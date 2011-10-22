@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.metamx.druid.lifecycle;
+package com.metamx.common.lifecycle;
 
 import com.metamx.common.logger.Logger;
 

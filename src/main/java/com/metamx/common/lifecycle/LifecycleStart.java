@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.metamx.druid.lifecycle;
+package com.metamx.common.lifecycle;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
