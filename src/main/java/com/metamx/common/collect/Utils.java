@@ -17,11 +17,11 @@ public class Utils
   public static <K, V> Map<K, V> zipMap(K[] keys, V[] values, boolean allowUnusedKeys)
   {
     Preconditions.checkArgument(values.length <= keys.length,
-                                "number of values[%d] exceeds number of keys[%d]",
+                                "number of values[%s] exceeds number of keys[%s]",
                                 values.length, keys.length);
 
     Preconditions.checkArgument(allowUnusedKeys || values.length == keys.length,
-                                "number of values[%d] less than number of keys[%d]",
+                                "number of values[%s] less than number of keys[%s]",
                                 values.length, keys.length);
 
 
@@ -47,14 +47,14 @@ public class Utils
       final K key = keysIter.next();
 
       Preconditions.checkArgument(valsIter.hasNext() || allowUnusedKeys,
-                                  "number of values[%d] less than number of keys",
+                                  "number of values[%s] less than number of keys",
                                   retVal.size());
       
       if(valsIter.hasNext()) retVal.put(key, valsIter.next());
     }
 
     Preconditions.checkArgument(!valsIter.hasNext(),
-                                "number of values[%d] exceeds number of keys[%d]",
+                                "number of values[%s] exceeds number of keys[%s]",
                                 retVal.size() + Iterators.size(valsIter), retVal.size());
 
     return retVal;
