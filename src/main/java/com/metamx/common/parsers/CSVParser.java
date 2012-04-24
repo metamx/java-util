@@ -1,10 +1,13 @@
 package com.metamx.common.parsers;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.metamx.common.collect.Utils;
+import sun.security.pkcs11.wrapper.Functions;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 
 public class CSVParser implements Parser<String, String>
@@ -23,7 +26,8 @@ public class CSVParser implements Parser<String, String>
   @Override
   public Map<String, String> parse(String input) throws IOException
   {
-    final String[] values = parser.parseLine(input);
+    String[] values = parser.parseLine(input);
+    for(int i = 0; i < values.length; ++i) if(values[i].equals("")) values[i] = null;
 
     try {
       return Utils.zipMap(fieldnames.toArray(new String[]{}), values, true);
