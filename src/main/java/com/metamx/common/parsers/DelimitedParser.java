@@ -49,7 +49,7 @@ public class DelimitedParser implements Parser<String, String>
     Iterable<String> values = splitter.split(input);
     
     try {
-      return Utils.zipMap(fieldnames, values);
+      return Utils.zipMap(fieldnames, values, true);
     }
     catch(IllegalArgumentException e) {
       throw new IOException(e.getMessage());

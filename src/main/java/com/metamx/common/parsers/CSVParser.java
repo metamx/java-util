@@ -26,7 +26,7 @@ public class CSVParser implements Parser<String, String>
     final String[] values = parser.parseLine(input);
 
     try {
-      return Utils.zipMap(fieldnames.toArray(new String[]{}), values);
+      return Utils.zipMap(fieldnames.toArray(new String[]{}), values, true);
     }
     catch(IllegalArgumentException e) {
       throw new IOException(e.getMessage());
