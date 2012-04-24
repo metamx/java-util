@@ -10,8 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 
-public class CSVParser implements Parser<String, String>
-{
+public class CSVParser implements Parser<String, String> {
   protected ArrayList<String> fieldnames;
   protected au.com.bytecode.opencsv.CSVParser parser = new au.com.bytecode.opencsv.CSVParser();
 
@@ -30,7 +29,7 @@ public class CSVParser implements Parser<String, String>
     for(int i = 0; i < values.length; ++i) if(values[i].equals("")) values[i] = null;
 
     try {
-      return Utils.zipMap(fieldnames.toArray(new String[]{}), values, true);
+      return Utils.zipMapPartial(fieldnames.toArray(new String[]{}), values);
     }
     catch(IllegalArgumentException e) {
       throw new IOException(e.getMessage());
