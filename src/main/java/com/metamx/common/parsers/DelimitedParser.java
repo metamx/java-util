@@ -1,6 +1,7 @@
 package com.metamx.common.parsers;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.metamx.common.collect.Utils;
 
@@ -30,8 +31,12 @@ public class DelimitedParser implements Parser<String, String>
     this(fieldnames, DEFAULT_DELIMITER);
   }
 
-  public DelimitedParser(String header) {
-    this(header, DEFAULT_DELIMITER);
+  public DelimitedParser(String delimiter) {
+    init(delimiter);
+  }
+
+  public DelimitedParser() {
+    this(DEFAULT_DELIMITER);
   }
 
   protected void init(String delimiter) {
@@ -41,12 +46,16 @@ public class DelimitedParser implements Parser<String, String>
   }
 
   public void setFieldnames(Iterable<String> fieldnames) {
-    fieldnames = Lists.newArrayList(fieldnames);
+    this.fieldnames = Lists.newArrayList(fieldnames);
   }
 
   @Override
   public Map<String, String> parse(String input) throws IOException {
     Iterable<String> values = splitter.split(input);
+
+    if(fieldnames == null) {
+      setFieldnames(ParserUtils.generateFieldNames(Iterators.size(values.iterator())));
+    }
     
     try {
       return Utils.zipMapPartial(fieldnames, values);
