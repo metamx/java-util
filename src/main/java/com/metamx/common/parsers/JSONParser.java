@@ -7,37 +7,57 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 
-public class JSONParser implements Parser<String, String> {
+public class JSONParser implements Parser<String, Object> {
 
   protected ObjectMapper jsonMapper = new ObjectMapper();
-  protected ArrayList<String> fieldnames = null;
+  protected ArrayList<String> fieldNames = null;
+
+  protected static final Function<JsonNode, String> valueFunction = new Function<JsonNode, String>() {
+    @Override
+    public String apply(JsonNode node) {
+      // use getValueAsText for compatibility with older jackson implementations on EMR
+      return (node == null || node.isMissingNode() || node.isNull()) ? null : node.getValueAsText();
+    }
+  };
 
   public JSONParser() {
   }
 
-  public JSONParser(Iterable<String> fieldnames) {
-    this.fieldnames = Lists.newArrayList(fieldnames);
+  public JSONParser(Iterable<String> fieldNames) {
+    setFieldNames(fieldNames);
   }
 
   @Override
-  public Map<String, String> parse(String input) throws IOException
+  public void setFieldNames(Iterable<String> fieldNames) {
+    this.fieldNames = Lists.newArrayList(fieldNames);
+  }
+
+  @Override
+  public Map<String, Object> parse(String input) throws IOException
   {
-    Map<String, String> map = new HashMap<String, String>();
+    Map<String, Object> map = new HashMap<String, Object>();
     JsonNode root = jsonMapper.readTree(input);
 
-    Iterator<String> keysIter = (fieldnames == null ? root.getFieldNames() : fieldnames.iterator());
+    Iterator<String> keysIter = (fieldNames == null ? root.getFieldNames() : fieldNames.iterator());
     
     while(keysIter.hasNext()) {
       String key = keysIter.next();
       JsonNode node = root.path(key);
-      // use getValueAsText for compatibility with older jackson implementations on EMR
-      map.put(key, (node.isMissingNode() || node.isNull()) ? null : node.getValueAsText());
+
+      if(node.isArray()) {
+        map.put(key, Lists.newArrayList(Iterators.transform(node.getElements(), valueFunction)));
+      } else {
+        map.put(key, valueFunction.apply(node));
+      }
     }
     return map;
   }
+
 
 }
