@@ -37,12 +37,16 @@ public class CSVParser implements Parser<String, Object> {
   }
 
   public CSVParser(String header) throws IOException {
-    setFieldNames(Arrays.asList(parser.parseLine(header)));
+    setFieldNames(header);
   }
 
   @Override
   public void setFieldNames(Iterable<String> fieldNames) {
     this.fieldNames = Lists.newArrayList(fieldNames);
+  }
+
+  public void setFieldNames(String header) throws IOException {
+    setFieldNames(Arrays.asList(parser.parseLine(header)));
   }
 
   @Override
