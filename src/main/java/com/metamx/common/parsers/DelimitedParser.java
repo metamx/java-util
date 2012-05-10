@@ -68,6 +68,11 @@ public class DelimitedParser implements Parser<String, Object>
   }
 
   @Override
+  public List<String> getFieldNames() {
+    return fieldNames;
+  }
+
+  @Override
   public void setFieldNames(Iterable<String> fieldNames) {
     this.fieldNames = Lists.newArrayList(fieldNames);
   }

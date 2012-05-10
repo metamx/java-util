@@ -9,6 +9,7 @@ import com.metamx.common.collect.Utils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class CSVParser implements Parser<String, Object> {
@@ -38,6 +39,11 @@ public class CSVParser implements Parser<String, Object> {
 
   public CSVParser(String header) throws IOException {
     setFieldNames(header);
+  }
+
+  @Override
+  public List<String> getFieldNames() {
+    return fieldNames;
   }
 
   @Override
