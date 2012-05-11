@@ -1,6 +1,7 @@
 package com.metamx.common.parsers;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -8,14 +9,17 @@ import java.util.Map;
 public class DelimitedIteratorParser implements IteratorParser
 {
   private final boolean parseHeader;
+  private final List<String> columns;
 
   private volatile String seenHeader;
 
   public DelimitedIteratorParser(
-      boolean parseHeader
+      boolean parseHeader,
+      List<String> columns
   )
   {
     this.parseHeader = parseHeader;
+    this.columns = columns;
   }
 
   @Override
@@ -30,7 +34,11 @@ public class DelimitedIteratorParser implements IteratorParser
       } else if (!seenHeader.equals(newHeader)) {
         throw new IllegalArgumentException(String.format("Header mismatch [%s] != [%s]!", seenHeader, newHeader));
       }
+    }
 
+    if (columns != null) {
+      parser.setFieldNames(columns);
+    } else if (parseHeader) {
       parser.setFieldNames(seenHeader);
     }
 
