@@ -17,6 +17,6 @@ public class ToLowerCaseParserFactory implements ParserFactory
   @Override
   public Parser makeParser(String delimiter, String header, List<String> columns) throws IOException
   {
-    return baseParserFactory.makeParser(delimiter, header, columns);
+    return new ToLowerCaseParser(baseParserFactory.makeParser(delimiter, header, columns));
   }
 }
