@@ -4,7 +4,8 @@ package com.metamx.common.collect;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 
-import java.lang.Iterable;import java.util.HashMap;
+import java.lang.Iterable;
+import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -24,7 +25,7 @@ public class Utils
                                 "number of values[%s] exceeds number of keys[%s]",
                                 values.length, keys.length);
 
-    Map<K, V> retVal = new HashMap<K, V>();
+    Map<K, V> retVal = new LinkedHashMap<K, V>();
 
     for(int i = 0; i < values.length; ++i) retVal.put(keys[i], values[i]);
 
@@ -32,7 +33,7 @@ public class Utils
   }
 
   public static <K, V> Map<K, V> zipMap(Iterable<K> keys, Iterable<V> values) {
-    Map<K, V> retVal = new HashMap<K, V>();
+    Map<K, V> retVal = new LinkedHashMap<K, V>();
 
     Iterator<K> keysIter = keys.iterator();
     Iterator<V> valsIter = values.iterator();
@@ -56,7 +57,7 @@ public class Utils
   
   public static <K, V> Map<K, V> zipMapPartial(Iterable<K> keys, Iterable<V> values)
   {
-    Map<K, V> retVal = new HashMap<K, V>();
+    Map<K, V> retVal = new LinkedHashMap<K, V>();
 
     Iterator<K> keysIter = keys.iterator();
     Iterator<V> valsIter = values.iterator();

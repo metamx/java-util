@@ -21,7 +21,7 @@ public class ToLowerCaseParser implements Parser<String, Object>
   public Map parse(String input) throws IOException
   {
     Map<String, Object> line = baseParser.parse(input);
-    Map<String, Object> retVal = Maps.newHashMap();
+    Map<String, Object> retVal = Maps.newLinkedHashMap();
     for (Map.Entry<String, Object> entry : line.entrySet()) {
       retVal.put(entry.getKey().toLowerCase(), entry.getValue());
     }

@@ -3,8 +3,8 @@ package com.metamx.common.parsers;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,7 +47,7 @@ public class JSONParser implements Parser<String, Object> {
   @Override
   public Map<String, Object> parse(String input) throws IOException
   {
-    Map<String, Object> map = new HashMap<String, Object>();
+    Map<String, Object> map = new LinkedHashMap<String, Object>();
     JsonNode root = jsonMapper.readTree(input);
 
     Iterator<String> keysIter = (fieldNames == null ? root.getFieldNames() : fieldNames.iterator());
