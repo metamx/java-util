@@ -24,14 +24,14 @@ public class ParserUtils
   }
 
   public static Function<String, DateTime> createTimestampParser(final String format) {
-    if(format.equals("iso")) {
+    if(format.equalsIgnoreCase("iso")) {
       return new Function<String, DateTime>() {
         @Override
         public DateTime apply(String input) {
           return new DateTime(input);
         }
       };
-    } else if(format.equals("posix")) {
+    } else if(format.equalsIgnoreCase("posix")) {
       return new Function<String, DateTime>() {
         @Override
         public DateTime apply(String input) {
