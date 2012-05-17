@@ -8,3 +8,4 @@ dist
 *.zip
 *.iml
 *.ipr
+.idea
