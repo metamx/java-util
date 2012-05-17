@@ -1,6 +1,7 @@
 package com.metamx.common.parsers;
 
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -28,6 +29,7 @@ public class ParserUtils
       return new Function<String, DateTime>() {
         @Override
         public DateTime apply(String input) {
+          Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
           return new DateTime(input);
         }
       };
@@ -35,6 +37,7 @@ public class ParserUtils
       return new Function<String, DateTime>() {
         @Override
         public DateTime apply(String input) {
+          Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
           return new DateTime(Long.parseLong(input) * 1000);
         }
       };
@@ -44,6 +47,7 @@ public class ParserUtils
         return new Function<String, DateTime>() {
           @Override
           public DateTime apply(String input) {
+            Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
             return formatter.parseDateTime(input);
           }
         };
