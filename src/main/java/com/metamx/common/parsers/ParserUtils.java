@@ -12,7 +12,7 @@ public class ParserUtils
   public static final Function<String, String> nullEmptyStringFunction = new Function<String, String>() {
     @Override
     public String apply(String input) {
-      if(input == null || input.length() == 0) return null;
+      if(input == null || input.isEmpty()) return null;
       return input;
     }
   };
