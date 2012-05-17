@@ -1,5 +1,6 @@
 package com.metamx.common.parsers;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;
@@ -23,7 +24,10 @@ public class ToLowerCaseParser implements Parser<String, Object>
     Map<String, Object> line = baseParser.parse(input);
     Map<String, Object> retVal = Maps.newLinkedHashMap();
     for (Map.Entry<String, Object> entry : line.entrySet()) {
-      retVal.put(entry.getKey().toLowerCase(), entry.getValue());
+      String k = entry.getKey().toLowerCase();
+
+      Preconditions.checkState(!retVal.containsKey(k), "Duplicate key [%s]", k);
+      retVal.put(k, entry.getValue());
     }
     return retVal;
   }
