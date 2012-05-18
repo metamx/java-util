@@ -94,16 +94,6 @@ public class Logger
     log.error(String.format(message, formatArgs), t);
   }
 
-  public void fatal(String message, Object... formatArgs)
-  {
-    log.fatal(String.format(message, formatArgs));
-  }
-
-  public void fatal(Throwable t, String message, Object... formatArgs)
-  {
-    log.fatal(String.format(message, formatArgs), t);
-  }
-
   public void wtf(String message, Object... formatArgs)
   {
     log.error(String.format("WTF?!: " + message, formatArgs), new Exception());
