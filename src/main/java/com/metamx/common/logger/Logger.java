@@ -16,20 +16,22 @@
 
 package com.metamx.common.logger;
 
+import org.slf4j.LoggerFactory;
+
 /**
  */
 public class Logger
 {
-  private final org.apache.log4j.Logger log;
+  private final org.slf4j.Logger log;
 
   public Logger(String name)
   {
-    log = org.apache.log4j.Logger.getLogger(name);
+    log = LoggerFactory.getLogger(name);
   }
 
   public Logger(Class clazz)
   {
-    log = org.apache.log4j.Logger.getLogger(clazz);
+    log = LoggerFactory.getLogger(clazz);
   }
 
   public void trace(String message, Object... formatArgs)
