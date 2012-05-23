@@ -3,7 +3,6 @@ package com.metamx.common.parsers;
 
 import com.google.common.base.Function;
 
-import java.io.IOException;
 import java.util.Map;
 
 public class Parsers
@@ -12,7 +11,7 @@ public class Parsers
 
     /**
      * Creates a Function object wrapping the given parser.
-     * Parser inputs that throw an IOException are mapped to null.
+     * Parser inputs that throw an ParseException are mapped to null.
      */
     return new Function<String, Map<K, V>>() {
       @Override
@@ -20,7 +19,7 @@ public class Parsers
         try {
           return p.parse(input);
         }
-        catch(IOException e) {
+        catch(ParseException e) {
           return null;
         }
       }

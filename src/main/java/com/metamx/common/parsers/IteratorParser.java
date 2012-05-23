@@ -28,14 +28,17 @@ public class IteratorParser
     this.parserFactory = parserFactory;
   }
 
-  public CloseableIterator<Map<String, Object>> parse(final CloseableIterator<String> lines) throws IOException
+  public CloseableIterator<Map<String, Object>> parse(final CloseableIterator<String> lines) throws ParseException
   {
     if (parseHeader) {
       String newHeader = lines.next();
       if (seenHeader == null) {
         seenHeader = newHeader;
       } else if (!seenHeader.equals(newHeader)) {
-        throw new IllegalArgumentException(String.format("Header mismatch [%s] != [%s]!", seenHeader, newHeader));
+        throw new ParseException.Builder()
+            .withErrorCode(ParseException.ErrorCode.BAD_HEADER)
+            .withMessage(String.format("Header mismatch [%s] != [%s]!", seenHeader, newHeader))
+            .build();
       }
     }
 
@@ -60,6 +63,13 @@ public class IteratorParser
       {
         try {
           return parser.parse(lines.next());
+        }
+        catch (ParseException e) {
+          throw new ParseException.Builder()
+              .withErrorCode(e.getErrorCode())
+              .withDetails(e.getDetails())
+              .withMessage(e.getMessage())
+              .build();
         }
         catch (Exception e) {
           throw new RuntimeException(e);

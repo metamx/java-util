@@ -3,7 +3,6 @@ package com.metamx.common.parsers;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -19,7 +18,7 @@ public class ToLowerCaseParser implements Parser<String, Object>
   }
 
   @Override
-  public Map parse(String input) throws IOException
+  public Map parse(String input) throws ParseException
   {
     Map<String, Object> line = baseParser.parse(input);
     Map<String, Object> retVal = Maps.newLinkedHashMap();
