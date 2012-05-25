@@ -1,4 +1,4 @@
-package com.metamx.common.parsers;
+package com.metamx.common.exception;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
@@ -6,16 +6,18 @@ import java.util.Map;
 
 /**
  */
-public class ParseException extends RuntimeException
+public class FormattedException extends RuntimeException
 {
   public static enum ErrorCode
   {
+    FILE_NOT_FOUND,
     BAD_HEADER,
     UNPARSABLE_ROW,
     MISSING_TIMESTAMP,
     UNPARSABLE_TIMESTAMP,
     MISSING_METRIC,
-    UNPARSABLE_METRIC
+    UNPARSABLE_METRIC,
+    SERVER_ERROR
   }
 
   public static class Builder
@@ -44,9 +46,9 @@ public class ParseException extends RuntimeException
       return this;
     }
 
-    public ParseException build()
+    public FormattedException build()
     {
-      return new ParseException(errorCode, details, message);
+      return new FormattedException(errorCode, details, message);
     }
   }
 
@@ -54,7 +56,7 @@ public class ParseException extends RuntimeException
   private final Map<String, Object> details;
   private final String message;
 
-  private ParseException(ErrorCode errorCode, Map<String, Object> details, String message)
+  private FormattedException(ErrorCode errorCode, Map<String, Object> details, String message)
   {
     this.errorCode = errorCode;
     this.details = details;

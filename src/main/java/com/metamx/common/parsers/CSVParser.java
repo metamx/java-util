@@ -5,6 +5,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.metamx.common.collect.Utils;
+import com.metamx.common.exception.FormattedException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +43,7 @@ public class CSVParser implements Parser<String, Object>
     setFieldNames(fieldNames);
   }
 
-  public CSVParser(String header) throws ParseException
+  public CSVParser(String header) throws FormattedException
   {
     setFieldNames(header);
   }
@@ -59,21 +60,21 @@ public class CSVParser implements Parser<String, Object>
     this.fieldNames = Lists.newArrayList(fieldNames);
   }
 
-  public void setFieldNames(String header) throws ParseException
+  public void setFieldNames(String header) throws FormattedException
   {
     try {
       setFieldNames(Arrays.asList(parser.parseLine(header)));
     }
     catch (Exception e) {
-      throw new ParseException.Builder()
-          .withErrorCode(ParseException.ErrorCode.BAD_HEADER)
+      throw new FormattedException.Builder()
+          .withErrorCode(FormattedException.ErrorCode.BAD_HEADER)
           .withMessage(e.getMessage())
           .build();
     }
   }
 
   @Override
-  public Map<String, Object> parse(String input) throws ParseException
+  public Map<String, Object> parse(String input) throws FormattedException
   {
     try {
       String[] values = parser.parseLine(input);
@@ -85,8 +86,8 @@ public class CSVParser implements Parser<String, Object>
       return Utils.zipMapPartial(fieldNames, Iterables.transform(Lists.newArrayList(values), valueFunction));
     }
     catch (Exception e) {
-      throw new ParseException.Builder()
-          .withErrorCode(ParseException.ErrorCode.UNPARSABLE_ROW)
+      throw new FormattedException.Builder()
+          .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_ROW)
           .withMessage(e.getMessage())
           .build();
     }

@@ -1,5 +1,7 @@
 package com.metamx.common.parsers;
 
+import com.metamx.common.exception.FormattedException;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -28,15 +30,15 @@ public class IteratorParser
     this.parserFactory = parserFactory;
   }
 
-  public CloseableIterator<Map<String, Object>> parse(final CloseableIterator<String> lines) throws ParseException
+  public CloseableIterator<Map<String, Object>> parse(final CloseableIterator<String> lines) throws FormattedException
   {
     if (parseHeader) {
       String newHeader = lines.next();
       if (seenHeader == null) {
         seenHeader = newHeader;
       } else if (!seenHeader.equals(newHeader)) {
-        throw new ParseException.Builder()
-            .withErrorCode(ParseException.ErrorCode.BAD_HEADER)
+        throw new FormattedException.Builder()
+            .withErrorCode(FormattedException.ErrorCode.BAD_HEADER)
             .withMessage(String.format("Header mismatch [%s] != [%s]!", seenHeader, newHeader))
             .build();
       }
@@ -64,8 +66,8 @@ public class IteratorParser
         try {
           return parser.parse(lines.next());
         }
-        catch (ParseException e) {
-          throw new ParseException.Builder()
+        catch (FormattedException e) {
+          throw new FormattedException.Builder()
               .withErrorCode(e.getErrorCode())
               .withDetails(e.getDetails())
               .withMessage(e.getMessage())

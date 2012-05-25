@@ -6,6 +6,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.metamx.common.collect.Utils;
+import com.metamx.common.exception.FormattedException;
 
 import java.util.List;
 import java.util.Map;
@@ -94,7 +95,7 @@ public class DelimitedParser implements Parser<String, Object>
   }
 
   @Override
-  public Map<String, Object> parse(String input) throws ParseException
+  public Map<String, Object> parse(String input) throws FormattedException
   {
     try {
       Iterable<String> values = splitter.split(input);
@@ -106,8 +107,8 @@ public class DelimitedParser implements Parser<String, Object>
       return Utils.zipMapPartial(fieldNames, Iterables.transform(values, valueFunction));
     }
     catch (IllegalArgumentException e) {
-      throw new ParseException.Builder()
-          .withErrorCode(ParseException.ErrorCode.UNPARSABLE_ROW)
+      throw new FormattedException.Builder()
+          .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_ROW)
           .withMessage(e.getMessage())
           .build();
     }

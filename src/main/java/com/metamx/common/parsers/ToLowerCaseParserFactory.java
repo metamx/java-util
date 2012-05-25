@@ -1,5 +1,7 @@
 package com.metamx.common.parsers;
 
+import com.metamx.common.exception.FormattedException;
+
 import java.util.List;
 
 /**
@@ -14,7 +16,7 @@ public class ToLowerCaseParserFactory implements ParserFactory
   }
 
   @Override
-  public Parser makeParser(String delimiter, String header, List<String> columns) throws ParseException
+  public Parser makeParser(String delimiter, String header, List<String> columns) throws FormattedException
   {
     return new ToLowerCaseParser(baseParserFactory.makeParser(delimiter, header, columns));
   }

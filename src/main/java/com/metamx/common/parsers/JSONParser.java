@@ -4,6 +4,7 @@ package com.metamx.common.parsers;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
+import com.metamx.common.exception.FormattedException;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -51,7 +52,7 @@ public class JSONParser implements Parser<String, Object>
   }
 
   @Override
-  public Map<String, Object> parse(String input) throws ParseException
+  public Map<String, Object> parse(String input) throws FormattedException
   {
     try {
       Map<String, Object> map = new LinkedHashMap<String, Object>();
@@ -72,8 +73,8 @@ public class JSONParser implements Parser<String, Object>
       return map;
     }
     catch (Exception e) {
-      throw new ParseException.Builder()
-          .withErrorCode(ParseException.ErrorCode.UNPARSABLE_ROW)
+      throw new FormattedException.Builder()
+          .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_ROW)
           .withMessage(e.getMessage())
           .build();
     }

@@ -1,5 +1,7 @@
 package com.metamx.common.parsers;
 
+import com.metamx.common.exception.FormattedException;
+
 import java.util.List;
 
 /**
@@ -7,7 +9,7 @@ import java.util.List;
 public class CSVParserFactory implements ParserFactory
 {
   @Override
-  public Parser makeParser(String delimiter, String header, List<String> columns) throws ParseException
+  public Parser makeParser(String delimiter, String header, List<String> columns) throws FormattedException
   {
     final CSVParser parser = new CSVParser();
 
