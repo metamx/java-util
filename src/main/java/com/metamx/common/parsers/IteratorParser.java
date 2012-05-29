@@ -64,7 +64,19 @@ public class IteratorParser
       public Map<String, Object> next()
       {
         try {
-          return parser.parse(lines.next());
+          Map<String, Object> parsed = parser.parse(lines.next());
+
+          //TODO: this validation needs to go elsewhere
+          for (String key : parsed.keySet()) {
+            if (key.contains("/")) {
+                        throw new FormattedException.Builder()
+              .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_ROW)
+              .withMessage("Columns cannot contain '/'")
+              .build();
+            }
+          }
+
+          return parsed;
         }
         catch (FormattedException e) {
           throw new FormattedException.Builder()
