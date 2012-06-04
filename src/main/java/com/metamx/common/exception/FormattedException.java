@@ -33,7 +33,8 @@ public class FormattedException extends RuntimeException
     UNPARSABLE_TIMESTAMP,
     MISSING_METRIC,
     UNPARSABLE_METRIC,
-    SERVER_ERROR
+    SERVER_ERROR,
+    AUTHENTICATION_ERROR
   }
 
   public static class Builder
