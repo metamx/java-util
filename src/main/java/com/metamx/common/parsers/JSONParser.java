@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class JSONParser implements Parser<String, Object>
 {
@@ -64,6 +65,13 @@ public class JSONParser implements Parser<String, Object>
   @Override
   public void setFieldNames(Iterable<String> fieldNames)
   {
+    Set<String> duplicates = ParserUtils.findDuplicates(fieldNames);
+    if (!duplicates.isEmpty()) {
+      throw new FormattedException.Builder()
+          .withErrorCode(FormattedException.ErrorCode.BAD_HEADER)
+          .withMessage(String.format("Duplicate entries founds: %s", duplicates.toString()))
+          .build();
+    }
     this.fieldNames = Lists.newArrayList(fieldNames);
   }
 
