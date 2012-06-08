@@ -16,6 +16,7 @@
 
 package com.metamx.common.exception;
 
+import com.google.common.collect.Maps;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.Map;
@@ -24,16 +25,26 @@ import java.util.Map;
  */
 public class FormattedException extends RuntimeException
 {
+  // High level error codes
   public static enum ErrorCode
   {
     FILE_NOT_FOUND,
-    BAD_HEADER,
+    UNPARSABLE_HEADER,
     UNPARSABLE_ROW,
     MISSING_TIMESTAMP,
     UNPARSABLE_TIMESTAMP,
     MISSING_METRIC,
     UNPARSABLE_METRIC,
-    SERVER_ERROR
+    SERVER_ERROR,
+    AUTHENTICATION_ERROR
+  }
+
+  // More specific error codes
+  public static enum SubErrorCode
+  {
+    DUPLICATE_KEY,
+    INVALID_CHARACTER,
+    MISMATCH
   }
 
   public static class Builder
@@ -42,7 +53,18 @@ public class FormattedException extends RuntimeException
     private Map<String, Object> details;
     private String message;
 
-    public Builder() {}
+    public Builder()
+    {
+      details = Maps.newHashMap();
+    }
+
+    public Builder fromException(FormattedException e)
+    {
+      this.errorCode = e.errorCode;
+      this.details = e.details;
+      this.message = e.message;
+      return this;
+    }
 
     public Builder withErrorCode(ErrorCode errorCode)
     {
@@ -52,7 +74,14 @@ public class FormattedException extends RuntimeException
 
     public Builder withDetails(Map<String, Object> details)
     {
-      this.details = details;
+      this.details.clear();
+      this.details.putAll(details);
+      return this;
+    }
+
+    public Builder withAppendedDetails(Map<String, Object> details)
+    {
+      this.details.putAll(details);
       return this;
     }
 

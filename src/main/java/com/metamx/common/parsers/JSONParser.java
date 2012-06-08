@@ -18,9 +18,12 @@ package com.metamx.common.parsers;
 
 
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.metamx.common.exception.FormattedException;
+import com.metamx.common.exception.SubErrorHolder;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -29,6 +32,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class JSONParser implements Parser<String, Object>
 {
@@ -64,6 +68,20 @@ public class JSONParser implements Parser<String, Object>
   @Override
   public void setFieldNames(Iterable<String> fieldNames)
   {
+    Set<String> duplicates = ParserUtils.findDuplicates(fieldNames);
+    if (!duplicates.isEmpty()) {
+      throw new FormattedException.Builder()
+          .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
+          .withDetails(
+              new SubErrorHolder(
+                  FormattedException.SubErrorCode.DUPLICATE_KEY,
+                  fieldNames,
+                  duplicates
+              ).get()
+          )
+          .withMessage(String.format("Duplicate entries founds: %s", duplicates.toString()))
+          .build();
+    }
     this.fieldNames = Lists.newArrayList(fieldNames);
   }
 
@@ -89,6 +107,7 @@ public class JSONParser implements Parser<String, Object>
       return map;
     }
     catch (Exception e) {
+      Throwables.propagateIfPossible(e, FormattedException.class);
       throw new FormattedException.Builder()
           .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_ROW)
           .withMessage(e.getMessage())

@@ -18,15 +18,19 @@ package com.metamx.common.parsers;
 
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.metamx.common.collect.Utils;
 import com.metamx.common.exception.FormattedException;
+import com.metamx.common.exception.SubErrorHolder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class CSVParser implements Parser<String, Object>
 {
@@ -73,6 +77,20 @@ public class CSVParser implements Parser<String, Object>
   @Override
   public void setFieldNames(Iterable<String> fieldNames)
   {
+    Set<String> duplicates = ParserUtils.findDuplicates(fieldNames);
+    if (!duplicates.isEmpty()) {
+      throw new FormattedException.Builder()
+          .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
+          .withDetails(
+              new SubErrorHolder(
+                  FormattedException.SubErrorCode.DUPLICATE_KEY,
+                  fieldNames,
+                  duplicates
+              ).get()
+          )
+          .withMessage(String.format("Duplicate entries founds: %s", duplicates.toString()))
+          .build();
+    }
     this.fieldNames = Lists.newArrayList(fieldNames);
   }
 
@@ -82,8 +100,9 @@ public class CSVParser implements Parser<String, Object>
       setFieldNames(Arrays.asList(parser.parseLine(header)));
     }
     catch (Exception e) {
+      Throwables.propagateIfPossible(e, FormattedException.class);        
       throw new FormattedException.Builder()
-          .withErrorCode(FormattedException.ErrorCode.BAD_HEADER)
+          .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
           .withMessage(e.getMessage())
           .build();
     }
@@ -102,6 +121,7 @@ public class CSVParser implements Parser<String, Object>
       return Utils.zipMapPartial(fieldNames, Iterables.transform(Lists.newArrayList(values), valueFunction));
     }
     catch (Exception e) {
+      Throwables.propagateIfPossible(e, FormattedException.class);
       throw new FormattedException.Builder()
           .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_ROW)
           .withMessage(e.getMessage())
