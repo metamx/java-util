@@ -63,6 +63,14 @@ public class FormattedException extends RuntimeException
       details = Maps.newHashMap();
     }
 
+    public Builder fromException(FormattedException e)
+    {
+      this.errorCode = e.errorCode;
+      this.details = e.details;
+      this.message = e.message;
+      return this;
+    }
+
     public Builder withErrorCode(ErrorCode errorCode)
     {
       this.errorCode = errorCode;

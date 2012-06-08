@@ -80,7 +80,7 @@ public class CSVParser implements Parser<String, Object>
     if (!duplicates.isEmpty()) {
       throw new FormattedException.Builder()
           .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
-          .withAppendedDetails(
+          .withDetails(
               ImmutableMap.<String, Object>of(
                   "subErrorCode", FormattedException.UnparsableHeaderSubErrorCode.DUPLICATE_KEY,
                   "duplicates", duplicates
