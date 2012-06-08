@@ -72,7 +72,7 @@ public class JSONParser implements Parser<String, Object>
           .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
           .withDetails(
               ImmutableMap.<String, Object>of(
-                  "errorCode", FormattedException.SubErrorCode.DUPLICATE_ENTRY,
+                  "subErrorCode", FormattedException.UnparsableHeaderSubErrorCode.DUPLICATE_KEY,
                   "duplicates", duplicates
               )
           )

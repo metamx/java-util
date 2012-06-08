@@ -40,12 +40,16 @@ public class FormattedException extends RuntimeException
   }
 
   // More specific error codes
-  public static enum SubErrorCode
+  public static enum UnparsableHeaderSubErrorCode
   {
-    // UNPARSABLE_HEADER
-    DUPLICATE_ENTRY,
+    DUPLICATE_KEY,
     INVALID_CHARACTER,
     MISMATCH
+  }
+
+  public static enum UnparsableRowSubErrorCode
+  {
+    DUPLICATE_KEY
   }
 
   public static class Builder
