@@ -73,8 +73,9 @@ public class JSONParser implements Parser<String, Object>
           .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
           .withDetails(
               ImmutableMap.<String, Object>of(
-                  "subErrorCode", FormattedException.UnparsableHeaderSubErrorCode.DUPLICATE_KEY,
-                  "duplicates", duplicates
+                  "subErrorCode", FormattedException.SubErrorCode.DUPLICATE_KEY,
+                  "key", fieldNames,
+                  "invalid_value", duplicates
               )
           )
           .withMessage(String.format("Duplicate entries founds: %s", duplicates.toString()))
