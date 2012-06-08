@@ -18,6 +18,7 @@ package com.metamx.common.parsers;
 
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -79,7 +80,7 @@ public class CSVParser implements Parser<String, Object>
     if (!duplicates.isEmpty()) {
       throw new FormattedException.Builder()
           .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
-          .withDetails(
+          .withAppendedDetails(
               ImmutableMap.<String, Object>of(
                   "subErrorCode", FormattedException.UnparsableHeaderSubErrorCode.DUPLICATE_KEY,
                   "duplicates", duplicates
@@ -96,19 +97,10 @@ public class CSVParser implements Parser<String, Object>
     try {
       setFieldNames(Arrays.asList(parser.parseLine(header)));
     }
-    catch (FormattedException e) {
-      Map<String, Object> details = e.getDetails();
-      details.put("header", header);
-      throw new FormattedException.Builder()
-          .withErrorCode(e.getErrorCode())
-          .withDetails(details)
-          .withMessage(e.getMessage())
-          .build();
-    }
     catch (Exception e) {
+      Throwables.propagateIfPossible(e, FormattedException.class);        
       throw new FormattedException.Builder()
           .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
-          .withDetails(ImmutableMap.<String, Object>of("header", header))
           .withMessage(e.getMessage())
           .build();
     }
@@ -127,6 +119,7 @@ public class CSVParser implements Parser<String, Object>
       return Utils.zipMapPartial(fieldNames, Iterables.transform(Lists.newArrayList(values), valueFunction));
     }
     catch (Exception e) {
+      Throwables.propagateIfPossible(e, FormattedException.class);
       throw new FormattedException.Builder()
           .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_ROW)
           .withMessage(e.getMessage())

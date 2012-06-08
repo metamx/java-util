@@ -18,6 +18,7 @@ package com.metamx.common.parsers;
 
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
@@ -108,7 +109,7 @@ public class DelimitedParser implements Parser<String, Object>
     if (!duplicates.isEmpty()) {
       throw new FormattedException.Builder()
           .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
-          .withDetails(
+          .withAppendedDetails(
               ImmutableMap.<String, Object>of(
                   "subErrorCode", FormattedException.UnparsableHeaderSubErrorCode.DUPLICATE_KEY,
                   "duplicates", duplicates
@@ -137,7 +138,8 @@ public class DelimitedParser implements Parser<String, Object>
 
       return Utils.zipMapPartial(fieldNames, Iterables.transform(values, valueFunction));
     }
-    catch (IllegalArgumentException e) {
+    catch (Exception e) {
+      Throwables.propagateIfPossible(e, FormattedException.class);
       throw new FormattedException.Builder()
           .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_ROW)
           .withMessage(e.getMessage())
