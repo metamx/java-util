@@ -25,6 +25,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.metamx.common.collect.Utils;
 import com.metamx.common.exception.FormattedException;
+import com.metamx.common.exception.SubErrorHolder;
 
 import java.util.List;
 import java.util.Map;
@@ -110,11 +111,11 @@ public class DelimitedParser implements Parser<String, Object>
       throw new FormattedException.Builder()
           .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
           .withDetails(
-              ImmutableMap.<String, Object>of(
-                  "subErrorCode", FormattedException.SubErrorCode.DUPLICATE_KEY,
-                  "key", fieldNames,
-                  "invalid_value", duplicates
-              )
+              new SubErrorHolder(
+                  FormattedException.SubErrorCode.DUPLICATE_KEY,
+                  fieldNames,
+                  duplicates
+              ).get()
           )
           .withMessage(String.format("Duplicate entries founds: %s", duplicates.toString()))
           .build();
