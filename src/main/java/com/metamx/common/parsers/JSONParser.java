@@ -18,6 +18,7 @@ package com.metamx.common.parsers;
 
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.metamx.common.exception.FormattedException;
@@ -68,7 +69,13 @@ public class JSONParser implements Parser<String, Object>
     Set<String> duplicates = ParserUtils.findDuplicates(fieldNames);
     if (!duplicates.isEmpty()) {
       throw new FormattedException.Builder()
-          .withErrorCode(FormattedException.ErrorCode.BAD_HEADER)
+          .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
+          .withDetails(
+              ImmutableMap.<String, Object>of(
+                  "errorCode", FormattedException.SubErrorCode.DUPLICATE_ENTRY,
+                  "duplicates", duplicates
+              )
+          )
           .withMessage(String.format("Duplicate entries founds: %s", duplicates.toString()))
           .build();
     }
