@@ -75,6 +75,12 @@ public class FormattedException extends RuntimeException
       return this;
     }
 
+    public Builder withAppendedDetails(Map<String, Object> details)
+    {
+      this.details.putAll(details);
+      return this;
+    }
+
     public Builder withMessage(String message)
     {
       this.message = message;
