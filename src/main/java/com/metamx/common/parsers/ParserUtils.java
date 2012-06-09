@@ -72,6 +72,14 @@ public class ParserUtils
           return new DateTime(Long.parseLong(input) * 1000);
         }
       };
+    } else if(format.equalsIgnoreCase("millis")) {
+      return new Function<String, DateTime>() {
+        @Override
+        public DateTime apply(String input) {
+          Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
+          return new DateTime(Long.parseLong(input));
+        }
+      };
     } else {
       try {
         final DateTimeFormatter formatter = DateTimeFormat.forPattern(format);
