@@ -64,11 +64,8 @@ public class SmooshedFileMapperTest
       mapper.close();
     }
     finally {
-      try {
-        Files.deleteRecursively(baseDir);
-      }
-      catch (Exception e) {
-        // ignore
+      for (File file : baseDir.listFiles()) {
+        file.delete();
       }
     }
   }
