@@ -36,6 +36,7 @@ public class FormattedException extends RuntimeException
     MISSING_METRIC,
     UNPARSABLE_METRIC,
     SERVER_ERROR,
+    AUTHENTICATION_FILE_NOT_FOUND,
     AUTHENTICATION_ERROR
   }
 
