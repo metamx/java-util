@@ -28,7 +28,8 @@ public class FormattedException extends RuntimeException
   // High level error codes
   public static enum ErrorCode
   {
-    FILE_NOT_FOUND,
+    S3BUCKET_NOT_FOUND,
+    S3PATH_NOT_FOUND,
     UNPARSABLE_HEADER,
     UNPARSABLE_ROW,
     MISSING_TIMESTAMP,
