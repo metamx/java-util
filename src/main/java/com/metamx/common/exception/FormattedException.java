@@ -30,6 +30,7 @@ public class FormattedException extends RuntimeException
   {
     S3BUCKET_NOT_FOUND,
     S3PATH_NOT_FOUND,
+    FILE_NOT_FOUND,
     UNPARSABLE_HEADER,
     UNPARSABLE_ROW,
     MISSING_TIMESTAMP,
