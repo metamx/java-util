@@ -43,8 +43,8 @@ public enum Granularity
   SECOND
       {
         DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'H'=HH/'M'=mm/'S'=ss");
-        DateTimeFormatter openxFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd-HH-mm-ss");
-        DateTimeFormatter moPubFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'h'=HH/'m'=mm/'s'=ss");
+        DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd-HH-mm-ss");
+        DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'h'=HH/'m'=mm/'s'=ss");
 
         @Override
         public DateTimeFormatter getFormatter(Formatter type)
@@ -52,10 +52,10 @@ public enum Granularity
           switch (type) {
             case DEFAULT:
               return defaultFormat;
-            case OPENX:
-              return openxFormat;
-            case MOPUB:
-              return moPubFormat;
+            case HIVE:
+              return hiveFormat;
+            case LOWER_DEFAULT:
+              return lowerDefaultFormat;
             default:
               throw new IAE("There is no format for type %s at granularity %s", type, this.name());
           }
@@ -104,8 +104,8 @@ public enum Granularity
   MINUTE
       {
         DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'H'=HH/'M'=mm");
-        DateTimeFormatter openxFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd-HH-mm");
-        DateTimeFormatter moPubFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'h'=HH/'m'=mm");
+        DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd-HH-mm");
+        DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'h'=HH/'m'=mm");
 
         @Override
         public DateTimeFormatter getFormatter(Formatter type)
@@ -113,10 +113,10 @@ public enum Granularity
           switch (type) {
             case DEFAULT:
               return defaultFormat;
-            case OPENX:
-              return openxFormat;
-            case MOPUB:
-              return moPubFormat;
+            case HIVE:
+              return hiveFormat;
+            case LOWER_DEFAULT:
+              return lowerDefaultFormat;
             default:
               throw new IAE("There is no format for type %s at granularity %s", type, this.name());
           }
@@ -161,8 +161,8 @@ public enum Granularity
   HOUR
       {
         DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'H'=HH");
-        DateTimeFormatter openxFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd-HH");
-        DateTimeFormatter moPubFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'h'=HH");
+        DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd-HH");
+        DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'h'=HH");
 
         @Override
         public DateTimeFormatter getFormatter(Formatter type)
@@ -170,10 +170,10 @@ public enum Granularity
           switch (type) {
             case DEFAULT:
               return defaultFormat;
-            case OPENX:
-              return openxFormat;
-            case MOPUB:
-              return moPubFormat;
+            case HIVE:
+              return hiveFormat;
+            case LOWER_DEFAULT:
+              return lowerDefaultFormat;
             default:
               throw new IAE("There is no format for type %s at granularity %s", type, this.name());
           }
@@ -263,8 +263,8 @@ public enum Granularity
   DAY
       {
         DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd");
-        DateTimeFormatter openxFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd");
-        DateTimeFormatter moPubFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd");
+        DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd");
+        DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd");
 
         @Override
         public DateTimeFormatter getFormatter(Formatter type)
@@ -272,10 +272,10 @@ public enum Granularity
           switch (type) {
             case DEFAULT:
               return defaultFormat;
-            case OPENX:
-              return openxFormat;
-            case MOPUB:
-              return moPubFormat;
+            case HIVE:
+              return hiveFormat;
+            case LOWER_DEFAULT:
+              return lowerDefaultFormat;
             default:
               throw new IAE("There is no format for type %s at granularity %s", type, this.name());
           }
@@ -319,8 +319,8 @@ public enum Granularity
   WEEK
       {
         DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd");
-        DateTimeFormatter openxFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd");
-        DateTimeFormatter moPubFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd");
+        DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd");
+        DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd");
 
         @Override
         public DateTimeFormatter getFormatter(Formatter type)
@@ -367,8 +367,8 @@ public enum Granularity
   MONTH
       {
         DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM");
-        DateTimeFormatter openxFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM");
-        DateTimeFormatter moPubFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM");
+        DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM");
+        DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM");
 
         @Override
         public DateTimeFormatter getFormatter(Formatter type)
@@ -376,10 +376,10 @@ public enum Granularity
           switch (type) {
             case DEFAULT:
               return defaultFormat;
-            case OPENX:
-              return openxFormat;
-            case MOPUB:
-              return moPubFormat;
+            case HIVE:
+              return hiveFormat;
+            case LOWER_DEFAULT:
+              return lowerDefaultFormat;
             default:
               throw new IAE("There is no format for type %s at granularity %s", type, this.name());
           }
@@ -424,8 +424,8 @@ public enum Granularity
   YEAR
       {
         DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy");
-        DateTimeFormatter openxFormat = DateTimeFormat.forPattern("'dt'=yyyy");
-        DateTimeFormatter moPubFormat = DateTimeFormat.forPattern("'y'=yyyy");
+        DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy");
+        DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy");
 
         @Override
         public DateTimeFormatter getFormatter(Formatter type)
@@ -433,10 +433,10 @@ public enum Granularity
           switch (type) {
             case DEFAULT:
               return defaultFormat;
-            case OPENX:
-              return openxFormat;
-            case MOPUB:
-              return moPubFormat;
+            case HIVE:
+              return hiveFormat;
+            case LOWER_DEFAULT:
+              return lowerDefaultFormat;
             default:
               throw new IAE("There is no format for type %s at granularity %s", type, this.name());
           }
@@ -484,7 +484,7 @@ public enum Granularity
   // Default patterns for parsing paths.
   protected final Pattern defaultPathPattern =
       Pattern.compile("^.*[Yy]=(\\d{4})/(?:[Mm]=(\\d{2})/(?:[Dd]=(\\d{2})/(?:[Hh]=(\\d{2})/(?:[Mm]=(\\d{2})/(?:[Ss]=(\\d{2})/)?)?)?)?)?.*$");
-  protected final Pattern openxPathPattern =
+  protected final Pattern hivePathPattern =
       Pattern.compile("^.*dt=(\\d{4})(?:-(\\d{2})(?:-(\\d{2})(?:-(\\d{2})(?:-(\\d{2})(?:-(\\d{2})?)?)?)?)?)?/.*$");
 
   // Abstract functions that individual enum's need to implement for the strategy.
@@ -509,10 +509,10 @@ public enum Granularity
     Pattern pattern = defaultPathPattern;
     switch(formatter) {
       case DEFAULT:
-      case MOPUB:
+      case LOWER_DEFAULT:
         break;
-      case OPENX:
-        pattern = openxPathPattern;
+      case HIVE:
+        pattern = hivePathPattern;
         break;
       default:
         throw new IAE("Format %s not supported", formatter);
@@ -645,7 +645,7 @@ public enum Granularity
   public enum Formatter
   {
     DEFAULT,
-    OPENX,
-    MOPUB
+    HIVE,
+    LOWER_DEFAULT
   }
 }

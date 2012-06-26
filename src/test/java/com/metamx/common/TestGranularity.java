@@ -48,7 +48,7 @@ public class TestGranularity
   Granularity YEAR = Granularity.YEAR;
 
   @Test
-  public void testOpenXFormat() {
+  public void testHiveFormat() {
     PathDate[] secondChecks = {
       new PathDate(new DateTime(2011, 3, 15, 20, 50, 43, 0), null, "dt=2011-03-15-20-50-43/Test0"),
       new PathDate(new DateTime(2011, 3, 15, 20, 50, 43, 0), null, "/dt=2011-03-15-20-50-43/Test0"),
@@ -67,7 +67,7 @@ public class TestGranularity
       new PathDate(null, IllegalFieldValueException.class, "error/dt=2011-10-33-20-42-24/Test11"),
       new PathDate(null, IllegalFieldValueException.class, "error/dt=2011-13-20-20-42-24/Test11"),
     };
-    checkToDate(SECOND, Granularity.Formatter.OPENX, secondChecks);
+    checkToDate(SECOND, Granularity.Formatter.HIVE, secondChecks);
   }
 
   @Test
