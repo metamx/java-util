@@ -571,6 +571,12 @@ public enum Granularity
     return getFormatter(type).print(time);
   }
 
+  /** Return a granularity-sized Interval containing a particular DateTime. */
+  public final Interval bucket(DateTime t)
+  {
+    DateTime start = truncate(t);
+    return new Interval(start, increment(start));
+  }
 
   // Iterable functions and classes.
   public Iterable<Interval> getIterable(final DateTime start, final DateTime end)

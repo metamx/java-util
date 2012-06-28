@@ -386,6 +386,20 @@ public class TestGranularity
     }
   }
 
+  @Test
+  public void testBucket()
+  {
+    DateTime dt = new DateTime("2011-02-03T04:05:06.100");
+
+    Assert.assertEquals(new Interval("2011-01-01/2012-01-01"),                   YEAR.bucket(dt));
+    Assert.assertEquals(new Interval("2011-02-01/2011-03-01"),                   MONTH.bucket(dt));
+    Assert.assertEquals(new Interval("2011-01-31/2011-02-07"),                   WEEK.bucket(dt));
+    Assert.assertEquals(new Interval("2011-02-03/2011-02-04"),                   DAY.bucket(dt));
+    Assert.assertEquals(new Interval("2011-02-03T04/2011-02-03T05"),             HOUR.bucket(dt));
+    Assert.assertEquals(new Interval("2011-02-03T04:05:00/2011-02-03T04:06:00"), MINUTE.bucket(dt));
+    Assert.assertEquals(new Interval("2011-02-03T04:05:06/2011-02-03T04:05:07"), SECOND.bucket(dt));
+  }
+
   /**
    * Helpers *
    */
