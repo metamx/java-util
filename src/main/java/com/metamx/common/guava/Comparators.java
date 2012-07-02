@@ -52,6 +52,12 @@ public class Comparators
       @Override
       public int compare(T t, T t1)
       {
+        if (t == null) {
+          return 1;
+        }
+        if (t1 == null) {
+          return -1;
+        }
         return t.compareTo(t1);
       }
     };
