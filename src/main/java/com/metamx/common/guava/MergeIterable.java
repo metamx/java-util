@@ -50,7 +50,15 @@ public class MergeIterable<T> implements Iterable<T>
           @Override
           public int compare(PeekingIterator<T> lhs, PeekingIterator<T> rhs)
           {
-            return comparator.compare(lhs.peek(), rhs.peek());
+            T lhsPeek = lhs.peek();
+            T rhsPeek = rhs.peek();
+            if (lhsPeek == null) {
+              return 1;
+            }
+            if (rhsPeek == null) {
+              return -1;
+            }
+            return comparator.compare(lhsPeek, rhsPeek);
           }
         }
     );
@@ -58,7 +66,7 @@ public class MergeIterable<T> implements Iterable<T>
     for (Iterable<T> baseIterable : baseIterables) {
       final PeekingIterator<T> iter = Iterators.peekingIterator(baseIterable.iterator());
 
-      if (iter.hasNext()) {
+      if (iter != null && iter.hasNext()) {
         pQueue.add(iter);
       }
     }
