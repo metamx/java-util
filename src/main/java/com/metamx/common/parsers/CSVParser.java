@@ -100,7 +100,7 @@ public class CSVParser implements Parser<String, Object>
       setFieldNames(Arrays.asList(parser.parseLine(header)));
     }
     catch (Exception e) {
-      Throwables.propagateIfPossible(e, FormattedException.class);        
+      Throwables.propagateIfInstanceOf(e, FormattedException.class);
       throw new FormattedException.Builder()
           .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
           .withMessage(e.getMessage())
@@ -121,7 +121,7 @@ public class CSVParser implements Parser<String, Object>
       return Utils.zipMapPartial(fieldNames, Iterables.transform(Lists.newArrayList(values), valueFunction));
     }
     catch (Exception e) {
-      Throwables.propagateIfPossible(e, FormattedException.class);
+      Throwables.propagateIfInstanceOf(e, FormattedException.class);
       throw new FormattedException.Builder()
           .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_ROW)
           .withMessage(e.getMessage())
