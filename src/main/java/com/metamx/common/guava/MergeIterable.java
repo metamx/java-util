@@ -51,16 +51,16 @@ public class MergeIterable<T> implements Iterable<T>
           public int compare(PeekingIterator<T> lhs, PeekingIterator<T> rhs)
           {
             T lhsPeek = lhs.peek();
+            while (lhsPeek == null) {
+              lhs.next();
+              lhsPeek = lhs.peek();
+            }
             T rhsPeek = rhs.peek();
-            if (lhsPeek == null && rhsPeek == null) {
-              return 0;
+            while (rhsPeek == null) {
+              rhs.next();
+              rhsPeek = rhs.peek();
             }
-            if (lhsPeek == null) {
-              return 1;
-            }
-            if (rhsPeek == null) {
-              return -1;
-            }
+
             return comparator.compare(lhsPeek, rhsPeek);
           }
         }
