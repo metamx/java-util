@@ -52,6 +52,9 @@ public class MergeIterable<T> implements Iterable<T>
           {
             T lhsPeek = lhs.peek();
             T rhsPeek = rhs.peek();
+            if (lhsPeek == null && rhsPeek == null) {
+              return 0;
+            }
             if (lhsPeek == null) {
               return 1;
             }

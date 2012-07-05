@@ -52,6 +52,9 @@ public class Comparators
       @Override
       public int compare(T t, T t1)
       {
+        if (t== null && t1 == null) {
+          return 0;
+        }
         if (t == null) {
           return 1;
         }
