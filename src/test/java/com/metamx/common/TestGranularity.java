@@ -398,6 +398,23 @@ public class TestGranularity
     Assert.assertEquals(new Interval("2011-02-03T04/2011-02-03T05"),             HOUR.bucket(dt));
     Assert.assertEquals(new Interval("2011-02-03T04:05:00/2011-02-03T04:06:00"), MINUTE.bucket(dt));
     Assert.assertEquals(new Interval("2011-02-03T04:05:06/2011-02-03T04:05:07"), SECOND.bucket(dt));
+
+    // Test with aligned DateTime
+    Assert.assertEquals(new Interval("2011-01-01/2011-01-02"), DAY.bucket(new DateTime("2011-01-01")));
+  }
+
+  @Test
+  public void testWiden()
+  {
+    Assert.assertEquals(new Interval("0/0T01"),  HOUR.widen(new Interval("0/0")));
+    Assert.assertEquals(new Interval("T03/T04"), HOUR.widen(new Interval("T03:00/T03:00")));
+    Assert.assertEquals(new Interval("T03/T04"), HOUR.widen(new Interval("T03:00/T03:05")));
+    Assert.assertEquals(new Interval("T03/T04"), HOUR.widen(new Interval("T03:05/T04:00")));
+    Assert.assertEquals(new Interval("T03/T04"), HOUR.widen(new Interval("T03:00/T04:00")));
+    Assert.assertEquals(new Interval("T03/T04"), HOUR.widen(new Interval("T03:00/T03:59:59.999")));
+    Assert.assertEquals(new Interval("T03/T05"), HOUR.widen(new Interval("T03:00/T04:00:00.001")));
+    Assert.assertEquals(new Interval("T03/T06"), HOUR.widen(new Interval("T03:05/T05:30")));
+    Assert.assertEquals(new Interval("T03/T04"), HOUR.widen(new Interval("T03:05/T03:05")));
   }
 
   /**

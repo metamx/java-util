@@ -578,6 +578,26 @@ public enum Granularity
     return new Interval(start, increment(start));
   }
 
+  /** Round out Interval such that it becomes granularity-aligned and nonempty. */
+  public final Interval widen(Interval interval)
+  {
+    final DateTime start = truncate(interval.getStart());
+    final DateTime end;
+
+    if(interval.getEnd().equals(start)) {
+      // Empty with aligned start/end; expand into a granularity-sized interval
+      end = increment(start);
+    } else if(truncate(interval.getEnd()).equals(interval.getEnd())) {
+      // Non-empty with aligned end; keep the same end
+      end = interval.getEnd();
+    } else {
+      // Non-empty with non-aligned end; push it out
+      end = increment(truncate(interval.getEnd()));
+    }
+
+    return new Interval(start, end);
+  }
+
   // Iterable functions and classes.
   public Iterable<Interval> getIterable(final DateTime start, final DateTime end)
   {
