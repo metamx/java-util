@@ -125,7 +125,16 @@ public class DelimitedParser implements Parser<String, Object>
 
   public void setFieldNames(String header)
   {
-    setFieldNames(splitter.split(header));
+    try {
+      setFieldNames(splitter.split(header));
+    }
+    catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, FormattedException.class);
+      throw new FormattedException.Builder()
+          .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
+          .withMessage(e.getMessage())
+          .build();
+    }
   }
 
   @Override
