@@ -150,7 +150,7 @@ public class DelimitedParser implements Parser<String, Object>
       return Utils.zipMapPartial(fieldNames, Iterables.transform(values, valueFunction));
     }
     catch (Exception e) {
-      Throwables.propagateIfPossible(e, FormattedException.class);
+      Throwables.propagateIfInstanceOf(e, FormattedException.class);
       throw new FormattedException.Builder()
           .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_ROW)
           .withMessage(e.getMessage())
