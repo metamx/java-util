@@ -45,6 +45,13 @@ public class Comparators
     };
   }
 
+  /**
+   * Use Guava Ordering.natural() instead
+   *
+   * @param <T>
+   * @return
+   */
+  @Deprecated
   public static <T extends Comparable> Comparator<T> comparable()
   {
     return new Comparator<T>()
@@ -52,15 +59,6 @@ public class Comparators
       @Override
       public int compare(T t, T t1)
       {
-        if (t== null && t1 == null) {
-          return 0;
-        }
-        if (t == null) {
-          return 1;
-        }
-        if (t1 == null) {
-          return -1;
-        }
         return t.compareTo(t1);
       }
     };

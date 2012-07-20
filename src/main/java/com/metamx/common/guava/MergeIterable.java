@@ -16,13 +16,11 @@
 
 package com.metamx.common.guava;
 
-import com.google.common.collect.Iterators;
-import com.google.common.collect.PeekingIterator;
+import com.google.common.collect.Lists;
 
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.PriorityQueue;
+import java.util.List;
 
 /**
  */
@@ -43,67 +41,11 @@ public class MergeIterable<T> implements Iterable<T>
   @Override
   public Iterator<T> iterator()
   {
-    final PriorityQueue<PeekingIterator<T>> pQueue = new PriorityQueue<PeekingIterator<T>>(
-        16,
-        new Comparator<PeekingIterator<T>>()
-        {
-          @Override
-          public int compare(PeekingIterator<T> lhs, PeekingIterator<T> rhs)
-          {
-            T lhsPeek = lhs.peek();
-            while (lhsPeek == null) {
-              lhs.next();
-              lhsPeek = lhs.peek();
-            }
-            T rhsPeek = rhs.peek();
-            while (rhsPeek == null) {
-              rhs.next();
-              rhsPeek = rhs.peek();
-            }
-
-            return comparator.compare(lhsPeek, rhsPeek);
-          }
-        }
-    );
-
+    List<Iterator<T>> iterators = Lists.newArrayList();
     for (Iterable<T> baseIterable : baseIterables) {
-      final PeekingIterator<T> iter = Iterators.peekingIterator(baseIterable.iterator());
-
-      if (iter != null && iter.hasNext()) {
-        pQueue.add(iter);
-      }
+      iterators.add(baseIterable.iterator());
     }
 
-    return new Iterator<T>()
-    {
-      @Override
-      public boolean hasNext()
-      {
-        return ! pQueue.isEmpty();
-      }
-
-      @Override
-      public T next()
-      {
-        if (! hasNext()) {
-          throw new NoSuchElementException();
-        }
-
-        PeekingIterator<T> retIt = pQueue.remove();
-        T retVal = retIt.next();
-
-        if (retIt.hasNext()) {
-          pQueue.add(retIt);
-        }
-
-        return retVal;
-      }
-
-      @Override
-      public void remove()
-      {
-        throw new UnsupportedOperationException();
-      }
-    };
+    return new MergeIterator<T>(comparator, iterators);
   }
 }
