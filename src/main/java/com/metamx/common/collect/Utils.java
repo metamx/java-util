@@ -48,6 +48,8 @@ public class Utils
     return retVal;
   }
 
+  /** Create a Map from iterables of keys and values. Will throw an exception if there are more keys than values,
+   *  or more values than keys. */
   public static <K, V> Map<K, V> zipMap(Iterable<K> keys, Iterable<V> values) {
     Map<K, V> retVal = new LinkedHashMap<K, V>();
 
@@ -70,7 +72,9 @@ public class Utils
 
     return retVal;
   }
-  
+
+  /** Create a Map from iterables of keys and values. If there are more keys than values, or more values than keys,
+    * the excess will be omitted. */
   public static <K, V> Map<K, V> zipMapPartial(Iterable<K> keys, Iterable<V> values)
   {
     Map<K, V> retVal = new LinkedHashMap<K, V>();
@@ -84,10 +88,6 @@ public class Utils
       if(valsIter.hasNext()) retVal.put(key, valsIter.next());
       else break;
     }
-
-    Preconditions.checkArgument(!valsIter.hasNext(),
-                                "number of values[%s] exceeds number of keys[%s]",
-                                retVal.size() + Iterators.size(valsIter), retVal.size());
 
     return retVal;
   }
