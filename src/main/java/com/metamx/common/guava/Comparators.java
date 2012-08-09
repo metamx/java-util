@@ -79,7 +79,13 @@ public class Comparators
     }
   };
 
+  @Deprecated
   public static Comparator<Interval> intervals()
+  {
+    return intervalsByStartThenEnd();
+  }
+
+  public static Comparator<Interval> intervalsByStartThenEnd()
   {
     return INTERVAL_COMPARATOR;
   }
