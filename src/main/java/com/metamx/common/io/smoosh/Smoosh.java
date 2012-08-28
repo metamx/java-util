@@ -18,11 +18,14 @@ package com.metamx.common.io.smoosh;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
+import com.google.common.io.InputSupplier;
 import com.metamx.common.collect.Utils;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +70,20 @@ public class Smoosh
     }
 
     return filesToSmoosh;
+  }
+
+  public static void smoosh(File outDir, Map<String, ByteBuffer> bufferstoSmoosh)
+      throws IOException
+  {
+    FileSmoosher smoosher = new FileSmoosher(outDir);
+    try {
+      for (Map.Entry<String, ByteBuffer> entry : bufferstoSmoosh.entrySet()) {
+        smoosher.add(entry.getKey(), entry.getValue());
+      }
+    }
+    finally {
+      smoosher.close();
+    }
   }
 
   public static SmooshedFileMapper map(File inDir) throws IOException

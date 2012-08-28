@@ -33,6 +33,7 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Class that works in conjunction with FileSmoosher.  This class knows how to map in a set of files smooshed
@@ -98,6 +99,11 @@ public class SmooshedFileMapper implements Closeable
   {
     this.outFiles = outFiles;
     this.internalFiles = internalFiles;
+  }
+
+  public Set<String> getInternalFilenames()
+  {
+    return internalFiles.keySet();
   }
 
   public ByteBuffer mapFile(String name) throws IOException
