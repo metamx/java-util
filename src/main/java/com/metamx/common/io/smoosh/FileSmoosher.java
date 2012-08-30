@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.metamx.common.IAE;
 import com.metamx.common.ISE;
@@ -105,37 +106,12 @@ public class FileSmoosher implements Closeable
 
   public void add(File fileToAdd) throws IOException
   {
-    add(fileToAdd.getName(), fileToAdd);
+    add(fileToAdd.getName(), Files.map(fileToAdd));
   }
 
   public void add(String name, File fileToAdd) throws IOException
   {
-    if (name.contains(",")) {
-      throw new IAE("Cannot have a comma in the name of a file, got[%s].", name);
-    }
-
-    if (internalFiles.get(name) != null) {
-      throw new IAE("Cannot add files of the same name, already have [%s]", name);
-    }
-
-    final long fileSize = fileToAdd.length();
-    if (fileSize > maxChunkSize) {
-      throw new IAE("Asked to add file[%,d] larger than configured max[%,d]", fileSize, maxChunkSize);
-    }
-
-    if (currOut == null) {
-      currOut = getNewCurrOut();
-    }
-    if (currOut.bytesLeft() < fileSize) {
-      Closeables.close(currOut, false);
-      currOut = getNewCurrOut();
-    }
-
-    int startOffset = currOut.getCurrOffset();
-    currOut.write(new BufferedInputStream(new FileInputStream(fileToAdd)));
-    int endOffset = currOut.getCurrOffset();
-
-    internalFiles.put(name, new Metadata(currOut.getFileNum(), startOffset, endOffset));
+    add(name, Files.map(fileToAdd));
   }
 
   public void add(String name, ByteBuffer bufferToAdd) throws IOException
@@ -274,6 +250,5 @@ public class FileSmoosher implements Closeable
     {
       out.close();
     }
-
   }
 }
