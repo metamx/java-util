@@ -26,10 +26,17 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
 
 import javax.annotation.Nullable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 public class ParserUtils
@@ -58,9 +65,24 @@ public class ParserUtils
   public static Function<String, DateTime> createTimestampParser(final String format)
   {
     Map<String, DateTimeZone> timezones = new HashMap<String, DateTimeZone>();
-    timezones.put("PST", DateTimeZone.forOffsetHours(-8));
-    timezones.put("CST", DateTimeZone.forOffsetHours(-6));
-    timezones.put("EST", DateTimeZone.forOffsetHours(-5));
+    try {
+      InputStream fileInput = ParserUtils.class.getResourceAsStream("/timezone.properties");
+      Properties properties = new Properties();
+      properties.load(fileInput);
+
+      Enumeration enuKeys = properties.keys();
+      while (enuKeys.hasMoreElements()) {
+        String zone = (String) enuKeys.nextElement();
+        float offset = Float.parseFloat(properties.getProperty(zone));
+        int hours = (int) Math.floor(offset);
+        int minutes = (int) (60 * (offset - hours)) ;
+        timezones.put(zone, DateTimeZone.forOffsetHoursMinutes(hours, minutes));
+      }
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
     return ParserUtils.createTimestampParser(format, timezones);
   }
 
