@@ -20,11 +20,16 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.DateTimeFormatterBuilder;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 public class ParserUtils
@@ -51,6 +56,15 @@ public class ParserUtils
   }
 
   public static Function<String, DateTime> createTimestampParser(final String format)
+  {
+    Map<String, DateTimeZone> timezones = new HashMap<String, DateTimeZone>();
+    timezones.put("PST", DateTimeZone.forOffsetHours(-8));
+    timezones.put("CST", DateTimeZone.forOffsetHours(-6));
+    timezones.put("EST", DateTimeZone.forOffsetHours(-5));
+    return ParserUtils.createTimestampParser(format, timezones);
+  }
+
+  public static Function<String, DateTime> createTimestampParser(final String format, final Map<String, DateTimeZone> timezones)
   {
     if (format.equalsIgnoreCase("iso")) {
       return new Function<String, DateTime>()
@@ -82,22 +96,56 @@ public class ParserUtils
       };
     } else {
       try {
-        final DateTimeFormatter formatter = DateTimeFormat.forPattern(format);
-        return new Function<String, DateTime>()
-        {
-          @Override
-          public DateTime apply(String input)
+        final int timeZoneIndex = format.indexOf('z');
+        if(timeZoneIndex == -1) {
+          final DateTimeFormatter formatter = DateTimeFormat.forPattern(format);
+          return new Function<String, DateTime>()
           {
-            Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-            return formatter.parseDateTime(input);
-          }
-        };
+            @Override
+            public DateTime apply(String input)
+            {
+              Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
+              return formatter.parseDateTime(input);
+            }
+          };
+        } else {
+          return new Function<String, DateTime>()
+          {
+            @Override
+            public DateTime apply(String input)
+            {
+              Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
+              return buildTimestampParser(format, timezones).toFormatter().parseDateTime(input);
+            }
+          };
+        }
       }
       catch (IllegalArgumentException e) {
         throw new IllegalArgumentException(String.format("Unknown timestamp format [%s]", format));
       }
     }
+  }
 
+  private static DateTimeFormatterBuilder buildTimestampParser(String format, Map<String, DateTimeZone> timezones) {
+    DateTimeFormatterBuilder formatBuilder = new DateTimeFormatterBuilder();
+    boolean insideLiteral = false;
+    int parseablePatternStart = 0;
+    for(int i = 0; i < format.length(); i++) {
+      char f = format.charAt(i);
+      if(f == '\'' && !insideLiteral)
+        insideLiteral = true;
+      else if(f == '\'' && insideLiteral)
+        insideLiteral = false;
+      if(f == 'z' && !insideLiteral) {
+        String test = format.substring(parseablePatternStart, i);
+        formatBuilder.append(DateTimeFormat.forPattern(format.substring(parseablePatternStart,i)))
+                     .appendTimeZoneShortName(timezones);
+        parseablePatternStart = i+1;
+      }
+    }
+    String test = format.substring(parseablePatternStart);
+    formatBuilder.append(DateTimeFormat.forPattern(format.substring(parseablePatternStart)));
+    return formatBuilder;
   }
 
   public static Set<String> findDuplicates(Iterable<String> fieldNames)
@@ -117,4 +165,5 @@ public class ParserUtils
 
     return duplicates;
   }
+
 }
