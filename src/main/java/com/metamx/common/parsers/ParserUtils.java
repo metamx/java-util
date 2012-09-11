@@ -18,7 +18,9 @@ package com.metamx.common.parsers;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
+import com.metamx.common.exception.FormattedException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -35,6 +37,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ParserUtils
 {
@@ -76,9 +80,15 @@ public class ParserUtils
         timezones.put(zone, DateTimeZone.forOffsetHoursMinutes(hours, minutes));
       }
     } catch (FileNotFoundException e) {
-      e.printStackTrace();
+      throw new FormattedException.Builder()
+          .withErrorCode(FormattedException.ErrorCode.FILE_NOT_FOUND)
+          .withMessage("Could not find timezone configuration file - timezone.properties - in resource folder")
+          .build();
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new FormattedException.Builder()
+          .withErrorCode(FormattedException.ErrorCode.IO_ERROR)
+          .withMessage("Could not read timezone configuration file - timezone.properties - in resource folder")
+          .build();
     }
     return ParserUtils.createTimestampParser(format, timezones);
   }
@@ -115,8 +125,20 @@ public class ParserUtils
       };
     } else {
       try {
-        final int timeZoneIndex = format.indexOf('z');
-        if(timeZoneIndex == -1) {
+        Pattern pattern = Pattern.compile("[zQ]");
+        Matcher matcher = pattern.matcher(format);
+        if(matcher.find()) {
+          return new Function<String, DateTime>()
+          {
+            @Override
+            public DateTime apply(String input)
+            {
+              Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
+              return buildTimeStampParser(format, timezones, input).toFormatter().parseDateTime(input);
+            }
+          };
+        }
+        else {
           final DateTimeFormatter formatter = DateTimeFormat.forPattern(format);
           return new Function<String, DateTime>()
           {
@@ -127,42 +149,58 @@ public class ParserUtils
               return formatter.parseDateTime(input);
             }
           };
-        } else {
-          return new Function<String, DateTime>()
-          {
-            @Override
-            public DateTime apply(String input)
-            {
-              Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-              return buildTimestampParser(format, timezones).toFormatter().parseDateTime(input);
-            }
-          };
         }
       }
+      catch (FormattedException e) {
+        Throwables.propagateIfInstanceOf(e, FormattedException.class);
+        throw new FormattedException.Builder()
+            .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_TIMESTAMP)
+            .withMessage(String.format("Unknown timestamp format [%s]", format))
+            .build();
+      }
       catch (IllegalArgumentException e) {
-        throw new IllegalArgumentException(String.format("Unknown timestamp format [%s]", format));
+        Throwables.propagateIfInstanceOf(e, FormattedException.class);
+        throw new FormattedException.Builder()
+            .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_TIMESTAMP)
+            .withMessage(String.format("Unknown timestamp format [%s]", format))
+            .build();
       }
     }
   }
 
-  private static DateTimeFormatterBuilder buildTimestampParser(String format, Map<String, DateTimeZone> timezones) {
+  private static DateTimeFormatterBuilder buildTimeStampParser(
+      String format,
+      Map<String, DateTimeZone> timezones,
+      String input
+  ) {
     DateTimeFormatterBuilder formatBuilder = new DateTimeFormatterBuilder();
     boolean insideLiteral = false;
     int parseablePatternStart = 0;
     for(int i = 0; i < format.length(); i++) {
       char f = format.charAt(i);
-      if(f == '\'' && !insideLiteral)
-        insideLiteral = true;
-      else if(f == '\'' && insideLiteral)
-        insideLiteral = false;
+      if(f == '\'') insideLiteral = !insideLiteral;
       if(f == 'z' && !insideLiteral) {
-        String test = format.substring(parseablePatternStart, i);
         formatBuilder.append(DateTimeFormat.forPattern(format.substring(parseablePatternStart,i)))
                      .appendTimeZoneShortName(timezones);
         parseablePatternStart = i+1;
       }
+      if(f == 'Q' && !insideLiteral) {
+        formatBuilder.append(DateTimeFormat.forPattern(format.substring(parseablePatternStart,i)));
+        Pattern pattern = Pattern.compile("(GMT[+-]\\d{4})(.)(\\(?[A-Z]{1,5}\\)?)");
+        Matcher matcher = pattern.matcher(input);
+        if(matcher.find()) {
+          formatBuilder.appendLiteral(matcher.group(3));
+        }
+        else {
+          throw new FormattedException.Builder()
+              .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_TIMESTAMP)
+              .withMessage(String.format("Timestamp format has primitive Q but input did not contain GMT or UTC offset"
+                                         + "[%s]", format))
+              .build();
+        }
+        parseablePatternStart = i+1;
+      }
     }
-    String test = format.substring(parseablePatternStart);
     formatBuilder.append(DateTimeFormat.forPattern(format.substring(parseablePatternStart)));
     return formatBuilder;
   }
@@ -172,7 +210,6 @@ public class ParserUtils
     Set<String> duplicates = Sets.newHashSet();
     Set<String> uniqueNames = Sets.newHashSet();
     Iterator<String> iter = fieldNames.iterator();
-
 
     while (iter.hasNext()) {
       String next = iter.next().toLowerCase();
