@@ -82,13 +82,13 @@ public class ParserUtils
     }
     catch (FileNotFoundException e) {
       throw new FormattedException.Builder()
-          .withErrorCode(FormattedException.ErrorCode.FILE_NOT_FOUND)
+          .withErrorCode(FormattedException.ErrorCode.SERVER_ERROR)
           .withMessage("Could not find timezone configuration file - timezone.properties - in resource folder")
           .build();
     }
     catch (IOException e) {
       throw new FormattedException.Builder()
-          .withErrorCode(FormattedException.ErrorCode.IO_ERROR)
+          .withErrorCode(FormattedException.ErrorCode.SERVER_ERROR)
           .withMessage("Could not read timezone configuration file - timezone.properties - in resource folder")
           .build();
     }
