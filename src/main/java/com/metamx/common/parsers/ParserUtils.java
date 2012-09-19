@@ -107,7 +107,7 @@ public class ParserUtils
         public DateTime apply(String input)
         {
           Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-          return new DateTime(input);
+          return new DateTime(stripQuotes(input));
         }
       };
     } else if (format.equalsIgnoreCase("posix")) {
@@ -117,7 +117,7 @@ public class ParserUtils
         public DateTime apply(String input)
         {
           Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-          return new DateTime(Long.parseLong(input) * 1000);
+          return new DateTime(Long.parseLong(stripQuotes(input)) * 1000);
         }
       };
     } else if (format.equalsIgnoreCase("millis")) {
@@ -127,7 +127,7 @@ public class ParserUtils
         public DateTime apply(String input)
         {
           Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-          return new DateTime(Long.parseLong(input));
+          return new DateTime(Long.parseLong(stripQuotes(input)));
         }
       };
     } else {
@@ -141,7 +141,7 @@ public class ParserUtils
             public DateTime apply(String input)
             {
               Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-              return buildTimeStampParser(format, timezones, input).toFormatter().parseDateTime(input);
+              return buildTimeStampParser(format, timezones, input).toFormatter().parseDateTime(stripQuotes(input));
             }
           };
         } else {
@@ -152,7 +152,7 @@ public class ParserUtils
             public DateTime apply(String input)
             {
               Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-              return formatter.parseDateTime(input);
+              return formatter.parseDateTime(stripQuotes(input));
             }
           };
         }
@@ -172,6 +172,13 @@ public class ParserUtils
             .build();
       }
     }
+  }
+
+  public static String stripQuotes(String input) {
+    input = input.trim();
+    if(input.charAt(0) == '\"' && input.charAt(input.length()-1) == '\"')
+      input = input.substring(1, input.length() - 1).trim();
+    return input;
   }
 
   private static DateTimeFormatterBuilder buildTimeStampParser(

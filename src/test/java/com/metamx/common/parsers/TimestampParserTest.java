@@ -11,6 +11,21 @@ public class TimestampParserTest
 {
 
   @Test
+  public void testStripQuotes() throws Exception {
+    Assert.assertEquals("hello world", ParserUtils.stripQuotes("\"hello world\""));
+    Assert.assertEquals("hello world", ParserUtils.stripQuotes("    \"    hello world   \"    "));
+  }
+
+  @Test
+  public void testTimeStampParserWithQuotes() throws Exception {
+    DateTime d = new DateTime(1994, 11, 9, 4, 0, DateTimeZone.forOffsetHours(-8));
+    Assert.assertEquals(d,
+                        ParserUtils.createTimestampParser("EEE MMM dd HH:mm:ss z yyyy")
+                                   .apply(" \" Wed Nov 9 04:00:00 PST 1994 \"  ")
+    );
+  }
+
+  @Test
   public void testTimeStampParserWithShortTimeZone() throws Exception {
     DateTime d = new DateTime(1994, 11, 9, 4, 0, DateTimeZone.forOffsetHours(-8));
     Assert.assertEquals(d,
