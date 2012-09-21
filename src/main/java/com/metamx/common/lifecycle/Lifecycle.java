@@ -27,6 +27,8 @@ import java.util.LinkedList;
  */
 public class Lifecycle
 {
+  private static final Logger log = new Logger(Lifecycle.class);
+
   private final Deque<Handler> handlers = new LinkedList<Handler>();
 
   public <T> T addManagedInstance(T o)
@@ -59,6 +61,25 @@ public class Lifecycle
     while (iter.hasNext()) {
       iter.next().stop();
     }
+  }
+
+  public void join() throws InterruptedException
+  {
+    Runtime.getRuntime().addShutdownHook(
+        new Thread(
+            new Runnable()
+            {
+              @Override
+              public void run()
+              {
+                log.info("Running shutdown hook");
+                stop();
+              }
+            }
+        )
+    );
+
+    Thread.currentThread().join();
   }
 
   public static interface Handler
