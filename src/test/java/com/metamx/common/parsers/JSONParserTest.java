@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class JSONParserTest
 {
-  final String json = "{\"one\": \"foo\", \"two\" : [\"bar\", \"baz\"], \"three\" : \"qux\"}";
+  final String json = "{\"one\": \"foo\", \"two\" : [\"bar\", \"baz\"], \"three\" : \"qux\", \"four\" : null}";
 
   @Test
   public void testSimple()
@@ -27,7 +27,7 @@ public class JSONParserTest
   public void testWithFields()
   {
     final Parser<String, Object> jsonParser = new JSONParser();
-    jsonParser.setFieldNames(ImmutableList.of("two", "three"));
+    jsonParser.setFieldNames(ImmutableList.of("two", "three", "five"));
     final Map<String, Object> jsonMap = jsonParser.parse(json);
     Assert.assertEquals(
         "jsonMap",
