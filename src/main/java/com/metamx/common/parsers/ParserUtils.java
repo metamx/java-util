@@ -196,13 +196,14 @@ public class ParserUtils
         insideLiteral = !insideLiteral;
       }
       if (f == 'z' && !insideLiteral) {
-        formatBuilder.append(DateTimeFormat.forPattern(format.substring(parseablePatternStart, i)))
-                     .appendTimeZoneShortName(timezones);
+        if(i > 0)
+          formatBuilder.append(DateTimeFormat.forPattern(format.substring(parseablePatternStart, i)));
+        formatBuilder.appendTimeZoneShortName(timezones);
         parseablePatternStart = i + 1;
       }
       if (f == 'Q' && !insideLiteral) {
         formatBuilder.append(DateTimeFormat.forPattern(format.substring(parseablePatternStart, i)));
-        Pattern pattern = Pattern.compile("(GMT[+-]\\d{4})(.)(\\(?[A-Z]{1,5}\\)?)");
+        Pattern pattern = Pattern.compile("([UTC|GMT][+-]\\d{4})(.)(\\(?[A-Z]{1,5}\\)?)");
         Matcher matcher = pattern.matcher(input);
         if (matcher.find()) {
           formatBuilder.appendLiteral(matcher.group(3));
@@ -211,8 +212,8 @@ public class ParserUtils
               .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_TIMESTAMP)
               .withMessage(
                   String.format(
-                      "Timestamp format has primitive Q but input did not contain GMT or UTC offset"
-                      + "[%s]", format
+                      "Timestamp format has primitive Q - time zone nested in parenthesis - but was not preceded by"
+                      + "GMT or UTC offset [%s]", format
                   )
               )
               .build();
@@ -220,7 +221,8 @@ public class ParserUtils
         parseablePatternStart = i + 1;
       }
     }
-    formatBuilder.append(DateTimeFormat.forPattern(format.substring(parseablePatternStart)));
+    if(parseablePatternStart < format.length())
+      formatBuilder.append(DateTimeFormat.forPattern(format.substring(parseablePatternStart)));
     return formatBuilder;
   }
 
