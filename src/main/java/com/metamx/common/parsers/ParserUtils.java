@@ -203,7 +203,7 @@ public class ParserUtils
       }
       if (f == 'Q' && !insideLiteral) {
         formatBuilder.append(DateTimeFormat.forPattern(format.substring(parseablePatternStart, i)));
-        Pattern pattern = Pattern.compile("([UTC|GMT][+-]\\d{4})(.)(\\(?[A-Z]{1,5}\\)?)");
+        Pattern pattern = Pattern.compile("([UTC|GMT][+-]\\d{4})(.)(\\([A-Z]{1,5}\\))");
         Matcher matcher = pattern.matcher(input);
         if (matcher.find()) {
           formatBuilder.appendLiteral(matcher.group(3));
