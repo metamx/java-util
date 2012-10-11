@@ -149,18 +149,6 @@ public class ParserUtils
       };
     } else {
       try {
-        final DateTimeFormatter formatter = DateTimeFormat.forPattern(format);
-        return new Function<String, DateTime>()
-        {
-          @Override
-          public DateTime apply(String input)
-          {
-            Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-            return formatter.parseDateTime(stripQuotes(input));
-          }
-        };
-
-        /*Commenting out until Joda 2.1 is supported
         Pattern pattern = Pattern.compile("[zQ]");
         Matcher matcher = pattern.matcher(format);
         if (matcher.find()) {
@@ -184,7 +172,7 @@ public class ParserUtils
               return formatter.parseDateTime(stripQuotes(input));
             }
           };
-        }*/
+        }
       }
       catch (FormattedException e) {
         Throwables.propagateIfInstanceOf(e, FormattedException.class);
@@ -210,7 +198,6 @@ public class ParserUtils
     return input;
   }
 
-  /*Commenting out until Joda 2.1 is supported
   private static DateTimeFormatterBuilder buildTimeStampParser(
       String format,
       Map<String, DateTimeZone> timezones,
@@ -252,7 +239,7 @@ public class ParserUtils
     }
     formatBuilder.append(DateTimeFormat.forPattern(format.substring(parseablePatternStart)));
     return formatBuilder;
-  }*/
+  }
 
   public static Set<String> findDuplicates(Iterable<String> fieldNames)
   {
