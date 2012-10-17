@@ -11,32 +11,60 @@ public class DelimitedParserTest
 {
 
   @Test
-  public void testSimpleHeader()
+  public void testValidHeader()
   {
     String tsv = "time\tvalue1\tvalue2";
-    final Parser<String, Object> tsvParser = new DelimitedParser();
-    final Map<String, Object> jsonMap = tsvParser.parse(tsv);
-    Assert.assertEquals(
-        "jsonMap",
-        ImmutableMap.of("column_1", "time", "column_2", "value1", "column_3", "value2"),
-        jsonMap
-    );
+    final Parser<String, Object> delimitedParser;
+    boolean parseable = true;
+    try {
+      delimitedParser = new DelimitedParserFactory().makeParser("\t", tsv, null);
+    } catch(FormattedException e) {
+      parseable = false;
+    } finally {
+      Assert.assertTrue(parseable);
+    }
   }
 
   @Test
   public void testInvalidHeader()
   {
-    String tsv = "ti/me\tvalu/e1\tval/ue2";
+    String tsv = "time\tvalue1\tvalue2\tvalue2";
+    final Parser<String, Object> delimitedParser;
     boolean parseable = true;
     try {
-      final Parser<String, Object> tsvParser = new DelimitedParserFactory().makeParser("\t", tsv, null);
-    }
-    catch (FormattedException e) {
+      delimitedParser = new DelimitedParserFactory().makeParser("\t", tsv, null);
+    } catch(FormattedException e) {
       parseable = false;
-    }
-    finally {
+    } finally {
       Assert.assertFalse(parseable);
     }
+  }
+
+  @Test
+  public void testTSVParserWithHeader()
+  {
+    String header = "time\tvalue1\tvalue2";
+    final Parser<String, Object> delimitedParser = new DelimitedParserFactory().makeParser("\t", header, null);
+    String body = "hello\tworld\tfoo";
+    final Map<String, Object> jsonMap = delimitedParser.parse(body);
+    Assert.assertEquals(
+        "jsonMap",
+        ImmutableMap.of("time", "hello", "value1", "world", "value2", "foo"),
+        jsonMap
+    );
+  }
+
+  @Test
+  public void testTSVParserWithoutHeader()
+  {
+    final Parser<String, Object> delimitedParser = new DelimitedParserFactory().makeParser("\t", null, null);
+    String body = "hello\tworld\tfoo";
+    final Map<String, Object> jsonMap = delimitedParser.parse(body);
+    Assert.assertEquals(
+        "jsonMap",
+        ImmutableMap.of("column_1", "hello", "column_2", "world", "column_3", "foo"),
+        jsonMap
+    );
   }
 
 }
