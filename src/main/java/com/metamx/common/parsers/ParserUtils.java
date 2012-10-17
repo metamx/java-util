@@ -92,17 +92,6 @@ public class ParserUtils
     return duplicates;
   }
 
-  public static char getMalformedChar(String str)
-  {
-    for (int i = 0; i < str.length(); i++) {
-      char c = str.charAt(i);
-      if (c == 47 || c < 32 || c > 126) {
-        return c;
-      }
-    }
-    return 0;
-  }
-
   public static void validateFields(Iterable<String> fieldNames) throws FormattedException
   {
     Set<String> duplicates = findDuplicates(fieldNames);
@@ -119,28 +108,5 @@ public class ParserUtils
           .withMessage(String.format("Duplicate entries founds: %s", duplicates.toString()))
           .build();
     }
-
-
-    Iterator<String> iter = fieldNames.iterator();
-    while (iter.hasNext()) {
-      String next = iter.next().toLowerCase();
-      char malformed = getMalformedChar(next);
-      if(malformed != 0) {
-        throw new FormattedException.Builder()
-            .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
-            .withDetails(
-                new SubErrorHolder(
-                    FormattedException.SubErrorCode.INVALID_CHARACTER,
-                    next,
-                    malformed
-                ).get()
-            )
-            .withMessage(String.format("Header columns contains invalid char[%c]", malformed))
-            .build();
-      }
-    }
   }
-
-
-
 }
