@@ -30,12 +30,6 @@ public class ConcatSequence<T> implements Sequence<T>
   }
 
   @Override
-  public <OutType> OutType accumulate(Accumulator<OutType, T> accumulator)
-  {
-    return accumulate(null, accumulator);
-  }
-
-  @Override
   public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator)
   {
     OutType retVal = initValue;
