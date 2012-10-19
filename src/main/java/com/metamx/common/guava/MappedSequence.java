@@ -35,14 +35,6 @@ public class MappedSequence<T, Out> implements Sequence<Out>
   }
 
   @Override
-  public <OutType> OutType accumulate(final Accumulator<OutType, Out> accumulator)
-  {
-    return baseSequence.accumulate(
-        new MappingAccumulator<OutType, T, Out>(fn, accumulator)
-    );
-  }
-
-  @Override
   public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, Out> accumulator)
   {
     return baseSequence.accumulate(

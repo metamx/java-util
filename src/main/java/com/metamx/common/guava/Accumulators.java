@@ -16,31 +16,22 @@
 
 package com.metamx.common.guava;
 
-import com.google.common.base.Predicate;
+import java.util.List;
 
 /**
  */
-public class FilteredSequence<T> implements Sequence<T>
+public class Accumulators
 {
-  private final Sequence<T> baseSequence;
-  private final Predicate<T> pred;
-
-  public FilteredSequence(
-      Sequence<T> baseSequence,
-      Predicate<T> pred
-  )
+  public static <T, ListType extends List<T>> Accumulator<ListType, T> list()
   {
-    this.baseSequence = baseSequence;
-    this.pred = pred;
+    return new Accumulator<ListType, T>()
+    {
+      @Override
+      public ListType accumulate(ListType accumulated, T in)
+      {
+        accumulated.add(in);
+        return accumulated;
+      }
+    };
   }
-
-  @Override
-  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator)
-  {
-    return baseSequence.accumulate(
-        initValue,
-        new FilteringAccumulator<OutType, T>(pred, accumulator)
-    );
-  }
-
 }

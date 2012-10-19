@@ -32,12 +32,6 @@ public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T
   }
 
   @Override
-  public <OutType> OutType accumulate(Accumulator<OutType, T> fn)
-  {
-    return accumulate(null, fn);
-  }
-
-  @Override
   public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> fn)
   {
     IterType iter = maker.make();

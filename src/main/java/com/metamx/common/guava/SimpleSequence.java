@@ -16,30 +16,36 @@
 
 package com.metamx.common.guava;
 
-import com.google.common.base.Predicate;
+import java.util.Iterator;
 
 /**
  */
-public class FilteredSequence<T> implements Sequence<T>
+public class SimpleSequence<T> extends BaseSequence<T, Iterator<T>>
 {
-  private final Sequence<T> baseSequence;
-  private final Predicate<T> pred;
-
-  public FilteredSequence(
-      Sequence<T> baseSequence,
-      Predicate<T> pred
-  )
+  public static <T> Sequence<T> create(Iterable<T> iterable)
   {
-    this.baseSequence = baseSequence;
-    this.pred = pred;
+    return new SimpleSequence<T>(iterable);
   }
 
-  @Override
-  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator)
+  public SimpleSequence(
+      final Iterable<T> iterable
+  )
   {
-    return baseSequence.accumulate(
-        initValue,
-        new FilteringAccumulator<OutType, T>(pred, accumulator)
+    super(
+        new IteratorMaker<T, Iterator<T>>()
+        {
+          @Override
+          public Iterator<T> make()
+          {
+            return iterable.iterator();
+          }
+
+          @Override
+          public void cleanup(Iterator<T> iterFromMake)
+          {
+
+          }
+        }
     );
   }
 
