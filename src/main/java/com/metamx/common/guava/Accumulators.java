@@ -22,7 +22,7 @@ import java.util.List;
  */
 public class Accumulators
 {
-  public static <T, ListType extends List<T>> Accumulator<ListType, T> list()
+  public static <ListType extends List<T>, T> Accumulator<ListType, T> list()
   {
     return new Accumulator<ListType, T>()
     {

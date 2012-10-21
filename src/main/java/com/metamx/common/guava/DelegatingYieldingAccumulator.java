@@ -18,8 +18,38 @@ package com.metamx.common.guava;
 
 /**
  */
-public interface Sequence<T>
+public class DelegatingYieldingAccumulator<OutType, T> extends YieldingAccumulator<OutType, T>
 {
-  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator);
-  public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator);
+  private final YieldingAccumulator<OutType, T> delegate;
+
+  public DelegatingYieldingAccumulator(
+      YieldingAccumulator<OutType, T> delegate
+  )
+  {
+    this.delegate = delegate;
+  }
+
+  @Override
+  public void yield()
+  {
+    delegate.yield();
+  }
+
+  @Override
+  public boolean yielded()
+  {
+    return delegate.yielded();
+  }
+
+  @Override
+  public void reset()
+  {
+    delegate.reset();
+  }
+
+  @Override
+  public OutType accumulate(OutType accumulated, T in)
+  {
+    return delegate.accumulate(accumulated, in);
+  }
 }

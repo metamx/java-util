@@ -16,10 +16,30 @@
 
 package com.metamx.common.guava;
 
+import com.google.common.base.Supplier;
+
 /**
  */
-public interface Sequence<T>
+public class LazySequence<T> implements Sequence<T>
 {
-  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator);
-  public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator);
+  private final Supplier<Sequence<T>> provider;
+
+  public LazySequence(
+      Supplier<Sequence<T>> provider
+  )
+  {
+    this.provider = provider;
+  }
+
+  @Override
+  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator)
+  {
+    return provider.get().accumulate(initValue, accumulator);
+  }
+
+  @Override
+  public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator)
+  {
+    return provider.get().toYielder(initValue, accumulator);
+  }
 }

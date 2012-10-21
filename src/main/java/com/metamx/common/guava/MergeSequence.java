@@ -1,0 +1,162 @@
+/*
+ * Copyright 2011,2012 Metamarkets Group Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.metamx.common.guava;
+
+import com.google.common.base.Function;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Ordering;
+import com.google.common.io.Closeables;
+
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.PriorityQueue;
+
+/**
+ */
+public class MergeSequence<T> implements Sequence<T>
+{
+  private final Ordering<T> ordering;
+  private final Iterable<? extends Sequence<T>> baseSequences;
+
+  public MergeSequence(
+      Ordering<T> ordering,
+      Iterable<? extends Sequence<T>> baseSequences
+  )
+  {
+    this.ordering = ordering;
+    this.baseSequences = baseSequences;
+  }
+
+  @Override
+  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator)
+  {
+    Yielder<OutType> yielder = toYielder(initValue, YieldingAccumulators.fromAccumulator(accumulator));
+
+    try {
+      return yielder.get();
+    }
+    finally {
+      Closeables.closeQuietly(yielder);
+    }
+  }
+
+  @Override
+  public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator)
+  {
+    PriorityQueue<Yielder<T>> pQueue = new PriorityQueue<Yielder<T>>(
+        32,
+        ordering.onResultOf(
+            new Function<Yielder<T>, T>()
+            {
+              @Override
+              public T apply(@Nullable Yielder<T> input)
+              {
+                return input.get();
+              }
+            }
+        )
+    );
+
+    for (Sequence<T> baseSequence : baseSequences) {
+      final Yielder<T> yielder = baseSequence.toYielder(
+          null, new YieldingAccumulator<T, T>()
+      {
+        @Override
+        public T accumulate(T accumulated, T in)
+        {
+          yield();
+          return in;
+        }
+      }
+      );
+
+      if (!yielder.isDone()) {
+        pQueue.add(yielder);
+      }
+      else {
+        try {
+          yielder.close();
+        }
+        catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    }
+
+    return makeYielder(pQueue, initValue, accumulator);
+  }
+
+  private <OutType> Yielder<OutType> makeYielder(
+      final PriorityQueue<Yielder<T>> pQueue,
+      OutType initVal,
+      final YieldingAccumulator<OutType, T> accumulator
+  )
+  {
+    if (pQueue.isEmpty()) {
+      return Yielders.done(null);
+    }
+
+    OutType retVal = initVal;
+    while (!accumulator.yielded() && !pQueue.isEmpty()) {
+      Yielder<T> yielder = pQueue.remove();
+      retVal = accumulator.accumulate(retVal, yielder.get());
+      yielder = yielder.next(null);
+      if (yielder.isDone()) {
+        try {
+          yielder.close();
+        }
+        catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+      else {
+        pQueue.add(yielder);
+      }
+    }
+
+    final OutType yieldVal = retVal;
+    return new Yielder<OutType>()
+    {
+      @Override
+      public OutType get()
+      {
+        return yieldVal;
+      }
+
+      @Override
+      public Yielder<OutType> next(OutType initValue)
+      {
+        accumulator.reset();
+        return makeYielder(pQueue, initValue, accumulator);
+      }
+
+      @Override
+      public boolean isDone()
+      {
+        return false;
+      }
+
+      @Override
+      public void close() throws IOException
+      {
+        while(!pQueue.isEmpty()) {
+          pQueue.remove().close();
+        }
+      }
+    };
+  }
+}

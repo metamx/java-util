@@ -18,6 +18,8 @@ package com.metamx.common.guava;
 
 import com.google.common.base.Predicate;
 
+import java.io.IOException;
+
 /**
  */
 public class FilteredSequence<T> implements Sequence<T>
@@ -37,10 +39,48 @@ public class FilteredSequence<T> implements Sequence<T>
   @Override
   public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator)
   {
-    return baseSequence.accumulate(
-        initValue,
-        new FilteringAccumulator<OutType, T>(pred, accumulator)
-    );
+    return baseSequence.accumulate(initValue, new FilteringAccumulator<OutType, T>(pred, accumulator));
   }
 
+  @Override
+  public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator)
+  {
+    final FilteringYieldingAccumulator<OutType, T> filteringAccumulator = new FilteringYieldingAccumulator<OutType, T>(
+        pred, accumulator
+    );
+
+    return wrapYielder(baseSequence.toYielder(initValue, filteringAccumulator), filteringAccumulator);
+  }
+
+  private <OutType> Yielder<OutType> wrapYielder(
+      final Yielder<OutType> yielder, final FilteringYieldingAccumulator<OutType, T> accumulator
+  )
+  {
+    return new Yielder<OutType>()
+    {
+      @Override
+      public OutType get()
+      {
+        return yielder.get();
+      }
+
+      @Override
+      public Yielder<OutType> next(OutType initValue)
+      {
+        return wrapYielder(yielder.next(initValue), accumulator);
+      }
+
+      @Override
+      public boolean isDone()
+      {
+        return !accumulator.didSomething() || yielder.isDone();
+      }
+
+      @Override
+      public void close() throws IOException
+      {
+        yielder.close();
+      }
+    };
+  }
 }

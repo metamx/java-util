@@ -18,10 +18,9 @@ package com.metamx.common.guava;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.Lists;
 
 import java.util.Arrays;
-import java.util.Iterator;
+import java.util.List;
 
 /**
  */
@@ -30,24 +29,9 @@ public class Sequences
 
   private static final EmptySequence EMPTY_SEQUENCE = new EmptySequence();
 
-  public static <T> Sequence<T> createSimple(final Iterable<T> iterable)
+  public static <T> Sequence<T> simple(final Iterable<T> iterable)
   {
-    return new BaseSequence<T, Iterator<T>>(
-        new BaseSequence.IteratorMaker<T, Iterator<T>>()
-        {
-          @Override
-          public Iterator<T> make()
-          {
-            return iterable.iterator();
-          }
-
-          @Override
-          public void cleanup(Iterator<T> iterFromMake)
-          {
-
-          }
-        }
-    );
+    return BaseSequence.simple(iterable);
   }
 
   @SuppressWarnings("unchecked")
@@ -76,12 +60,23 @@ public class Sequences
     return new FilteredSequence<T>(sequence, pred);
   }
 
+  public static <T, ListType extends List<T>> ListType toList(Sequence<T> seq, ListType list)
+  {
+    return seq.accumulate(list, Accumulators.<ListType, T>list());
+  }
+
   private static class EmptySequence implements Sequence<Object>
   {
     @Override
     public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, Object> accumulator)
     {
       return initValue;
+    }
+
+    @Override
+    public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, Object> accumulator)
+    {
+      return Yielders.done(null);
     }
   }
 }

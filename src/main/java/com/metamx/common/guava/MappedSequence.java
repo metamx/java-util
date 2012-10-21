@@ -37,10 +37,12 @@ public class MappedSequence<T, Out> implements Sequence<Out>
   @Override
   public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, Out> accumulator)
   {
-    return baseSequence.accumulate(
-        initValue,
-        new MappingAccumulator<OutType, T, Out>(fn, accumulator)
-    );
+    return baseSequence.accumulate(initValue, new MappingAccumulator<OutType, T, Out>(fn, accumulator));
   }
 
+  @Override
+  public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, Out> accumulator)
+  {
+    return baseSequence.toYielder(initValue, new MappingYieldingAccumulator<OutType, T, Out>(fn, accumulator));
+  }
 }
