@@ -12,8 +12,8 @@ public class TimestampParserTest
 
   @Test
   public void testStripQuotes() throws Exception {
-    Assert.assertEquals("hello world", TimestampParser.stripQuotes("\"hello world\""));
-    Assert.assertEquals("hello world", TimestampParser.stripQuotes("    \"    hello world   \"    "));
+    Assert.assertEquals("hello world", ParserUtils.stripQuotes("\"hello world\""));
+    Assert.assertEquals("hello world", ParserUtils.stripQuotes("    \"    hello world   \"    "));
   }
 
   @Test

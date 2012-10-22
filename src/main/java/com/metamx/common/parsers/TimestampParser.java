@@ -70,7 +70,7 @@ public class TimestampParser
           Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
           for(int i = 0 ; i < input.length() ; i++) {
             if(input.charAt(i) < '0' || input.charAt(i) > '9') {
-              return new DateTime(stripQuotes(input));
+              return new DateTime(ParserUtils.stripQuotes(input));
             }
           }
 
@@ -84,7 +84,7 @@ public class TimestampParser
         public DateTime apply(String input)
         {
           Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-          return new DateTime(stripQuotes(input));
+          return new DateTime(ParserUtils.stripQuotes(input));
         }
       };
     } else if (format.equalsIgnoreCase("posix")) {
@@ -94,7 +94,7 @@ public class TimestampParser
         public DateTime apply(String input)
         {
           Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-          return new DateTime(Long.parseLong(stripQuotes(input)) * 1000);
+          return new DateTime(Long.parseLong(ParserUtils.stripQuotes(input)) * 1000);
         }
       };
     } else if (format.equalsIgnoreCase("millis")) {
@@ -104,7 +104,7 @@ public class TimestampParser
         public DateTime apply(String input)
         {
           Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-          return new DateTime(Long.parseLong(stripQuotes(input)));
+          return new DateTime(Long.parseLong(ParserUtils.stripQuotes(input)));
         }
       };
     } else {
@@ -118,7 +118,7 @@ public class TimestampParser
             public DateTime apply(String input)
             {
               Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-              return buildTimeStampParser(format, timezones, input).toFormatter().parseDateTime(stripQuotes(input));
+              return buildTimeStampParser(format, timezones, input).toFormatter().parseDateTime(ParserUtils.stripQuotes(input));
             }
           };
         } else {
@@ -129,7 +129,7 @@ public class TimestampParser
             public DateTime apply(String input)
             {
               Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-              return formatter.parseDateTime(stripQuotes(input));
+              return formatter.parseDateTime(ParserUtils.stripQuotes(input));
             }
           };
         }
@@ -149,13 +149,6 @@ public class TimestampParser
             .build();
       }
     }
-  }
-
-  public static String stripQuotes(String input) {
-    input = input.trim();
-    if(input.charAt(0) == '\"' && input.charAt(input.length()-1) == '\"')
-      input = input.substring(1, input.length() - 1).trim();
-    return input;
   }
 
   private static DateTimeFormatterBuilder buildTimeStampParser(

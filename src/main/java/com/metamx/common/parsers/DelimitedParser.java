@@ -110,7 +110,7 @@ public class DelimitedParser implements Parser<String, Object>
     this.fieldNames = Lists.newArrayList(fieldNames);
   }
 
-  public void setFieldNames(String header) throws FormattedException
+  public void setFieldNames(String header)
   {
     try {
       setFieldNames(splitter.split(header));

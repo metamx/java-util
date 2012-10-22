@@ -105,8 +105,15 @@ public class ParserUtils
                   duplicates
               ).get()
           )
-          .withMessage(String.format("Duplicate entries founds: %s", duplicates.toString()))
+          .withMessage(String.format("Duplicate entries found: %s", duplicates.toString()))
           .build();
     }
+  }
+
+  public static String stripQuotes(String input) {
+    input = input.trim();
+    if(input.charAt(0) == '\"' && input.charAt(input.length()-1) == '\"')
+      input = input.substring(1, input.length() - 1).trim();
+    return input;
   }
 }
