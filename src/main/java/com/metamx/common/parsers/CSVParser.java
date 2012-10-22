@@ -77,20 +77,7 @@ public class CSVParser implements Parser<String, Object>
   @Override
   public void setFieldNames(Iterable<String> fieldNames)
   {
-    Set<String> duplicates = ParserUtils.findDuplicates(fieldNames);
-    if (!duplicates.isEmpty()) {
-      throw new FormattedException.Builder()
-          .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
-          .withDetails(
-              new SubErrorHolder(
-                  FormattedException.SubErrorCode.DUPLICATE_KEY,
-                  fieldNames,
-                  duplicates
-              ).get()
-          )
-          .withMessage(String.format("Duplicate entries founds: %s", duplicates.toString()))
-          .build();
-    }
+    ParserUtils.validateFields(fieldNames);
     this.fieldNames = Lists.newArrayList(fieldNames);
   }
 
