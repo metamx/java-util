@@ -17,6 +17,13 @@ public class TimestampParserTest
   }
 
   @Test
+  public void testAuto() throws Exception {
+    final Function<String, DateTime> parser = ParserUtils.createTimestampParser("auto");
+    Assert.assertEquals(new DateTime("2009-02-13T23:31:30Z"), parser.apply("1234567890000"));
+    Assert.assertEquals(new DateTime("2009-02-13T23:31:30Z"), parser.apply("2009-02-13T23:31:30Z"));
+  }
+
+  @Test
   public void testTimeStampParserWithQuotes() throws Exception {
     DateTime d = new DateTime(1994, 11, 9, 4, 0, DateTimeZone.forOffsetHours(-8));
     Assert.assertEquals(d.getMillis(),
@@ -108,4 +115,6 @@ public class TimestampParserTest
                                    .getMillis()
     );
   }
+
+
 }

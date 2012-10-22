@@ -37,10 +37,10 @@ import java.util.Set;
 public class JSONParser implements Parser<String, Object>
 {
 
-  protected ObjectMapper jsonMapper = new ObjectMapper();
-  protected ArrayList<String> fieldNames = null;
+  private final ObjectMapper jsonMapper = new ObjectMapper();
+  private ArrayList<String> fieldNames = null;
 
-  protected static final Function<JsonNode, String> valueFunction = new Function<JsonNode, String>()
+  private static final Function<JsonNode, String> valueFunction = new Function<JsonNode, String>()
   {
     @Override
     public String apply(JsonNode node)
@@ -99,9 +99,19 @@ public class JSONParser implements Parser<String, Object>
         JsonNode node = root.path(key);
 
         if (node.isArray()) {
-          map.put(key, Lists.newArrayList(Iterators.transform(node.getElements(), valueFunction)));
+          final List<String> nodeValue = Lists.newArrayListWithExpectedSize(node.size());
+          for(final JsonNode subnode : node) {
+            final String subnodeValue = valueFunction.apply(subnode);
+            if(subnodeValue != null) {
+              nodeValue.add(subnodeValue);
+            }
+          }
+          map.put(key, nodeValue);
         } else {
-          map.put(key, valueFunction.apply(node));
+          final String nodeValue = valueFunction.apply(node);
+          if(nodeValue != null) {
+            map.put(key, nodeValue);
+          }
         }
       }
       return map;

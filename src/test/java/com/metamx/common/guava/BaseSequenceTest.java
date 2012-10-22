@@ -16,10 +16,26 @@
 
 package com.metamx.common.guava;
 
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.List;
+
 /**
  */
-public interface Sequence<T>
+public class BaseSequenceTest
 {
-  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator);
-  public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator);
+  @Test
+  public void testSanity() throws Exception
+  {
+    final List<Integer> vals = Arrays.asList(1, 2, 3, 4, 5);
+    SequenceTestHelper.testAll(BaseSequence.simple(vals), vals);
+  }
+
+  @Test
+  public void testNothing() throws Exception
+  {
+    final List<Integer> vals = Arrays.asList();
+    SequenceTestHelper.testAll(BaseSequence.simple(vals), vals);
+  }
 }

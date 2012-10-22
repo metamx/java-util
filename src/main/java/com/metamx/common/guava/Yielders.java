@@ -16,10 +16,42 @@
 
 package com.metamx.common.guava;
 
+import com.google.common.io.Closeables;
+
+import java.io.Closeable;
+import java.io.IOException;
+
 /**
  */
-public interface Sequence<T>
+public class Yielders
 {
-  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator);
-  public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator);
+  public static <T> Yielder<T> done(final Closeable closeable)
+  {
+    return new Yielder<T>()
+    {
+      @Override
+      public T get()
+      {
+        return null;
+      }
+
+      @Override
+      public Yielder<T> next(T initValue)
+      {
+        return null;
+      }
+
+      @Override
+      public boolean isDone()
+      {
+        return true;
+      }
+
+      @Override
+      public void close() throws IOException
+      {
+        Closeables.closeQuietly(closeable);
+      }
+    };
+  }
 }

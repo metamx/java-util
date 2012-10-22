@@ -16,10 +16,37 @@
 
 package com.metamx.common.guava;
 
+import java.util.Iterator;
+
 /**
  */
-public interface Sequence<T>
+public class SimpleSequence<T> extends BaseSequence<T, Iterator<T>>
 {
-  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator);
-  public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator);
+  public static <T> Sequence<T> create(Iterable<T> iterable)
+  {
+    return new SimpleSequence<T>(iterable);
+  }
+
+  public SimpleSequence(
+      final Iterable<T> iterable
+  )
+  {
+    super(
+        new IteratorMaker<T, Iterator<T>>()
+        {
+          @Override
+          public Iterator<T> make()
+          {
+            return iterable.iterator();
+          }
+
+          @Override
+          public void cleanup(Iterator<T> iterFromMake)
+          {
+
+          }
+        }
+    );
+  }
+
 }

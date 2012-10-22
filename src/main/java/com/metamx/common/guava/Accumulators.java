@@ -16,10 +16,22 @@
 
 package com.metamx.common.guava;
 
+import java.util.List;
+
 /**
  */
-public interface Sequence<T>
+public class Accumulators
 {
-  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator);
-  public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator);
+  public static <ListType extends List<T>, T> Accumulator<ListType, T> list()
+  {
+    return new Accumulator<ListType, T>()
+    {
+      @Override
+      public ListType accumulate(ListType accumulated, T in)
+      {
+        accumulated.add(in);
+        return accumulated;
+      }
+    };
+  }
 }

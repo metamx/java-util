@@ -100,7 +100,24 @@ public class ParserUtils
       final Map<String, DateTimeZone> timezones
   )
   {
-    if (format.equalsIgnoreCase("iso")) {
+    if(format.equalsIgnoreCase("auto")) {
+      // Could be iso or millis
+      return new Function<String, DateTime>()
+      {
+        @Override
+        public DateTime apply(String input)
+        {
+          Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
+          for(int i = 0 ; i < input.length() ; i++) {
+            if(input.charAt(i) < '0' || input.charAt(i) > '9') {
+              return new DateTime(stripQuotes(input));
+            }
+          }
+
+          return new DateTime(Long.parseLong(input));
+        }
+      };
+    } else if (format.equalsIgnoreCase("iso")) {
       return new Function<String, DateTime>()
       {
         @Override

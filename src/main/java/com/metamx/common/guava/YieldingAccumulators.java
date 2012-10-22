@@ -18,8 +18,19 @@ package com.metamx.common.guava;
 
 /**
  */
-public interface Sequence<T>
+public class YieldingAccumulators
 {
-  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator);
-  public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator);
+  public static <AccumulatedType, InType> YieldingAccumulator<AccumulatedType, InType> fromAccumulator(
+      final Accumulator<AccumulatedType, InType> accumulator
+  )
+  {
+    return new YieldingAccumulator<AccumulatedType, InType>()
+    {
+      @Override
+      public AccumulatedType accumulate(AccumulatedType accumulated, InType in)
+      {
+        return accumulator.accumulate(accumulated, in);
+      }
+    };
+  }
 }
