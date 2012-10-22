@@ -75,7 +75,7 @@ public class ParserUtils
     return TimestampParser.createTimestampParser(format);
   }
 
-  private static Set<String> findDuplicates(Iterable<String> fieldNames)
+  public static Set<String> findDuplicates(Iterable<String> fieldNames)
   {
     Set<String> duplicates = Sets.newHashSet();
     Set<String> uniqueNames = Sets.newHashSet();
@@ -92,7 +92,7 @@ public class ParserUtils
     return duplicates;
   }
 
-  public static void validateFields(Iterable<String> fieldNames) throws FormattedException
+  public static void validateFields(Iterable<String> fieldNames)
   {
     Set<String> duplicates = findDuplicates(fieldNames);
     if (!duplicates.isEmpty()) {
