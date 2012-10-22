@@ -18,6 +18,8 @@ package com.metamx.common;
 
 import com.google.common.base.Function;
 
+import java.util.Comparator;
+
 /**
  */
 public class Pair<T1, T2>
@@ -34,6 +36,36 @@ public class Pair<T1, T2>
   {
     this.lhs = lhs;
     this.rhs = rhs;
+  }
+
+  @Override
+  public boolean equals(Object o)
+  {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Pair pair = (Pair) o;
+
+    if (lhs != null ? !lhs.equals(pair.lhs) : pair.lhs != null) {
+      return false;
+    }
+    if (rhs != null ? !rhs.equals(pair.rhs) : pair.rhs != null) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode()
+  {
+    int result = lhs != null ? lhs.hashCode() : 0;
+    result = 31 * result + (rhs != null ? rhs.hashCode() : 0);
+    return result;
   }
 
   @Override
@@ -65,6 +97,18 @@ public class Pair<T1, T2>
       public T2 apply(Pair<T1, T2> input)
       {
         return input.rhs;
+      }
+    };
+  }
+
+  public static <T1> Comparator<Pair<T1, ?>> lhsComparator(final Comparator<T1> comparator)
+  {
+    return new Comparator<Pair<T1, ?>>()
+    {
+      @Override
+      public int compare(Pair<T1, ?> o1, Pair<T1, ?> o2)
+      {
+        return comparator.compare(o1.lhs, o2.lhs);
       }
     };
   }

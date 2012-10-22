@@ -16,6 +16,10 @@
 
 package com.metamx.common.guava;
 
+import com.google.common.io.Closeables;
+
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Iterator;
 
 /**
@@ -23,6 +27,26 @@ import java.util.Iterator;
 public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T>
 {
   private final IteratorMaker<T, IterType> maker;
+
+  public static <T> Sequence<T> simple(final Iterable<T> iterable)
+  {
+    return new BaseSequence<T, Iterator<T>>(
+        new BaseSequence.IteratorMaker<T, Iterator<T>>()
+        {
+          @Override
+          public Iterator<T> make()
+          {
+            return iterable.iterator();
+          }
+
+          @Override
+          public void cleanup(Iterator<T> iterFromMake)
+          {
+
+          }
+        }
+    );
+  }
 
   public BaseSequence(
       IteratorMaker<T, IterType> maker
@@ -32,28 +56,75 @@ public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T
   }
 
   @Override
-  public <OutType> OutType accumulate(Accumulator<OutType, T> fn)
+  public <OutType> OutType accumulate(OutType initValue, final Accumulator<OutType, T> fn)
   {
-    return accumulate(null, fn);
+    Yielder<OutType> yielder = null;
+    try {
+      yielder = toYielder(initValue, YieldingAccumulators.fromAccumulator(fn));      return yielder.isDone() ? initValue : yielder.get();
+    }
+    finally {
+      Closeables.closeQuietly(yielder);
+    }
   }
 
   @Override
-  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> fn)
+  public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator)
   {
-    IterType iter = maker.make();
+    return makeYielder(initValue, accumulator, maker.make());
+  }
+
+  private <OutType> Yielder<OutType> makeYielder(
+      OutType initValue,
+      final YieldingAccumulator<OutType, T> accumulator,
+      final IterType iter
+  )
+  {
+    if (! iter.hasNext()) {
+      return Yielders.done(
+          new Closeable()
+          {
+            @Override
+            public void close() throws IOException
+            {
+              maker.cleanup(iter);
+            }
+          }
+      );
+    }
 
     OutType retVal = initValue;
+    while (!accumulator.yielded() && iter.hasNext()) {
+      retVal = accumulator.accumulate(retVal, iter.next());
+    }
 
-    try {
-      while (iter.hasNext()) {
-        retVal = fn.accumulate(retVal, iter.next());
+    final OutType finalRetVal = retVal;
+    return new Yielder<OutType>()
+    {
+      @Override
+      public OutType get()
+      {
+        return finalRetVal;
       }
-    }
-    finally {
-      maker.cleanup(iter);
-    }
 
-    return retVal;
+      @Override
+      public Yielder<OutType> next(OutType initValue)
+      {
+        accumulator.reset();
+        return makeYielder(initValue, accumulator, iter);
+      }
+
+      @Override
+      public boolean isDone()
+      {
+        return false;
+      }
+
+      @Override
+      public void close() throws IOException
+      {
+        maker.cleanup(iter);
+      }
+    };
   }
 
   public static interface IteratorMaker<T, IterType extends Iterator<T>>

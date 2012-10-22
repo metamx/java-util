@@ -18,8 +18,7 @@ package com.metamx.common.guava;
 
 /**
  */
-public interface Sequence<T>
+public interface YieldSign<T>
 {
-  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator);
-  public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator);
+  public T yield(T toYield);
 }
