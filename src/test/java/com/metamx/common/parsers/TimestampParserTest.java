@@ -26,21 +26,15 @@ public class TimestampParserTest
   @Test
   public void testTimeStampParserWithQuotes() throws Exception {
     DateTime d = new DateTime(1994, 11, 9, 4, 0, DateTimeZone.forOffsetHours(-8));
-    Assert.assertEquals(d.getMillis(),
-                        ParserUtils.createTimestampParser("EEE MMM dd HH:mm:ss z yyyy")
-                                   .apply(" \" Wed Nov 9 04:00:00 PST 1994 \"  ")
-                                   .getMillis()
-    );
+    Function<String, DateTime> parser = ParserUtils.createTimestampParser("EEE MMM dd HH:mm:ss z yyyy");
+    Assert.assertEquals(d.getMillis(), parser.apply(" \" Wed Nov 9 04:00:00 PST 1994 \"  ").getMillis());
   }
 
   @Test
   public void testTimeStampParserWithShortTimeZone() throws Exception {
     DateTime d = new DateTime(1994, 11, 9, 4, 0, DateTimeZone.forOffsetHours(-8));
-    Assert.assertEquals(d.getMillis(),
-                        ParserUtils.createTimestampParser("EEE MMM dd HH:mm:ss z yyyy")
-                                   .apply("Wed Nov 9 04:00:00 PST 1994")
-                                   .getMillis()
-    );
+    Function<String, DateTime> parser = ParserUtils.createTimestampParser("EEE MMM dd HH:mm:ss z yyyy");
+    Assert.assertEquals(d.getMillis(), parser.apply("Wed Nov 9 04:00:00 PST 1994").getMillis());
   }
 
   @Test
