@@ -26,6 +26,7 @@ public class TimestampParser
   public static Function<String, DateTime> createTimestampParser(final String format)
   {
     Map<String, DateTimeZone> timezones = new HashMap<String, DateTimeZone>();
+    /*Commenting out until Joda 2.1 safely supported
     try {
       InputStream fileInput = ParserUtils.class.getResourceAsStream("/timezone.properties");
       Properties properties = new Properties();
@@ -51,7 +52,7 @@ public class TimestampParser
           .withErrorCode(FormattedException.ErrorCode.SERVER_ERROR)
           .withMessage("Could not read timezone configuration file - timezone.properties - in resource folder")
           .build();
-    }
+    }*/
     return createTimestampParser(format, timezones);
   }
 
@@ -109,6 +110,17 @@ public class TimestampParser
       };
     } else {
       try {
+        final DateTimeFormatter formatter = DateTimeFormat.forPattern(format);
+        return new Function<String, DateTime>()
+        {
+          @Override
+          public DateTime apply(String input)
+          {
+            Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
+            return formatter.parseDateTime(ParserUtils.stripQuotes(input));
+          }
+        };
+        /*Commenting out until Joda 2.1 safely supported
         Pattern pattern = Pattern.compile("[zQ]");
         Matcher matcher = pattern.matcher(format);
         if (matcher.find()) {
@@ -132,7 +144,7 @@ public class TimestampParser
               return formatter.parseDateTime(ParserUtils.stripQuotes(input));
             }
           };
-        }
+        }*/
       }
       catch (FormattedException e) {
         Throwables.propagateIfInstanceOf(e, FormattedException.class);
@@ -151,6 +163,7 @@ public class TimestampParser
     }
   }
 
+  /*Commenting out until Joda 2.1 supported
   private static DateTimeFormatterBuilder buildTimeStampParser(
       String format,
       Map<String, DateTimeZone> timezones,
@@ -194,6 +207,6 @@ public class TimestampParser
     if(parseablePatternStart < format.length())
       formatBuilder.append(DateTimeFormat.forPattern(format.substring(parseablePatternStart)));
     return formatBuilder;
-  }
+  }*/
 
 }
