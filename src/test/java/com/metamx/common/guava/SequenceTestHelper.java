@@ -70,18 +70,23 @@ public class SequenceTestHelper
     }
     );
 
+    int expectedSum = 0;
     while (numsIter.hasNext()) {
-      int expectedSum = 0;
-      for (int i = 0; i < numToTake && numsIter.hasNext(); ++i) {
+      int i = 0;
+      for (; i < numToTake && numsIter.hasNext(); ++i) {
         expectedSum += numsIter.next();
       }
 
-      Assert.assertFalse(prefix, yielder.isDone());
-      Assert.assertEquals(prefix, expectedSum, yielder.get().intValue());
+      if (i >= numToTake) {
+        Assert.assertFalse(prefix, yielder.isDone());
+        Assert.assertEquals(prefix, expectedSum, yielder.get().intValue());
 
-      yielder = yielder.next(0);
+        expectedSum = 0;
+        yielder = yielder.next(0);
+      }
     }
 
+    Assert.assertEquals(expectedSum, yielder.get().intValue());
     Assert.assertTrue(prefix, yielder.isDone());
     yielder.close();
   }

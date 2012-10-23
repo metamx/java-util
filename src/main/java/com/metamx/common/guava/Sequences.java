@@ -40,14 +40,19 @@ public class Sequences
     return (Sequence<T>) EMPTY_SEQUENCE;
   }
 
-  public static <T> Sequence<T> concat(Iterable<Sequence<T>> sequences)
-  {
-    return new ConcatSequence<T>(sequences);
-  }
-
   public static <T> Sequence<T> concat(Sequence<T>... sequences)
   {
     return concat(Arrays.asList(sequences));
+  }
+
+  public static <T> Sequence<T> concat(Iterable<Sequence<T>> sequences)
+  {
+    return concat(Sequences.simple(sequences));
+  }
+
+  public static <T> Sequence<T> concat(Sequence<Sequence<T>> sequences)
+  {
+    return new ConcatSequence<T>(sequences);
   }
 
   public static <From, To> Sequence<To> map(Sequence<From> sequence, Function<From, To> fn)
@@ -76,7 +81,7 @@ public class Sequences
     @Override
     public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, Object> accumulator)
     {
-      return Yielders.done(null);
+      return Yielders.done(initValue, null);
     }
   }
 }

@@ -25,14 +25,14 @@ import java.io.IOException;
  */
 public class Yielders
 {
-  public static <T> Yielder<T> done(final Closeable closeable)
+  public static <T> Yielder<T> done(final T finalVal, final Closeable closeable)
   {
     return new Yielder<T>()
     {
       @Override
       public T get()
       {
-        return null;
+        return finalVal;
       }
 
       @Override

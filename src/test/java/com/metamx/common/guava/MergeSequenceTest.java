@@ -31,16 +31,16 @@ public class MergeSequenceTest
   @Test
   public void testSanity() throws Exception
   {
-    final ArrayList<TestSequence<Integer>> testSequences = Lists.newArrayList(
+    final ArrayList<TestSequence<Integer>> testSeqs = Lists.newArrayList(
         TestSequence.create(1, 3, 5, 7, 9),
         TestSequence.create(2, 8),
         TestSequence.create(4, 6, 8)
     );
 
-    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), testSequences);
+    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
     SequenceTestHelper.testAll(seq, Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 8, 9));
 
-    for (TestSequence<Integer> sequence : testSequences) {
+    for (TestSequence<Integer> sequence : testSeqs) {
       Assert.assertTrue(sequence.isClosed());
     }
   }
@@ -48,16 +48,16 @@ public class MergeSequenceTest
   @Test
   public void testWorksWhenBeginningOutOfOrder() throws Exception
   {
-    final ArrayList<TestSequence<Integer>> testSequences = Lists.newArrayList(
+    final ArrayList<TestSequence<Integer>> testSeqs = Lists.newArrayList(
         TestSequence.create(2, 8),
         TestSequence.create(1, 3, 5, 7, 9),
         TestSequence.create(4, 6, 8)
     );
 
-    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), testSequences);
+    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
     SequenceTestHelper.testAll(seq, Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 8, 9));
 
-    for (TestSequence<Integer> sequence : testSequences) {
+    for (TestSequence<Integer> sequence : testSeqs) {
       Assert.assertTrue(sequence.isClosed());
     }
   }
@@ -65,17 +65,17 @@ public class MergeSequenceTest
   @Test
   public void testMergeEmpties() throws Exception
   {
-    final ArrayList<TestSequence<Integer>> testSequences = Lists.newArrayList(
+    final ArrayList<TestSequence<Integer>> testSeqs = Lists.newArrayList(
         TestSequence.create(1, 3, 5, 7, 9),
         TestSequence.<Integer>create(),
         TestSequence.create(2, 8),
         TestSequence.create(4, 6, 8)
     );
 
-    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), testSequences);
+    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
     SequenceTestHelper.testAll(seq, Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 8, 9));
 
-    for (TestSequence<Integer> sequence : testSequences) {
+    for (TestSequence<Integer> sequence : testSeqs) {
       Assert.assertTrue(sequence.isClosed());
     }
   }
@@ -83,17 +83,17 @@ public class MergeSequenceTest
   @Test
   public void testMergeEmpties1() throws Exception
   {
-    final ArrayList<TestSequence<Integer>> testSequences = Lists.newArrayList(
+    final ArrayList<TestSequence<Integer>> testSeqs = Lists.newArrayList(
         TestSequence.<Integer>create(),
         TestSequence.create(1, 3, 5, 7, 9),
         TestSequence.create(2, 8),
         TestSequence.create(4, 6, 8)
     );
 
-    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), testSequences);
+    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
     SequenceTestHelper.testAll(seq, Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 8, 9));
 
-    for (TestSequence<Integer> sequence : testSequences) {
+    for (TestSequence<Integer> sequence : testSeqs) {
       Assert.assertTrue(sequence.isClosed());
     }
   }
@@ -101,7 +101,7 @@ public class MergeSequenceTest
   @Test
   public void testMergeEmpties2() throws Exception
   {
-    final ArrayList<TestSequence<Integer>> testSequences = Lists.newArrayList(
+    final ArrayList<TestSequence<Integer>> testSeqs = Lists.newArrayList(
         TestSequence.create(1, 3, 5, 7, 9),
         TestSequence.create(2, 8),
         TestSequence.<Integer>create(),
@@ -109,10 +109,10 @@ public class MergeSequenceTest
         TestSequence.<Integer>create()
     );
 
-    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), testSequences);
+    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
     SequenceTestHelper.testAll(seq, Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 8, 9));
 
-    for (TestSequence<Integer> sequence : testSequences) {
+    for (TestSequence<Integer> sequence : testSeqs) {
       Assert.assertTrue(sequence.isClosed());
     }
   }
@@ -120,16 +120,16 @@ public class MergeSequenceTest
   @Test
   public void testScrewsUpOnOutOfOrder() throws Exception
   {
-    final ArrayList<TestSequence<Integer>> testSequences = Lists.newArrayList(
+    final ArrayList<TestSequence<Integer>> testSeqs = Lists.newArrayList(
         TestSequence.create(1, 3, 5, 4, 7, 9),
         TestSequence.create(2, 8),
         TestSequence.create(4, 6)
     );
 
-    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), testSequences);
+    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
     SequenceTestHelper.testAll(seq, Arrays.asList(1, 2, 3, 4, 5, 4, 6, 7, 8, 9));
 
-    for (TestSequence<Integer> sequence : testSequences) {
+    for (TestSequence<Integer> sequence : testSeqs) {
       Assert.assertTrue(sequence.isClosed());
     }
   }

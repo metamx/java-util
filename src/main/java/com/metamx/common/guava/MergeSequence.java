@@ -30,11 +30,11 @@ import java.util.PriorityQueue;
 public class MergeSequence<T> implements Sequence<T>
 {
   private final Ordering<T> ordering;
-  private final Iterable<? extends Sequence<T>> baseSequences;
+  private final Sequence<Sequence<T>> baseSequences;
 
   public MergeSequence(
       Ordering<T> ordering,
-      Iterable<? extends Sequence<T>> baseSequences
+      Sequence<Sequence<T>> baseSequences
   )
   {
     this.ordering = ordering;
@@ -71,31 +71,41 @@ public class MergeSequence<T> implements Sequence<T>
         )
     );
 
-    for (Sequence<T> baseSequence : baseSequences) {
-      final Yielder<T> yielder = baseSequence.toYielder(
-          null, new YieldingAccumulator<T, T>()
-      {
-        @Override
-        public T accumulate(T accumulated, T in)
+    pQueue = baseSequences.accumulate(
+        pQueue,
+        new Accumulator<PriorityQueue<Yielder<T>>, Sequence<T>>()
         {
-          yield();
-          return in;
-        }
-      }
-      );
+          @Override
+          public PriorityQueue<Yielder<T>> accumulate(PriorityQueue<Yielder<T>> queue, Sequence<T> in)
+          {
+            final Yielder<T> yielder = in.toYielder(
+                null,
+                new YieldingAccumulator<T, T>()
+                {
+                  @Override
+                  public T accumulate(T accumulated, T in)
+                  {
+                    yield();
+                    return in;
+                  }
+                }
+            );
 
-      if (!yielder.isDone()) {
-        pQueue.add(yielder);
-      }
-      else {
-        try {
-          yielder.close();
+            if (!yielder.isDone()) {
+              queue.add(yielder);
+            } else {
+              try {
+                yielder.close();
+              }
+              catch (IOException e) {
+                throw Throwables.propagate(e);
+              }
+            }
+
+            return queue;
+          }
         }
-        catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    }
+    );
 
     return makeYielder(pQueue, initValue, accumulator);
   }
@@ -106,10 +116,6 @@ public class MergeSequence<T> implements Sequence<T>
       final YieldingAccumulator<OutType, T> accumulator
   )
   {
-    if (pQueue.isEmpty()) {
-      return Yielders.done(null);
-    }
-
     OutType retVal = initVal;
     while (!accumulator.yielded() && !pQueue.isEmpty()) {
       Yielder<T> yielder = pQueue.remove();
@@ -126,6 +132,10 @@ public class MergeSequence<T> implements Sequence<T>
       else {
         pQueue.add(yielder);
       }
+    }
+
+    if (pQueue.isEmpty()) {
+      return Yielders.done(retVal,  null);
     }
 
     final OutType yieldVal = retVal;

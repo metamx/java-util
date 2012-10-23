@@ -19,8 +19,8 @@ package com.metamx.common.guava;
 import java.io.Closeable;
 
 /**
- * A Yielder is an object that tries to act like the yield() command/continuations in other languages.  It's pretty
- * bad at it's job, but it works.  I think.
+ * A Yielder is an object that tries to act like the yield() command/continuations in other languages.  It's not
+ * necessarily good at this job, but it works.  I think.
  *
  * Essentially, you can think of a Yielder as a linked list of items where the Yielder gives you access to the current
  * head via get() and it will give you another Yielder representing the next item in the chain via next().  A Yielder
@@ -57,8 +57,9 @@ public interface Yielder<T> extends Closeable
   public Yielder<T> next(T initValue);
 
   /**
-   * Returns true if this is the last Yielder in the chain.  A Yielder that isDone() may return anything from both
-   * get() and next().
+   * Returns true if this is the last Yielder in the chain.  A Yielder that isDone() should have the final non-yielded
+   * result from the accumulator (or the initValue to the previous next() call).  It will probably break your code
+   * to call next() on a Yielder that is done and expect something good from it.
    *
    * Once next() is called on this Yielder object, all further operations on this object are undefined.
    *

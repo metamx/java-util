@@ -94,6 +94,7 @@ public class ConcatSequenceTest
     );
   }
 
+  @SuppressWarnings("unchecked")
   public void testAll(Iterable<List<Integer>> vals) throws IOException
   {
     final Iterable<TestSequence<Integer>> theSequences = Iterables.transform(
@@ -111,7 +112,7 @@ public class ConcatSequenceTest
     List<TestSequence<Integer>> accumulationSeqs = Lists.newArrayList(theSequences);
     SequenceTestHelper.testAccumulation(
         "",
-        new ConcatSequence<Integer>(accumulationSeqs),
+        new ConcatSequence<Integer>((Sequence) Sequences.simple(accumulationSeqs)),
         Lists.newArrayList(Iterables.concat(vals))
     );
 
@@ -122,7 +123,7 @@ public class ConcatSequenceTest
     List<TestSequence<Integer>> yieldSeqs = Lists.newArrayList(theSequences);
     SequenceTestHelper.testYield(
         "",
-        new ConcatSequence<Integer>(yieldSeqs),
+        new ConcatSequence<Integer>((Sequence) Sequences.simple(yieldSeqs)),
         Lists.newArrayList(Iterables.concat(vals))
     );
 

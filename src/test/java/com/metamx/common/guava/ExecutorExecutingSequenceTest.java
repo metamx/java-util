@@ -48,6 +48,22 @@ public class ExecutorExecutingSequenceTest
     exec.reset();
 
     SequenceTestHelper.testYield("", 3, seq, vals);
+    Assert.assertEquals(5, exec.getTimesCalled());
+  }
+
+  @Test
+  public void testSanity2() throws Exception
+  {
+    TestExecutor exec = new TestExecutor();
+    final List<Integer> vals = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+    ExecutorExecutingSequence<Integer> seq = new ExecutorExecutingSequence<Integer>(Sequences.simple(vals), exec);
+
+    SequenceTestHelper.testAccumulation("", seq, vals);
+    Assert.assertEquals(1, exec.getTimesCalled());
+
+    exec.reset();
+
+    SequenceTestHelper.testYield("", 3, seq, vals);
     Assert.assertEquals(6, exec.getTimesCalled());
   }
 

@@ -60,7 +60,8 @@ public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T
   {
     Yielder<OutType> yielder = null;
     try {
-      yielder = toYielder(initValue, YieldingAccumulators.fromAccumulator(fn));      return yielder.isDone() ? initValue : yielder.get();
+      yielder = toYielder(initValue, YieldingAccumulators.fromAccumulator(fn));
+      return yielder.get();
     }
     finally {
       Closeables.closeQuietly(yielder);
@@ -79,8 +80,14 @@ public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T
       final IterType iter
   )
   {
-    if (! iter.hasNext()) {
+    OutType retVal = initValue;
+    while (!accumulator.yielded() && iter.hasNext()) {
+      retVal = accumulator.accumulate(retVal, iter.next());
+    }
+
+    if (!accumulator.yielded()) {
       return Yielders.done(
+          retVal,
           new Closeable()
           {
             @Override
@@ -90,11 +97,6 @@ public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T
             }
           }
       );
-    }
-
-    OutType retVal = initValue;
-    while (!accumulator.yielded() && iter.hasNext()) {
-      retVal = accumulator.accumulate(retVal, iter.next());
     }
 
     final OutType finalRetVal = retVal;
