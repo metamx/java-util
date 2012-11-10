@@ -35,4 +35,30 @@ public class JSONParserTest
         jsonMap
     );
   }
+
+  @Test
+  public void testValueWithEscapes()
+  {
+    String json = "{\"x\": \"hel\\rl\\no\"}";
+    final Parser<String, Object> jsonParser = new JSONParser();
+    final Map<String, Object> jsonMap = jsonParser.parse(json);
+    Assert.assertEquals(
+        "jsonMap",
+        ImmutableMap.of("x", "hel\rl\no"),
+        jsonMap
+    );
+  }
+
+  @Test
+  public void testValueWithUnbalancedQuotes()
+  {
+    String json = "{\"\\\"x\": \"hel\\\"lo\"}";
+    final Parser<String, Object> jsonParser = new JSONParser();
+    final Map<String, Object> jsonMap = jsonParser.parse(json);
+    Assert.assertEquals(
+        "jsonMap",
+        ImmutableMap.of("\"x", "hel\"lo"),
+        jsonMap
+    );
+  }
 }
