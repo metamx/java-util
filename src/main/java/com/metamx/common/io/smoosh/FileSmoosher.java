@@ -24,16 +24,14 @@ import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
+import com.google.common.primitives.Ints;
 import com.metamx.common.IAE;
 import com.metamx.common.ISE;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -44,6 +42,7 @@ import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -116,6 +115,11 @@ public class FileSmoosher implements Closeable
 
   public void add(String name, ByteBuffer bufferToAdd) throws IOException
   {
+    add(name, Arrays.asList(bufferToAdd));
+  }
+
+  public void add(String name, List<ByteBuffer> bufferToAdd) throws IOException
+  {
     if (name.contains(",")) {
       throw new IAE("Cannot have a comma in the name of a file, got[%s].", name);
     }
@@ -124,9 +128,27 @@ public class FileSmoosher implements Closeable
       throw new IAE("Cannot add files of the same name, already have [%s]", name);
     }
 
-    final long size = bufferToAdd.remaining();
+    long size = 0;
+    for (ByteBuffer buffer : bufferToAdd) {
+      size += buffer.remaining();
+    }
+
+    SmooshedWriter out = addWithSmooshedWriter(name, size);
+
+    try {
+      for (ByteBuffer buffer : bufferToAdd) {
+        out.write(buffer);
+      }
+    }
+    finally {
+      Closeables.closeQuietly(out);
+    }
+  }
+
+  public SmooshedWriter addWithSmooshedWriter(final String name, final long size) throws IOException
+  {
     if (size > maxChunkSize) {
-      throw new IAE("Asked to add buffer[%,d] larger than configured max[%,d]", size, maxChunkSize);
+      throw new IAE("Asked to add buffers[%,d] larger than configured max[%,d]", size, maxChunkSize);
     }
     if (currOut == null) {
       currOut = getNewCurrOut();
@@ -136,11 +158,61 @@ public class FileSmoosher implements Closeable
       currOut = getNewCurrOut();
     }
 
-    int startOffset = currOut.getCurrOffset();
-    currOut.write(bufferToAdd);
-    int endOffset = currOut.getCurrOffset();
+    final int startOffset = currOut.getCurrOffset();
 
-    internalFiles.put(name, new Metadata(currOut.getFileNum(), startOffset, endOffset));
+    return new SmooshedWriter()
+    {
+      private boolean open = true;
+      private long bytesWritten = 0;
+
+      @Override
+      public int write(InputStream in) throws IOException
+      {
+        return verifySize(currOut.write(in));
+      }
+
+      @Override
+      public int write(ByteBuffer in) throws IOException
+      {
+        return verifySize(currOut.write(in));
+      }
+
+      private int verifySize(int bytesWrittenInChunk) throws IOException
+      {
+        bytesWritten += bytesWrittenInChunk;
+
+        if (bytesWritten != currOut.getCurrOffset() - startOffset) {
+          throw new ISE("WTF? Perhaps there is some concurrent modification going on?");
+        }
+        if (bytesWritten > size) {
+          throw new ISE("Wrote[%,d] bytes for something of size[%,d].  Liar!!!", bytesWritten, size);
+        }
+
+        return bytesWrittenInChunk;
+      }
+
+      @Override
+      public boolean isOpen()
+      {
+        return open;
+      }
+
+      @Override
+      public void close() throws IOException
+      {
+        open = false;
+        internalFiles.put(name, new Metadata(currOut.getFileNum(), startOffset, currOut.getCurrOffset()));
+
+        if (bytesWritten != currOut.getCurrOffset() - startOffset) {
+          throw new ISE("WTF? Perhaps there is some concurrent modification going on?");
+        }
+        if (bytesWritten != size) {
+          throw new IOException(
+              String.format("Expected [%,d] bytes, only saw [%,d], potential corruption?", size, bytesWritten)
+          );
+        }
+      }
+    };
   }
 
   @Override
@@ -192,12 +264,13 @@ public class FileSmoosher implements Closeable
     return new File(baseDir, String.format("%05d.%s", i, FILE_EXTENSION));
   }
 
-  private static class Outer implements Closeable
+  public static class Outer implements SmooshedWriter
   {
     private final int fileNum;
     private final OutputStream out;
     private final int maxLength;
 
+    private boolean open = true;
     private int currOffset = 0;
 
     Outer(int fileNum, OutputStream out, int maxLength)
@@ -222,32 +295,40 @@ public class FileSmoosher implements Closeable
       return maxLength - currOffset;
     }
 
-    public void write(ByteBuffer buffer) throws IOException
+    @Override
+    public int write(ByteBuffer buffer) throws IOException
     {
       WritableByteChannel channel = Channels.newChannel(out);
-      long numBytesWritten = channel.write(buffer);
-
-      if (numBytesWritten > bytesLeft()) {
-        throw new ISE("Wrote more bytes[%,d] than available[%,d]. Don't do that.", numBytesWritten, bytesLeft());
-      }
-
-      currOffset += numBytesWritten;
+      return addToOffset(channel.write(buffer));
     }
 
-    public void write(InputStream in) throws IOException
+    @Override
+    public int write(InputStream in) throws IOException
     {
-      long numBytesWritten = ByteStreams.copy(in, out);
+      return addToOffset(Ints.checkedCast(ByteStreams.copy(in, out)));
+    }
 
+    public int addToOffset(int numBytesWritten)
+    {
       if (numBytesWritten > bytesLeft()) {
         throw new ISE("Wrote more bytes[%,d] than available[%,d]. Don't do that.", numBytesWritten, bytesLeft());
       }
 
       currOffset += numBytesWritten;
+
+      return numBytesWritten;
+    }
+
+    @Override
+    public boolean isOpen()
+    {
+      return open;
     }
 
     @Override
     public void close() throws IOException
     {
+      open = false;
       out.close();
     }
   }

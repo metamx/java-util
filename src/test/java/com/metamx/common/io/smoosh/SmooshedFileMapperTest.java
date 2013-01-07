@@ -16,12 +16,15 @@
 
 package com.metamx.common.io.smoosh;
 
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.primitives.Ints;
+import com.metamx.common.ISE;
 import junit.framework.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -47,7 +50,7 @@ public class SmooshedFileMapperTest
       File[] files = baseDir.listFiles();
       Arrays.sort(files);
 
-      Assert.assertEquals(5, files.length);
+      Assert.assertEquals(5, files.length); // 4 smooshed files and 1 meta file
       for (int i = 0; i < 4; ++i) {
         Assert.assertEquals(FileSmoosher.makeChunkFile(baseDir, i), files[i]);
       }
@@ -62,6 +65,75 @@ public class SmooshedFileMapperTest
         Assert.assertEquals(i, buf.getInt());
       }
       mapper.close();
+    }
+    finally {
+      for (File file : baseDir.listFiles()) {
+        file.delete();
+      }
+    }
+  }
+
+  @Test
+  public void testBehaviorWhenReportedSizesLargeAndExceptionIgnored() throws Exception
+  {
+    File baseDir = Files.createTempDir();
+
+    try {
+      FileSmoosher smoosher = new FileSmoosher(baseDir, 21);
+      for (int i = 0; i < 20; ++i) {
+        final SmooshedWriter writer = smoosher.addWithSmooshedWriter(String.format("%d", i), 7);
+        writer.write(ByteBuffer.wrap(Ints.toByteArray(i)));
+        Closeables.closeQuietly(writer);
+      }
+      smoosher.close();
+
+      File[] files = baseDir.listFiles();
+      Arrays.sort(files);
+
+      Assert.assertEquals(6, files.length); // 4 smoosh files and 1 meta file
+      for (int i = 0; i < 4; ++i) {
+        Assert.assertEquals(FileSmoosher.makeChunkFile(baseDir, i), files[i]);
+      }
+      Assert.assertEquals(FileSmoosher.metaFile(baseDir), files[files.length - 1]);
+
+      SmooshedFileMapper mapper = SmooshedFileMapper.load(baseDir);
+      for (int i = 0; i < 20; ++i) {
+        ByteBuffer buf = mapper.mapFile(String.format("%d", i));
+        Assert.assertEquals(0, buf.position());
+        Assert.assertEquals(4, buf.remaining());
+        Assert.assertEquals(4, buf.capacity());
+        Assert.assertEquals(i, buf.getInt());
+      }
+      mapper.close();
+    }
+    finally {
+      for (File file : baseDir.listFiles()) {
+        file.delete();
+      }
+    }
+  }
+
+  @Test
+  public void testBehaviorWhenReportedSizesSmall() throws Exception
+  {
+    File baseDir = Files.createTempDir();
+
+    try {
+      FileSmoosher smoosher = new FileSmoosher(baseDir, 21);
+      final SmooshedWriter writer = smoosher.addWithSmooshedWriter("1", 2);
+      boolean exceptionThrown = false;
+      try {
+        writer.write(ByteBuffer.wrap(Ints.toByteArray(1)));
+      }
+      catch (ISE e) {
+        Assert.assertTrue(e.getMessage().contains("Liar!!!"));
+        exceptionThrown = true;
+      }
+
+      Assert.assertTrue(exceptionThrown);
+      File[] files = baseDir.listFiles();
+      Assert.assertEquals(1, files.length);
+      Assert.assertEquals(0, files[0].length());
     }
     finally {
       for (File file : baseDir.listFiles()) {
