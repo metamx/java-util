@@ -23,6 +23,12 @@ public class TimestampParserTest
     Assert.assertEquals(new DateTime("2009-02-13T23:31:30Z"), parser.apply("2009-02-13T23:31:30Z"));
   }
 
+  @Test
+  public void testRuby() throws Exception {
+    final Function<String, DateTime> parser = ParserUtils.createTimestampParser("ruby");
+    Assert.assertEquals(new DateTime("2013-01-16T15:41:47+01:00"), parser.apply("1358347307.435447"));
+  }
+
   /*Commenting out until Joda 2.1 supported
   @Test
   public void testTimeStampParserWithQuotes() throws Exception {
