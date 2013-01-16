@@ -98,6 +98,18 @@ public class TimestampParser
           return new DateTime(Long.parseLong(ParserUtils.stripQuotes(input)) * 1000);
         }
       };
+    } else if (format.equalsIgnoreCase("ruby")) {
+      return new Function<String, DateTime>()
+      {
+        @Override
+        public DateTime apply(String input)
+        {
+          Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
+          Double ts = Double.parseDouble(ParserUtils.stripQuotes(input));
+          Long jts = ts.longValue() * 1000; // ignoring milli secs
+          return new DateTime(jts);
+        }
+      };
     } else if (format.equalsIgnoreCase("millis")) {
       return new Function<String, DateTime>()
       {
