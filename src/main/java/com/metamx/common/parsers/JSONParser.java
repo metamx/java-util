@@ -17,22 +17,18 @@
 package com.metamx.common.parsers;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.metamx.common.exception.FormattedException;
-import com.metamx.common.exception.SubErrorHolder;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class JSONParser implements Parser<String, Object>
 {
@@ -46,7 +42,7 @@ public class JSONParser implements Parser<String, Object>
     public String apply(JsonNode node)
     {
       // use getValueAsText for compatibility with older jackson implementations on EMR
-      return (node == null || node.isMissingNode() || node.isNull()) ? null : node.getValueAsText();
+      return (node == null || node.isMissingNode() || node.isNull()) ? null : node.asText();
     }
   };
 
@@ -79,7 +75,7 @@ public class JSONParser implements Parser<String, Object>
       Map<String, Object> map = new LinkedHashMap<String, Object>();
       JsonNode root = jsonMapper.readTree(input);
 
-      Iterator<String> keysIter = (fieldNames == null ? root.getFieldNames() : fieldNames.iterator());
+      Iterator<String> keysIter = (fieldNames == null ? root.fieldNames() : fieldNames.iterator());
 
       while (keysIter.hasNext()) {
         String key = keysIter.next();

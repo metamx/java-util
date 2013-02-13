@@ -16,8 +16,8 @@
 
 package com.metamx.common.exception;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Maps;
-import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.Map;
 
