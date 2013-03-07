@@ -193,17 +193,15 @@ public class ScheduledExecutors
     {
       public ScheduledExecutorService create(int corePoolSize, String nameFormat)
       {
-        return ExecutorServices.manageLifecycle(
-            lifecycle,
-            Executors.newScheduledThreadPool(
-                corePoolSize,
-                new ThreadFactoryBuilder()
-                    .setDaemon(true)
-                    .setNameFormat(nameFormat)
-                    .build()
-            )
-        );
+        return ExecutorServices.manageLifecycle(lifecycle, fixed(corePoolSize, nameFormat));
       }
     };
+  }
+
+  public static ScheduledExecutorService fixed(int corePoolSize, String nameFormat)
+  {
+    return Executors.newScheduledThreadPool(
+        corePoolSize, new ThreadFactoryBuilder().setDaemon(true).setNameFormat(nameFormat).build()
+    );
   }
 }
