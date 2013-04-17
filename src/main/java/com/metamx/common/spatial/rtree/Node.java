@@ -1,6 +1,5 @@
 package com.metamx.common.spatial.rtree;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
@@ -9,33 +8,33 @@ import java.util.List;
 
 /**
  */
-public class Node<T>
+public class Node
 {
-  private final double[] minCoordinates;
-  private final double[] maxCoordinates;
+  private final float[] minCoordinates;
+  private final float[] maxCoordinates;
 
-  private final List<Node<T>> children;
+  private final List<Node> children;
   private final boolean isLeaf;
 
-  private Node<T> parent;
+  private Node parent;
 
-  public Node(double[] minCoordinates, double[] maxCoordinates, boolean isLeaf)
+  public Node(float[] minCoordinates, float[] maxCoordinates, boolean isLeaf)
   {
     this(
         minCoordinates,
         maxCoordinates,
-        Lists.<Node<T>>newArrayList(),
+        Lists.<Node>newArrayList(),
         isLeaf,
         null
     );
   }
 
   public Node(
-      double[] minCoordinates,
-      double[] maxCoordinates,
-      List<Node<T>> children,
+      float[] minCoordinates,
+      float[] maxCoordinates,
+      List<Node> children,
       boolean isLeaf,
-      Node<T> parent
+      Node parent
   )
   {
     Preconditions.checkArgument(minCoordinates.length == maxCoordinates.length);
@@ -52,49 +51,37 @@ public class Node<T>
     return minCoordinates.length;
   }
 
-  public double[] getMinCoordinates()
+  public float[] getMinCoordinates()
   {
     return minCoordinates;
   }
 
-  public void updateMinCoordinates(double[] minCoords)
-  {
-    Preconditions.checkArgument(minCoords.length == minCoordinates.length);
-    System.arraycopy(minCoords, 0, minCoordinates, 0, minCoordinates.length);
-  }
-
-  public double[] getMaxCoordinates()
+  public float[] getMaxCoordinates()
   {
     return maxCoordinates;
   }
 
-  public void updateMaxCoordinates(double[] maxCoords)
-  {
-    Preconditions.checkArgument(maxCoords.length == maxCoordinates.length);
-    System.arraycopy(maxCoords, 0, maxCoordinates, 0, maxCoordinates.length);
-  }
-
-  public void setParent(Node<T> p)
+  public void setParent(Node p)
   {
     parent = p;
   }
 
-  public Node<T> getParent()
+  public Node getParent()
   {
     return parent;
   }
 
-  public void addChild(Node<T> node)
+  public void addChild(Node node)
   {
     children.add(node);
   }
 
-  public void addChildren(List<Node<T>> nodes)
+  public void addChildren(List<Node> nodes)
   {
     children.addAll(nodes);
   }
 
-  public List<Node<T>> getChildren()
+  public List<Node> getChildren()
   {
     return children;
   }
@@ -126,7 +113,7 @@ public class Node<T>
     return true;
   }
 
-  public boolean contains(double[] coords)
+  public boolean contains(float[] coords)
   {
     Preconditions.checkArgument(getNumDims() == coords.length);
 
@@ -138,6 +125,24 @@ public class Node<T>
     return true;
   }
 
+  public void enclose()
+  {
+    float[] minCoords = new float[getNumDims()];
+    Arrays.fill(minCoords, Float.MAX_VALUE);
+    float[] maxCoords = new float[getNumDims()];
+    Arrays.fill(maxCoords, -Float.MAX_VALUE);
+
+    for (Node child : getChildren()) {
+      for (int i = 0; i < getNumDims(); i++) {
+        minCoords[i] = Math.min(child.getMinCoordinates()[i], minCoords[i]);
+        maxCoords[i] = Math.max(child.getMaxCoordinates()[i], maxCoords[i]);
+      }
+    }
+
+    System.arraycopy(minCoords, 0, minCoordinates, 0, minCoordinates.length);
+    System.arraycopy(maxCoords, 0, maxCoordinates, 0, maxCoordinates.length);
+  }
+
   private double calculateArea()
   {
     double area = 1.0;
@@ -145,40 +150,5 @@ public class Node<T>
       area *= (maxCoordinates[i] - minCoordinates[i]);
     }
     return area;
-  }
-
-  public String print(int numTabs) throws Exception
-  {
-    String tabs = "";
-    for (int i = 0; i < numTabs; i++) {
-      tabs += "\t";
-    }
-    String tabs2 = tabs + "\t";
-
-    StringBuilder builder = new StringBuilder();
-    builder.append("\n");
-    builder.append(tabs);
-    builder.append("Node{\n");
-    builder.append(tabs2);
-
-    ObjectMapper jsonMapper = new ObjectMapper();
-
-    builder.append("minCoordinates: ");
-    builder.append(jsonMapper.writeValueAsString(minCoordinates));
-    builder.append(", maxCoordinates: ");
-    builder.append(jsonMapper.writeValueAsString(maxCoordinates));
-    builder.append(String.format(", area: %s, isLeaf: %s\n", getArea(), isLeaf));
-    if (getChildren().size() > 0) {
-      builder.append(tabs2);
-      builder.append("children: ");
-      for (Node<T> tNode : getChildren()) {
-        builder.append(tNode.print(numTabs + 1));
-      }
-    }
-    builder.append("\n");
-    builder.append(tabs);
-    builder.append("}\n");
-
-    return builder.toString();
   }
 }

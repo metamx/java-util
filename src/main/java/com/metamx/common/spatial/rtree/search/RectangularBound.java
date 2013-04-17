@@ -1,39 +1,39 @@
 package com.metamx.common.spatial.rtree.search;
 
 import com.google.common.base.Preconditions;
-import com.metamx.common.spatial.rtree.Node;
-import com.metamx.common.spatial.rtree.Point;
+import com.metamx.common.spatial.rtree.ImmutableNode;
+import com.metamx.common.spatial.rtree.ImmutablePoint;
 
 import java.util.List;
 
 /**
  */
-public class RectangularBound<T> implements com.metamx.common.spatial.rtree.search.Bound<T>
+public class RectangularBound implements Bound
 {
-  private final double[] coords;
-  private final double[] minCoords;
-  private final double[] maxCoords;
+  private final float[] coords;
+  private final float[] minCoords;
+  private final float[] maxCoords;
   private final int numDims;
 
-  public RectangularBound(double[] coords, double[] dimLens)
+  public RectangularBound(float[] coords, float[] dimLens)
   {
     Preconditions.checkArgument(coords.length == dimLens.length);
 
     this.coords = coords;
     this.numDims = coords.length;
 
-    this.minCoords = new double[numDims];
-    this.maxCoords = new double[numDims];
+    this.minCoords = new float[numDims];
+    this.maxCoords = new float[numDims];
 
     for (int i = 0; i < numDims; i++) {
-      double half = dimLens[i] / 2;
+      float half = dimLens[i] / 2;
       minCoords[i] = coords[i] - half;
       maxCoords[i] = coords[i] + half;
     }
   }
 
   @Override
-  public double[] getCoordinates()
+  public float[] getCoordinates()
   {
     return coords;
   }
@@ -45,7 +45,7 @@ public class RectangularBound<T> implements com.metamx.common.spatial.rtree.sear
   }
 
   @Override
-  public boolean overlaps(Node node)
+  public boolean overlaps(ImmutableNode node)
   {
     for (int i = 0; i < numDims; i++) {
       if ((minCoords[i] >= node.getMinCoordinates()[i] && minCoords[i] <= node.getMaxCoordinates()[i]) ||
@@ -58,7 +58,7 @@ public class RectangularBound<T> implements com.metamx.common.spatial.rtree.sear
   }
 
   @Override
-  public List<Point<T>> filter(List<Point<T>> points)
+  public Iterable<ImmutablePoint> filter(Iterable<ImmutablePoint> points)
   {
     return points;
   }

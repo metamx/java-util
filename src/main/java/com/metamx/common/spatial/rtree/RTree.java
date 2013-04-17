@@ -3,47 +3,44 @@ package com.metamx.common.spatial.rtree;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.metamx.common.spatial.rtree.search.Bound;
+import com.metamx.common.spatial.rtree.search.GutmanSearchStrategy;
 import com.metamx.common.spatial.rtree.search.SearchStrategy;
+import com.metamx.common.spatial.rtree.split.LinearGutmanSplitStrategy;
 import com.metamx.common.spatial.rtree.split.SplitStrategy;
 
 import java.util.Arrays;
 import java.util.List;
 
 /**
+ * This RTree only takes integer entries because serde is hard.
  */
-public class RTree<T>
+public class RTree
 {
   private final int numDims;
   private final SplitStrategy splitStrategy;
-  private final SearchStrategy<T> searchStrategy;
 
-  private Node<T> root;
+  private Node root;
 
   private volatile int size;
 
-  public RTree(int numDims, SplitStrategy splitStrategy, SearchStrategy<T> searchStrategy)
+  public RTree()
+  {
+    this(0, new LinearGutmanSplitStrategy(0, 50));
+  }
+
+  public RTree(int numDims, SplitStrategy splitStrategy)
   {
     this.numDims = numDims;
     this.splitStrategy = splitStrategy;
-    this.searchStrategy = searchStrategy;
     this.root = buildRoot(true);
   }
 
-  public RTree(int numDims, SplitStrategy splitStrategy, SearchStrategy<T> searchStrategy, Node<T> root, int size)
-  {
-    this.numDims = numDims;
-    this.splitStrategy = splitStrategy;
-    this.searchStrategy = searchStrategy;
-    this.root = root;
-    this.size = size;
-  }
-
-  public void insert(double[] coords, T entry)
+  public void insert(float[] coords, int entry)
   {
     Preconditions.checkArgument(coords.length == numDims);
 
-    Point<T> point = new Point<T>(coords, entry);
-    Node<T> node = chooseLeaf(root, point);
+    Point point = new Point(coords, entry);
+    Node node = chooseLeaf(root, point);
     node.addChild(point);
     point.setParent(node);
 
@@ -57,7 +54,7 @@ public class RTree<T>
     size++;
   }
 
-  public boolean delete(double[] coords, T entry)
+  public boolean delete(double[] coords, int entry)
   {
     throw new UnsupportedOperationException();
   }
@@ -77,42 +74,30 @@ public class RTree<T>
     return splitStrategy;
   }
 
-  public SearchStrategy<T> getSearchStrategy()
-  {
-    return searchStrategy;
-  }
-
-  public Node<T> getRoot()
+  public Node getRoot()
   {
     return root;
   }
 
-  public List<T> search(Bound<T> bound)
+  private Node buildRoot(boolean isLeaf)
   {
-    Preconditions.checkArgument(bound.getNumDims() == numDims);
+    float[] initMinCoords = new float[numDims];
+    float[] initMaxCoords = new float[numDims];
+    Arrays.fill(initMinCoords, -Float.MAX_VALUE);
+    Arrays.fill(initMaxCoords, Float.MAX_VALUE);
 
-    return searchStrategy.search(root, bound);
+    return new Node(initMinCoords, initMaxCoords, isLeaf);
   }
 
-  private Node<T> buildRoot(boolean isLeaf)
-  {
-    double[] initMinCoords = new double[numDims];
-    double[] initMaxCoords = new double[numDims];
-    Arrays.fill(initMinCoords, Double.MIN_VALUE);
-    Arrays.fill(initMaxCoords, Double.MAX_VALUE);
-
-    return new Node<T>(initMinCoords, initMaxCoords, isLeaf);
-  }
-
-  private Node<T> chooseLeaf(Node<T> node, Point point)
+  private Node chooseLeaf(Node node, Point point)
   {
     if (node.isLeaf()) {
       return node;
     }
 
     double minCost = Double.MAX_VALUE;
-    Node<T> optimal = null;
-    for (Node<T> child : node.getChildren()) {
+    Node optimal = null;
+    for (Node child : node.getChildren()) {
       double cost = RTreeUtils.getExpansionCost(child, point);
       if (cost < minCost) {
         minCost = cost;
@@ -128,7 +113,7 @@ public class RTree<T>
     return chooseLeaf(optimal, point);
   }
 
-  private void adjustTree(Node<T> n, Node<T> nn)
+  private void adjustTree(Node n, Node nn)
   {
     // special case for root
     if (n == root) {
@@ -139,14 +124,14 @@ public class RTree<T>
         n.setParent(root);
         nn.setParent(root);
       }
-      RTreeUtils.enclose(root);
+      root.enclose();
       return;
     }
 
-    RTreeUtils.enclose(n);
+    n.enclose();
 
     if (nn != null) {
-      RTreeUtils.enclose(nn);
+      nn.enclose();
 
       if (splitStrategy.needToSplit(n.getParent())) {
         Node[] groups = splitStrategy.split(n.getParent());
@@ -156,16 +141,6 @@ public class RTree<T>
 
     if (n.getParent() != null) {
       adjustTree(n.getParent(), null);
-    }
-  }
-
-  public static <T> void print(RTree<T> tree)
-  {
-    Node<T> root = tree.getRoot();
-    try {
-    System.out.println(root.print(0));
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
     }
   }
 }

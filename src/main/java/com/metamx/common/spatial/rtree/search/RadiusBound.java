@@ -1,42 +1,43 @@
 package com.metamx.common.spatial.rtree.search;
 
-import com.google.common.collect.Lists;
-import com.metamx.common.spatial.rtree.Point;
-
-import java.util.List;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import com.metamx.common.spatial.rtree.ImmutablePoint;
 
 /**
  */
-public class RadiusBound<T> extends RectangularBound<T>
+public class RadiusBound extends RectangularBound
 {
-  private final double[] coords;
-  private final double radius;
+  private final float[] coords;
+  private final float radius;
 
-  public RadiusBound(double[] coords, double radius)
+  public RadiusBound(float[] coords, float radius)
   {
-    super(coords, new double[]{radius, radius});
+    super(coords, new float[]{radius, radius});
 
     this.coords = coords;
     this.radius = radius;
   }
 
   @Override
-  public List<Point<T>> filter(List<Point<T>> points)
+  public Iterable<ImmutablePoint> filter(Iterable<ImmutablePoint> points)
   {
-    List<Point<T>> retVal = Lists.newArrayList();
+    return Iterables.filter(
+        points,
+        new Predicate<ImmutablePoint>()
+        {
+          @Override
+          public boolean apply(ImmutablePoint point)
+          {
+            double total = 0.0;
 
-    for (Point<T> point : points) {
-      double total = 0.0;
+                  for (int i = 0; i < coords.length; i++) {
+                    total += Math.pow(point.getMinCoordinates()[i] - coords[i], 2);
+                  }
 
-      for (int i = 0; i < coords.length; i++) {
-        total += Math.pow(point.getCoords()[i] - coords[i], 2);
-      }
-
-      if (total <= Math.pow(radius, 2)) {
-        retVal.add(point);
-      }
-    }
-
-    return retVal;
+                  return (total <= Math.pow(radius, 2));
+          }
+        }
+    );
   }
 }

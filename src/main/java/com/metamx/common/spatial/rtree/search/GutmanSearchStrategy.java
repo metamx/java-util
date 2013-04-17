@@ -1,59 +1,72 @@
 package com.metamx.common.spatial.rtree.search;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.metamx.common.spatial.rtree.Node;
-import com.metamx.common.spatial.rtree.Point;
-
-import java.util.List;
+import com.metamx.common.spatial.rtree.ImmutableNode;
+import com.metamx.common.spatial.rtree.ImmutablePoint;
 
 /**
  */
-public class GutmanSearchStrategy<T> implements com.metamx.common.spatial.rtree.search.SearchStrategy<T>
+public class GutmanSearchStrategy implements com.metamx.common.spatial.rtree.search.SearchStrategy
 {
   @Override
-  public List<T> search(Node<T> node, com.metamx.common.spatial.rtree.search.Bound<T> bound)
+  public Iterable<Integer> search(ImmutableNode node, Bound bound)
   {
-    return Lists.transform(
+    return Iterables.transform(
         innerSearch(node, bound),
-        new Function<Point<T>, T>()
+        new Function<ImmutablePoint, Integer>()
         {
           @Override
-          public T apply(Point<T> tPoint)
+          public Integer apply(ImmutablePoint immutablePoint)
           {
-            return tPoint.getEntry();
+            return immutablePoint.getEntry();
           }
         }
     );
   }
 
-  public List<Point<T>> innerSearch(Node<T> node, com.metamx.common.spatial.rtree.search.Bound<T> bound)
+  public Iterable<ImmutablePoint> innerSearch(ImmutableNode node, final Bound bound)
   {
-    List<Point<T>> points = Lists.newArrayList();
     if (node.isLeaf()) {
-      points.addAll(
-          bound.filter(
-              Lists.transform(
-                  node.getChildren(),
-                  new Function<Node<T>, Point<T>>()
-                  {
-                    @Override
-                    public Point<T> apply(Node<T> tNode)
-                    {
-                      return (Point<T>) tNode;
-                    }
-                  }
-              )
+      return bound.filter(
+          Lists.transform(
+              node.getChildren(),
+              new Function<ImmutableNode, ImmutablePoint>()
+              {
+                @Override
+                public ImmutablePoint apply(ImmutableNode tNode)
+                {
+                  return new ImmutablePoint(tNode);
+                }
+              }
           )
       );
     } else {
-      for (Node<T> child : node.getChildren()) {
-        if (bound.overlaps(child)) {
-          points.addAll(innerSearch(child, bound));
-        }
-      }
+      return Iterables.concat(
+          Iterables.transform(
+              Iterables.filter(
+                  node.getChildren(),
+                  new Predicate<ImmutableNode>()
+                  {
+                    @Override
+                    public boolean apply(ImmutableNode child)
+                    {
+                      return bound.overlaps(child);
+                    }
+                  }
+              ),
+              new Function<ImmutableNode, Iterable<ImmutablePoint>>()
+              {
+                @Override
+                public Iterable<ImmutablePoint> apply(ImmutableNode child)
+                {
+                  return innerSearch(child, bound);
+                }
+              }
+          )
+      );
     }
-
-    return points;
   }
 }

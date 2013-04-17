@@ -21,10 +21,10 @@ public class LinearGutmanSplitStrategy extends GutmanSplitStrategy
 
     double bestNormalized = 0.0;
     for (int i = 0; i < numDims; i++) {
-      double minCoord = Double.MAX_VALUE;
-      double maxCoord = Double.MIN_VALUE;
-      double highestLowSide = Double.MIN_VALUE;
-      double lowestHighside = Double.MAX_VALUE;
+      float minCoord = Float.MAX_VALUE;
+      float maxCoord = -Float.MAX_VALUE;
+      float highestLowSide = -Float.MAX_VALUE;
+      float lowestHighside = Float.MAX_VALUE;
       int highestLowSideIndex = 0;
       int lowestHighSideIndex = 0;
 
@@ -59,7 +59,9 @@ public class LinearGutmanSplitStrategy extends GutmanSplitStrategy
       optimalIndices[1] = 1;
     }
 
-    return new Node[]{nodes.remove(optimalIndices[0]), nodes.remove(optimalIndices[1] - 1)};
+    int indexToRemove1 = Math.min(optimalIndices[0], optimalIndices[1]);
+    int indexToRemove2 = Math.max(optimalIndices[0], optimalIndices[1]);
+    return new Node[]{nodes.remove(indexToRemove1), nodes.remove(indexToRemove2 - 1)};
   }
 
   @Override

@@ -1,12 +1,12 @@
 package com.metamx.common.spatial.rtree.search;
 
-import com.metamx.common.spatial.rtree.Node;
+import com.metamx.common.spatial.rtree.ImmutableNode;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  */
-public interface SearchStrategy<T>
+public interface SearchStrategy
 {
-  public List<T> search(Node<T> node, com.metamx.common.spatial.rtree.search.Bound<T> bound);
+  public Iterable<Integer> search(ImmutableNode node, Bound bound);
 }

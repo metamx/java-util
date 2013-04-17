@@ -1,18 +1,18 @@
 package com.metamx.common.spatial.rtree;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 
 import java.util.Arrays;
 import java.util.List;
 
 /**
  */
-public class Point<T> extends Node<T>
+public class Point extends Node
 {
-  private final double[] coords;
-  private final T entry;
+  private final float[] coords;
+  private final int entry;
 
-  public Point(double[] coords, T entry)
+  public Point(float[] coords, int entry)
   {
     super(coords, Arrays.copyOf(coords, coords.length), true);
 
@@ -20,44 +20,32 @@ public class Point<T> extends Node<T>
     this.entry = entry;
   }
 
-  public double[] getCoords()
+  public float[] getCoords()
   {
     return coords;
   }
 
-  public T getEntry()
+  public int getEntry()
   {
     return entry;
   }
 
   @Override
-  public void updateMinCoordinates(double[] minCoords)
+  public void addChild(Node node)
   {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void updateMaxCoordinates(double[] maxCoords)
+  public void addChildren(List<Node> nodes)
   {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void addChild(Node<T> node)
+  public List<Node> getChildren()
   {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addChildren(List<Node<T>> nodes)
-  {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public List<Node<T>> getChildren()
-  {
-    throw new UnsupportedOperationException();
+    return Lists.newArrayList();
   }
 
   @Override
@@ -69,7 +57,7 @@ public class Point<T> extends Node<T>
   @Override
   public boolean isLeaf()
   {
-    throw new UnsupportedOperationException();
+    return true;
   }
 
   @Override
@@ -82,30 +70,5 @@ public class Point<T> extends Node<T>
   public boolean contains(Node other)
   {
     return false;
-  }
-
-  @Override
-  public String print(int numTabs) throws Exception
-  {
-    String tabs = "";
-    for (int i = 0; i < numTabs; i++) {
-      tabs += "\t";
-    }
-    String tabs2 = tabs + "\t";
-
-    StringBuilder builder = new StringBuilder();
-    builder.append("\n");
-    builder.append(tabs);
-    builder.append("Point{\n");
-    builder.append(tabs2);
-
-    ObjectMapper jsonMapper = new ObjectMapper();
-
-    builder.append(String.format("coords: %s, entry: %s", jsonMapper.writeValueAsString(coords), entry));
-    builder.append("\n");
-    builder.append(tabs);
-    builder.append("}");
-
-    return builder.toString();
   }
 }

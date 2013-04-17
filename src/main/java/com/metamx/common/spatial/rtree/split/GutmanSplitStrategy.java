@@ -42,6 +42,9 @@ public abstract class GutmanSplitStrategy implements SplitStrategy
         node.isLeaf(),
         node.getParent()
     );
+    if (node.getParent() != null) {
+      node.getParent().addChild(group1);
+    }
     Node[] groups = new Node[]{
         node, group1
     };
@@ -74,7 +77,7 @@ public abstract class GutmanSplitStrategy implements SplitStrategy
       }
 
       optimal.addChild(nextToAssign);
-      RTreeUtils.enclose(optimal);
+      optimal.enclose();
     }
 
     return groups;

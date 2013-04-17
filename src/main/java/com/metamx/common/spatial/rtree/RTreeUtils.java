@@ -50,27 +50,8 @@ public class RTreeUtils
   public static void enclose(Node[] nodes)
   {
     for (Node node : nodes) {
-      enclose(node);
+      node.enclose();
     }
-  }
-
-  @SuppressWarnings("unchecked")
-  public static void enclose(Node node)
-  {
-    double[] minCoords = new double[node.getNumDims()];
-    Arrays.fill(minCoords, Double.MAX_VALUE);
-    double[] maxCoords = new double[node.getNumDims()];
-    Arrays.fill(maxCoords, Double.MIN_VALUE);
-
-    for (Node child : (List<Node>) node.getChildren()) {
-      for (int i = 0; i < node.getNumDims(); i++) {
-        minCoords[i] = Math.min(child.getMinCoordinates()[i], minCoords[i]);
-        maxCoords[i] = Math.max(child.getMaxCoordinates()[i], maxCoords[i]);
-      }
-    }
-
-    node.updateMinCoordinates(minCoords);
-    node.updateMaxCoordinates(maxCoords);
   }
 
   @SuppressWarnings("unchecked")

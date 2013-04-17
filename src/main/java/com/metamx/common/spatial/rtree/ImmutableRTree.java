@@ -1,72 +1,129 @@
 package com.metamx.common.spatial.rtree;
 
+import com.google.common.base.Preconditions;
+import com.google.common.primitives.Floats;
+import com.google.common.primitives.Ints;
 import com.metamx.common.spatial.rtree.search.Bound;
+import com.metamx.common.spatial.rtree.search.GutmanSearchStrategy;
 import com.metamx.common.spatial.rtree.search.SearchStrategy;
-import com.metamx.common.spatial.rtree.split.SplitStrategy;
 
+import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Set;
 
 /**
  */
-public class ImmutableRTree<T> extends RTree<T>
+public class ImmutableRTree
 {
-  public static <T> ImmutableRTree<T> fromMutableRTree(RTree<T> rTree)
+  public static ImmutableRTree newImmutableFromMutable(RTree rTree)
   {
-    return new ImmutableRTree<T>(
-        rTree.getNumDims(),
-        rTree.getSplitStrategy(),
-        rTree.getSearchStrategy(),
-        rTree.getRoot(),
-        rTree.getSize()
-    );
+    ByteBuffer buffer = ByteBuffer.wrap(new byte[calcNumBytes(rTree)]);
+
+    buffer.putInt(0, rTree.getNumDims());
+    makeByteBuffer(buffer, Ints.BYTES, rTree.getRoot());
+
+    return new ImmutableRTree(buffer);
   }
 
-  public static <T> ImmutableRTree<T> fromByteArray(byte[] data)
+  private static int makeByteBuffer(ByteBuffer buffer, int currOffset, Node node)
   {
-    // TODO
-    return new ImmutableRTree<T>(0, null, null, null, 0);
+    buffer.putInt(currOffset, currOffset);
+    currOffset += Ints.BYTES;
+    buffer.putInt(currOffset, node.getChildren().size());
+    currOffset += Ints.BYTES;
+    buffer.put(currOffset, node.isLeaf() ? (byte) 1 : (byte) 0);
+    currOffset++;
+    for (float v : node.getMinCoordinates()) {
+      buffer.putFloat(currOffset, v);
+      currOffset += Floats.BYTES;
+    }
+    for (float v : node.getMaxCoordinates()) {
+      buffer.putFloat(currOffset, v);
+      currOffset += Floats.BYTES;
+    }
+
+    if (node instanceof Point) {
+      buffer.putInt(currOffset, ((Point) node).getEntry());
+      currOffset += Ints.BYTES;
+      return currOffset;
+    }
+
+    int childStartOffset = currOffset + node.getChildren().size() * Ints.BYTES;
+    for (Node child : node.getChildren()) {
+      buffer.putInt(currOffset, childStartOffset);
+      childStartOffset = makeByteBuffer(buffer, childStartOffset, child);
+      currOffset += Ints.BYTES;
+    }
+
+    return childStartOffset;
   }
 
-  public ImmutableRTree(
-      int numDims, SplitStrategy splitStrategy, SearchStrategy<T> searchStrategy, Node<T> root, int size
-  )
+  private static int calcNumBytes(RTree tree)
   {
-    super(
-        numDims,
-        splitStrategy,
-        searchStrategy,
-        root,
-        size
-    );
+    int total = Ints.BYTES;
+    total += calcNodeBytes(tree.getRoot());
+
+    return total;
   }
 
-  @Override
-  public void insert(double[] coords, T entry)
+  private static int calcNodeBytes(Node node)
   {
-    throw new UnsupportedOperationException();
+    int total = 0;
+
+    // find size of this node
+    total += ImmutableNode.HEADER_NUM_BYTES + ImmutableNode.getCoordinateNumBytes(node.getNumDims());
+
+    if (node instanceof Point) {
+      total += Ints.BYTES;
+      return total;
+    }
+
+    total += node.getChildren().size() * Ints.BYTES;
+
+    // recursively find sizes of child nodes
+    for (Node child : node.getChildren()) {
+      total += calcNodeBytes(child);
+    }
+
+    return total;
   }
 
-  @Override
-  public int getSize()
+  private final int numDims;
+  private final ImmutableNode root;
+  private final ByteBuffer data;
+
+  private final SearchStrategy defaultSearchStrategy = new GutmanSearchStrategy();
+
+  public ImmutableRTree(ByteBuffer data)
   {
-    return super.getSize();
+    this.numDims = data.getInt(0);
+    this.data = data;
+    this.root = new ImmutableNode(numDims, Ints.BYTES, data);
   }
 
-  @Override
   public int getNumDims()
   {
-    return super.getNumDims();
+    return numDims;
   }
 
-  @Override
-  public List<T> search(Bound<T> bound)
+  public Iterable<Integer> search(Bound bound)
   {
-    return super.search(bound);
+    Preconditions.checkArgument(bound.getNumDims() == numDims);
+
+    return defaultSearchStrategy.search(root, bound);
   }
 
-  public byte[] toByteArray()
+  public Iterable<Integer> search(SearchStrategy strategy, Bound bound)
   {
-    // TODO
-    return new byte[0];
+    Preconditions.checkArgument(bound.getNumDims() == numDims);
+
+    return strategy.search(root, bound);
+  }
+
+  public byte[] toBytes()
+  {
+    ByteBuffer buf = ByteBuffer.allocate(data.capacity());
+    buf.put(data.asReadOnlyBuffer());
+    return buf.array();
   }
 }

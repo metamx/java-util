@@ -1,19 +1,17 @@
 package com.metamx.common.spatial.rtree.search;
 
-import com.metamx.common.spatial.rtree.Node;
-import com.metamx.common.spatial.rtree.Point;
-
-import java.util.List;
+import com.metamx.common.spatial.rtree.ImmutableNode;
+import com.metamx.common.spatial.rtree.ImmutablePoint;
 
 /**
  */
-public interface Bound<T>
+public interface Bound
 {
-  public double[] getCoordinates();
+  public float[] getCoordinates();
 
   public int getNumDims();
 
-  public boolean overlaps(Node node);
+  public boolean overlaps(ImmutableNode node);
 
-  public List<Point<T>> filter(List<Point<T>> points);
+  public Iterable<ImmutablePoint> filter(Iterable<ImmutablePoint> points);
 }
