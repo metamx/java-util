@@ -94,11 +94,23 @@ public class ImmutableRTree
 
   private final SearchStrategy defaultSearchStrategy = new GutmanSearchStrategy();
 
+  public ImmutableRTree()
+  {
+    this.numDims = 0;
+    this.data = null;
+    this.root = null;
+  }
+
   public ImmutableRTree(ByteBuffer data)
   {
     this.numDims = data.getInt(0);
     this.data = data;
     this.root = new ImmutableNode(numDims, Ints.BYTES, data);
+  }
+
+  public int size()
+  {
+    return data.capacity();
   }
 
   public int getNumDims()
@@ -125,5 +137,10 @@ public class ImmutableRTree
     ByteBuffer buf = ByteBuffer.allocate(data.capacity());
     buf.put(data.asReadOnlyBuffer());
     return buf.array();
+  }
+
+  public int compareTo(ImmutableRTree other)
+  {
+    return data.asReadOnlyBuffer().compareTo(other.data.asReadOnlyBuffer());
   }
 }
