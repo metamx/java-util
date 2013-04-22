@@ -65,9 +65,12 @@ public class RectangularBound implements Bound
   @Override
   public boolean overlaps(ImmutableNode node)
   {
+    final float[] minCoords = node.getMinCoordinates();
+    final float[] maxCoords = node.getMaxCoordinates();
+
     for (int i = 0; i < numDims; i++) {
-      if ((minCoords[i] >= node.getMinCoordinates()[i] && minCoords[i] <= node.getMaxCoordinates()[i]) ||
-          (maxCoords[i] >= node.getMinCoordinates()[i] && maxCoords[i] <= node.getMaxCoordinates()[i])) {
+      if ((minCoords[i] >= minCoords[i] && minCoords[i] <= maxCoords[i]) ||
+          (maxCoords[i] >= minCoords[i] && maxCoords[i] <= maxCoords[i])) {
         return true;
       }
     }

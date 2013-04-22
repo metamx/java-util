@@ -96,7 +96,7 @@ public class ImmutableRTreeTest
     }
   }
 
-  //@Test
+  @Test
   public void showBenchmarks()
   {
     final int start = 1;

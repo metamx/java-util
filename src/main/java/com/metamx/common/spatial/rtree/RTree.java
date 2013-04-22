@@ -13,6 +13,10 @@ import java.util.List;
 
 /**
  * This RTree only takes integer entries because serde is hard.
+ *
+ * This code will probably make a lot more sense if you read:
+ * http://www.sai.msu.su/~megera/postgres/gist/papers/gutman-rtree.pdf
+ *
  */
 public class RTree
 {
@@ -35,6 +39,26 @@ public class RTree
     this.root = buildRoot(true);
   }
 
+  /**
+   * This description is from the original paper.
+   *
+   * Algorithm Insert: Insert a new index entry E into an R-tree.
+   *
+   * I1. [Find position for new record]. Invoke {@link #chooseLeaf(Node, Point)} to select
+   * a leaf node L in which to place E.
+   *
+   * I2. [Add records to leaf node]. If L has room for another entry, install E. Otherwise invoke
+   * {@link SplitStrategy} split methods to obtain L and LL containing E and all the old entries of L.
+   *
+   * I3. [Propagate changes upward]. Invoke {@link #adjustTree(Node, Node)} on L, also passing LL if a split was
+   * performed.
+   *
+   * I4. [Grow tree taller]. If node split propagation caused the root to split, create a new record whose
+   * children are the two resulting nodes.
+   *
+   * @param coords - the coordinates of the entry
+   * @param entry - the integer to insert
+   */
   public void insert(float[] coords, int entry)
   {
     Preconditions.checkArgument(coords.length == numDims);
@@ -54,6 +78,13 @@ public class RTree
     size++;
   }
 
+  /**
+   * Not yet implemented.
+   *
+   * @param coords - the coordinates of the entry
+   * @param entry - the integer to insert
+   * @return - whether the operation completed successfully
+   */
   public boolean delete(double[] coords, int entry)
   {
     throw new UnsupportedOperationException();
@@ -89,6 +120,25 @@ public class RTree
     return new Node(initMinCoords, initMaxCoords, isLeaf);
   }
 
+  /**
+   * This description is from the original paper.
+   *
+   * Algorithm ChooseLeaf. Select a leaf node in which to place a new index entry E.
+   *
+   * CL1. [Initialize]. Set N to be the root node.
+   *
+   * CL2. [Leaf check]. If N is a leaf, return N.
+   *
+   * CL3. [Choose subtree]. If N is not a leaf, let F be the entry in N whose rectangle
+   * FI needs least enlargement to include EI. Resolve ties by choosing the entry with the rectangle
+   * of smallest area.
+   *
+   * CL4. [Descend until a leaf is reached]. Set N to be the child node pointed to by Fp and repeated from CL2.
+   *
+   * @param node - current node to evaluate
+   * @param point - point to insert
+   * @return - leafNode where point can be inserted
+   */
   private Node chooseLeaf(Node node, Point point)
   {
     if (node.isLeaf()) {
@@ -113,6 +163,23 @@ public class RTree
     return chooseLeaf(optimal, point);
   }
 
+  /**
+   * This description is from the original paper.
+   *
+   * AT1. [Initialize]. Set N=L. If L was split previously, set NN to be the resulting second node.
+   *
+   * AT2. [Check if done]. If N is the root, stop.
+   *
+   * AT3. [Adjust covering rectangle in parent entry]. Let P be the parent node of N, and let Ev(N)I be N's entry in P.
+   * Adjust Ev(N)I so that it tightly encloses all entry rectangles in N.
+   *
+   * AT4. [Propagate node split upward]. If N has a partner NN resulting from an earlier split, create a new entry
+   * Ev(NN) with Ev(NN)p pointing to NN and Ev(NN)I enclosing all rectangles in NN. Add Ev(NN) to p is there is room.
+   * Otherwise, invoke {@link SplitStrategy} split to product p and pp containing Ev(NN) and all p's old entries.
+   *
+   * @param n - first node to adjust
+   * @param nn - optional second node to adjust
+   */
   private void adjustTree(Node n, Node nn)
   {
     // special case for root

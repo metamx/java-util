@@ -31,7 +31,7 @@ public class GutmanSearchStrategy implements com.metamx.common.spatial.rtree.sea
   {
     if (node.isLeaf()) {
       return bound.filter(
-          Lists.transform(
+          Iterables.transform(
               node.getChildren(),
               new Function<ImmutableNode, ImmutablePoint>()
               {

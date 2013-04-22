@@ -13,6 +13,22 @@ public class LinearGutmanSplitStrategy extends GutmanSplitStrategy
     super(minNumChildren, maxNumChildren);
   }
 
+  /**
+   * This algorithm is from the original paper.
+   *
+   * Algorithm LinearPickSeeds. Select two entries to be the first elements of the groups.
+   *
+   * LPS1. [Find extreme rectangles along all dimensions]. Along each dimension, find the entry whose rectangle has
+   * the highest low side, and the one with the lowest high side. Record the separation.
+   *
+   * LPS2. [Adjust for shape of the rectangle cluster]. Normalize the separations by dividing by the width of the
+   * entire set along the corresponding dimension.
+   *
+   * LPS3. [Select the most extreme pair]. Choose the pair with the greatest normalized separation along any dimension.
+   *
+   * @param nodes - nodes to choose from
+   * @return - two groups representing the seeds
+   */
   @Override
   public Node[] pickSeeds(List<Node> nodes)
   {
@@ -64,6 +80,15 @@ public class LinearGutmanSplitStrategy extends GutmanSplitStrategy
     return new Node[]{nodes.remove(indexToRemove1), nodes.remove(indexToRemove2 - 1)};
   }
 
+  /**
+   * This algorithm is from the original paper.
+   *
+   * Algorithm LinearPickNext. PickNext simply choose any of the remaining entries.
+   *
+   * @param nodes - remaining nodes
+   * @param groups - the left and right groups
+   * @return - the optimal selected node
+   */
   @Override
   public Node pickNext(List<Node> nodes, Node[] groups)
   {

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * An immutable representation of an {@link RTree} for spatial indexing.
  */
 public class ImmutableRTree
 {
@@ -27,12 +28,12 @@ public class ImmutableRTree
 
   private static int makeByteBuffer(ByteBuffer buffer, int currOffset, Node node)
   {
-    buffer.putInt(currOffset, currOffset);
-    currOffset += Ints.BYTES;
     buffer.putInt(currOffset, node.getChildren().size());
     currOffset += Ints.BYTES;
+
     buffer.put(currOffset, node.isLeaf() ? (byte) 1 : (byte) 0);
     currOffset++;
+
     for (float v : node.getMinCoordinates()) {
       buffer.putFloat(currOffset, v);
       currOffset += Floats.BYTES;
@@ -42,6 +43,7 @@ public class ImmutableRTree
       currOffset += Floats.BYTES;
     }
 
+    // Really hate this instanceof check
     if (node instanceof Point) {
       buffer.putInt(currOffset, ((Point) node).getEntry());
       currOffset += Ints.BYTES;
@@ -103,9 +105,11 @@ public class ImmutableRTree
 
   public ImmutableRTree(ByteBuffer data)
   {
-    this.numDims = data.getInt(0);
+    final int initPosition = data.position();
+
+    this.numDims = data.getInt(initPosition);
     this.data = data;
-    this.root = new ImmutableNode(numDims, Ints.BYTES, data);
+    this.root = new ImmutableNode(numDims, initPosition, Ints.BYTES, data);
   }
 
   public int size()

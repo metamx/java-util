@@ -1,21 +1,19 @@
 package com.metamx.common.spatial.rtree;
 
-import com.google.common.collect.Lists;
 import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Iterator;
 
 /**
  * Byte layout:
- * 0 to 3 : offset
- * 4 to 7 : numChildren
- * 8 : isLeaf
- * 9 to 9 + numDims * Floats.BYTES : minCoordinates
- * 9 + numDims * Floats.BYTES to 9 + 2 * numDims * Floats.BYTES : maxCoordinates
- * everything else : every 4 bytes is a child offset
+ * 0 to 3 : numChildren
+ * 4 : isLeaf
+ * 5 to 5 + numDims * Floats.BYTES : minCoordinates
+ * 5 + numDims * Floats.BYTES to 5 + 2 * numDims * Floats.BYTES : maxCoordinates
+ * rest (children) : Every 4 bytes is storing an offset representing the position of a child.
+ *                   This child offset is an offset from the initialOffset
  */
 public class ImmutableNode
 {
@@ -24,10 +22,12 @@ public class ImmutableNode
     return 2 * numDims * Floats.BYTES;
   }
 
-  public static final int HEADER_NUM_BYTES = 9;
+  public static final int HEADER_NUM_BYTES = 5;
 
   private final int numDims;
-  private final int offset;
+  private final int initialOffset;
+  private final int offsetFromInitial;
+
   private final int numChildren;
   private final boolean isLeaf;
 
@@ -35,39 +35,47 @@ public class ImmutableNode
 
   private final ByteBuffer data;
 
-  public ImmutableNode(int numDims, int offset, ByteBuffer data)
+  public ImmutableNode(int numDims, int initialOffset, int offsetFromInitial, ByteBuffer data)
   {
     this.numDims = numDims;
-    this.offset = offset;
-    this.numChildren = data.getInt(offset + 4);
-    this.isLeaf = (data.get(offset + 8) == 0x1);
+    this.initialOffset = initialOffset;
+    this.offsetFromInitial = offsetFromInitial;
+    this.numChildren = data.getInt(initialOffset + offsetFromInitial);
+    this.isLeaf = (data.get(initialOffset + offsetFromInitial + Ints.BYTES) == 0x1);
 
-    childrenOffset = offset + HEADER_NUM_BYTES + getCoordinateNumBytes(numDims);
+    childrenOffset = initialOffset + offsetFromInitial + HEADER_NUM_BYTES + getCoordinateNumBytes(numDims);
 
     this.data = data;
   }
 
   public ImmutableNode(
       int numDims,
-      int offset,
+      int initialOffset,
+      int offsetFromInitial,
       int numChildren,
       boolean leaf,
       ByteBuffer data
   )
   {
     this.numDims = numDims;
-    this.offset = offset;
+    this.initialOffset = initialOffset;
+    this.offsetFromInitial = offsetFromInitial;
     this.numChildren = numChildren;
     this.isLeaf = leaf;
 
-    this.childrenOffset = offset + HEADER_NUM_BYTES + getCoordinateNumBytes(numDims);
+    this.childrenOffset = initialOffset + offsetFromInitial + HEADER_NUM_BYTES + getCoordinateNumBytes(numDims);
 
     this.data = data;
   }
 
-  public int getOffset()
+  public int getInitialOffset()
   {
-    return offset;
+    return initialOffset;
+  }
+
+  public int getOffsetFromInitial()
+  {
+    return offsetFromInitial;
   }
 
   public int getNumDims()
@@ -87,35 +95,65 @@ public class ImmutableNode
 
   public float[] getMinCoordinates()
   {
-    //TODO: make not suck
-    float[] retVal = new float[numDims];
-    for (int i = 0; i < numDims; i++) {
-      retVal[i] = data.getFloat(offset + HEADER_NUM_BYTES + i * Floats.BYTES);
-    }
-    return retVal;
+    return getCoords(initialOffset + offsetFromInitial + HEADER_NUM_BYTES);
   }
 
   public float[] getMaxCoordinates()
   {
-    float[] retVal = new float[numDims];
-    for (int i = 0; i < numDims; i++) {
-      retVal[i] = data.getFloat(offset + HEADER_NUM_BYTES + numDims * Floats.BYTES + i * Floats.BYTES);
-    }
-    return retVal;
+    return getCoords(initialOffset + offsetFromInitial + HEADER_NUM_BYTES + +numDims * Floats.BYTES);
   }
 
-  public List<ImmutableNode> getChildren()
+  public Iterable<ImmutableNode> getChildren()
   {
-    List<ImmutableNode> retVal = Lists.newArrayList();
-    for (int i = 0; i < numChildren; i++) {
-      retVal.add(new ImmutableNode(numDims, data.getInt(childrenOffset + i * Ints.BYTES), data));
-    }
+    return new Iterable<ImmutableNode>()
+    {
+      @Override
+      public Iterator<ImmutableNode> iterator()
+      {
+        return new Iterator<ImmutableNode>()
+        {
+          private volatile int count = 0;
 
-    return retVal;
+          @Override
+          public boolean hasNext()
+          {
+            return (count < numChildren);
+          }
+
+          @Override
+          public ImmutableNode next()
+          {
+            return new ImmutableNode(
+                numDims,
+                initialOffset,
+                data.getInt(childrenOffset + (count++) * Ints.BYTES),
+                data
+            );
+          }
+
+          @Override
+          public void remove()
+          {
+            throw new UnsupportedOperationException();
+          }
+        };
+      }
+    };
   }
 
   public ByteBuffer getData()
   {
     return data;
+  }
+
+  private float[] getCoords(int offset)
+  {
+    final float[] retVal = new float[numDims];
+
+    final ByteBuffer readOnlyBuffer = data.asReadOnlyBuffer();
+    readOnlyBuffer.position(offset);
+    readOnlyBuffer.asFloatBuffer().get(retVal);
+
+    return retVal;
   }
 }
