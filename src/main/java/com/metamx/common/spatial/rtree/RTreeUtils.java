@@ -54,7 +54,6 @@ public class RTreeUtils
     }
   }
 
-  @SuppressWarnings("unchecked")
   public static Node copyOf(Node node)
   {
     return new Node(

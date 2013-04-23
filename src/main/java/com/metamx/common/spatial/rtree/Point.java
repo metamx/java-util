@@ -71,4 +71,9 @@ public class Point extends Node
   {
     return false;
   }
+
+  @Override
+  public void enclose()
+  {
+  }
 }

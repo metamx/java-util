@@ -52,8 +52,9 @@ public class RadiusBound extends RectangularBound
           {
             double total = 0.0;
 
+            final float[] pointCoords = point.getCoords();
             for (int i = 0; i < coords.length; i++) {
-              total += Math.pow(point.getMinCoordinates()[i] - coords[i], 2);
+              total += Math.pow(pointCoords[i] - coords[i], 2);
             }
 
             return (total <= Math.pow(radius, 2));

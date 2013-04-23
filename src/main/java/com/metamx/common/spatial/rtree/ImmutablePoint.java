@@ -1,7 +1,6 @@
 package com.metamx.common.spatial.rtree;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 /**
  */
@@ -32,5 +31,10 @@ public class ImmutablePoint extends ImmutableNode
   public int getEntry()
   {
     return data.getInt(entryOffset);
+  }
+
+  public float[] getCoords()
+  {
+    return super.getMinCoordinates();
   }
 }

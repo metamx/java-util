@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.metamx.common.spatial.rtree.Node;
 import com.metamx.common.spatial.rtree.RTreeUtils;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -51,8 +52,8 @@ public abstract class GutmanSplitStrategy implements SplitStrategy
     node.addChild(seeds[0]);
 
     Node group1 = new Node(
-        seeds[1].getMinCoordinates(),
-        seeds[1].getMaxCoordinates(),
+        Arrays.copyOf(seeds[1].getMinCoordinates(), seeds[1].getMinCoordinates().length),
+        Arrays.copyOf(seeds[1].getMaxCoordinates(), seeds[1].getMaxCoordinates().length),
         Lists.newArrayList(seeds[1]),
         node.isLeaf(),
         node.getParent()
