@@ -3,10 +3,13 @@ package com.metamx.common.spatial.rtree.search;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.primitives.Floats;
 import com.metamx.common.spatial.rtree.ImmutableNode;
 import com.metamx.common.spatial.rtree.ImmutablePoint;
 
+import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 
 /**
@@ -65,23 +68,44 @@ public class RectangularBound implements Bound
   @Override
   public boolean overlaps(ImmutableNode node)
   {
-    final float[] minCoords = node.getMinCoordinates();
-    final float[] maxCoords = node.getMaxCoordinates();
+    final float[] nodeMinCoords = node.getMinCoordinates();
+    final float[] nodeMaxCoords = node.getMaxCoordinates();
 
     for (int i = 0; i < numDims; i++) {
-      if ((minCoords[i] >= minCoords[i] && minCoords[i] <= maxCoords[i]) ||
-          (maxCoords[i] >= minCoords[i] && maxCoords[i] <= maxCoords[i])) {
-        return true;
+      if (nodeMaxCoords[i] < minCoords[i] || nodeMinCoords[i] > maxCoords[i]) {
+        return false;
       }
     }
 
-    return false;
+    return true;
+  }
+
+  @Override
+  public boolean contains(float[] coords)
+  {
+    for (int i = 0; i < numDims; i++) {
+      if (coords[i] < minCoords[i] || coords[i] > maxCoords[i]) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @Override
   public Iterable<ImmutablePoint> filter(Iterable<ImmutablePoint> points)
   {
-    return points;
+    return Iterables.filter(
+        points,
+        new Predicate<ImmutablePoint>()
+        {
+          @Override
+          public boolean apply(ImmutablePoint immutablePoint)
+          {
+            return contains(immutablePoint.getCoords());
+          }
+        }
+    );
   }
 
   @Override

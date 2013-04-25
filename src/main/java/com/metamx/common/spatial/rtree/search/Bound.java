@@ -20,6 +20,8 @@ public interface Bound
 
   public boolean overlaps(ImmutableNode node);
 
+  public boolean contains(float[] coords);
+
   public Iterable<ImmutablePoint> filter(Iterable<ImmutablePoint> points);
 
   public byte[] getCacheKey();

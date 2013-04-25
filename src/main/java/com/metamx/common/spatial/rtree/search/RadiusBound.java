@@ -4,10 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import com.google.common.primitives.Floats;
 import com.metamx.common.spatial.rtree.ImmutablePoint;
-
-import java.nio.ByteBuffer;
 
 /**
  */
@@ -41,6 +38,17 @@ public class RadiusBound extends RectangularBound
   }
 
   @Override
+  public boolean contains(float[] otherCoords)
+  {
+    double total = 0.0;
+    for (int i = 0; i < coords.length; i++) {
+      total += Math.pow(otherCoords[i] - coords[i], 2);
+    }
+
+    return (total <= Math.pow(radius, 2));
+  }
+
+  @Override
   public Iterable<ImmutablePoint> filter(Iterable<ImmutablePoint> points)
   {
     return Iterables.filter(
@@ -50,14 +58,7 @@ public class RadiusBound extends RectangularBound
           @Override
           public boolean apply(ImmutablePoint point)
           {
-            double total = 0.0;
-
-            final float[] pointCoords = point.getCoords();
-            for (int i = 0; i < coords.length; i++) {
-              total += Math.pow(pointCoords[i] - coords[i], 2);
-            }
-
-            return (total <= Math.pow(radius, 2));
+            return contains(point.getCoords());
           }
         }
     );
