@@ -71,6 +71,7 @@ public abstract class GutmanSplitStrategy implements SplitStrategy
       for (Node group : groups) {
         if (group.getChildren().size() + children.size() <= minNumChildren) {
           group.addChildren(children);
+          RTreeUtils.enclose(groups);
           return groups;
         }
       }

@@ -5,6 +5,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.metamx.common.spatial.rtree.search.RadiusBound;
+import com.metamx.common.spatial.rtree.search.RectangularBound;
 import com.metamx.common.spatial.rtree.split.LinearGutmanSplitStrategy;
 import junit.framework.Assert;
 import org.junit.Test;
@@ -91,6 +92,34 @@ public class ImmutableRTreeTest
     Assert.assertTrue(Iterables.size(points) >= 5);
 
     Set<Integer> expected = Sets.newHashSet(1, 2, 3, 4, 5);
+    for (Integer point : points) {
+      Assert.assertTrue(expected.contains(point));
+    }
+  }
+
+  @Test
+  public void testSearchWithSplit2()
+  {
+    RTree tree = new RTree(2, new LinearGutmanSplitStrategy(0, 50));
+    tree.insert(new float[]{0.0f, 0.0f}, 0);
+    tree.insert(new float[]{1.0f, 3.0f}, 1);
+    tree.insert(new float[]{4.0f, 2.0f}, 2);
+    tree.insert(new float[]{7.0f, 3.0f}, 3);
+    tree.insert(new float[]{8.0f, 6.0f}, 4);
+
+    Random rand = new Random();
+    for (int i = 5; i < 5000; i++) {
+      tree.insert(
+          new float[]{(float) (rand.nextDouble() * 10 + 10.0), (float) (rand.nextDouble() * 10 + 10.0)},
+          i
+      );
+    }
+
+    ImmutableRTree searchTree = ImmutableRTree.newImmutableFromMutable(tree);
+    Iterable<Integer> points = searchTree.search(new RectangularBound(new float[]{0, 0}, new float[]{9, 9}));
+    Assert.assertTrue(Iterables.size(points) >= 5);
+
+    Set<Integer> expected = Sets.newHashSet(0, 1, 2, 3, 4);
     for (Integer point : points) {
       Assert.assertTrue(expected.contains(point));
     }

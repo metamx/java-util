@@ -1,6 +1,8 @@
 package com.metamx.common.spatial.rtree;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
 import com.metamx.common.spatial.rtree.search.Bound;
@@ -8,8 +10,6 @@ import com.metamx.common.spatial.rtree.search.GutmanSearchStrategy;
 import com.metamx.common.spatial.rtree.search.SearchStrategy;
 
 import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Set;
 
 /**
  * An immutable representation of an {@link RTree} for spatial indexing.
@@ -115,6 +115,11 @@ public class ImmutableRTree
   public int size()
   {
     return data.capacity();
+  }
+
+  public ImmutableNode getRoot()
+  {
+    return root;
   }
 
   public int getNumDims()

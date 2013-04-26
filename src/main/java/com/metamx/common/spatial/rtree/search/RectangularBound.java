@@ -9,7 +9,6 @@ import com.google.common.primitives.Floats;
 import com.metamx.common.spatial.rtree.ImmutableNode;
 import com.metamx.common.spatial.rtree.ImmutablePoint;
 
-import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 
 /**
@@ -18,45 +17,34 @@ public class RectangularBound implements Bound
 {
   private static final byte CACHE_TYPE_ID = 0x0;
 
-  private final float[] coords;
-  private final float[] dimLens;
   private final float[] minCoords;
   private final float[] maxCoords;
   private final int numDims;
 
   @JsonCreator
   public RectangularBound(
-      @JsonProperty("coords") float[] coords,
-      @JsonProperty("dimLens") float[] dimLens
+      @JsonProperty("minCoords") float[] minCoords,
+      @JsonProperty("maxCoords") float[] maxCoords
   )
   {
-    Preconditions.checkArgument(coords.length == dimLens.length);
+    Preconditions.checkArgument(minCoords.length == maxCoords.length);
 
-    this.coords = coords;
-    this.dimLens = dimLens;
-    this.numDims = coords.length;
+    this.numDims = minCoords.length;
 
-    this.minCoords = new float[numDims];
-    this.maxCoords = new float[numDims];
-
-    for (int i = 0; i < numDims; i++) {
-      float half = dimLens[i] / 2;
-      minCoords[i] = coords[i] - half;
-      maxCoords[i] = coords[i] + half;
-    }
+    this.minCoords = minCoords;
+    this.maxCoords = maxCoords;
   }
 
   @JsonProperty
-  @Override
-  public float[] getCoordinates()
+  public float[] getMinCoords()
   {
-    return coords;
+    return minCoords;
   }
 
   @JsonProperty
-  public float[] getDimLens()
+  public float[] getMaxCoords()
   {
-    return dimLens;
+    return maxCoords;
   }
 
   @Override
@@ -111,17 +99,17 @@ public class RectangularBound implements Bound
   @Override
   public byte[] getCacheKey()
   {
-    ByteBuffer coordsBuffer = ByteBuffer.allocate(coords.length * Floats.BYTES);
-    coordsBuffer.asFloatBuffer().put(coords);
-    final byte[] coordsCacheKey = coordsBuffer.array();
+    ByteBuffer minCoordsBuffer = ByteBuffer.allocate(minCoords.length * Floats.BYTES);
+    minCoordsBuffer.asFloatBuffer().put(minCoords);
+    final byte[] minCoordsCacheKey = minCoordsBuffer.array();
 
-    ByteBuffer dimLensBuffer = ByteBuffer.allocate(dimLens.length * Floats.BYTES);
-    dimLensBuffer.asFloatBuffer().put(dimLens);
-    final byte[] dimLensCacheKey = dimLensBuffer.array();
+    ByteBuffer maxCoordsBuffer = ByteBuffer.allocate(maxCoords.length * Floats.BYTES);
+    maxCoordsBuffer.asFloatBuffer().put(maxCoords);
+    final byte[] maxCoordsCacheKey = maxCoordsBuffer.array();
 
-    final ByteBuffer cacheKey = ByteBuffer.allocate(1 + coordsCacheKey.length + dimLensCacheKey.length)
-                                          .put(coordsCacheKey)
-                                          .put(dimLensCacheKey)
+    final ByteBuffer cacheKey = ByteBuffer.allocate(1 + minCoordsCacheKey.length + maxCoordsCacheKey.length)
+                                          .put(minCoordsCacheKey)
+                                          .put(maxCoordsCacheKey)
                                           .put(CACHE_TYPE_ID);
     return cacheKey.array();
   }

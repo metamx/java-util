@@ -73,11 +73,15 @@ public class Node
 
   public void addChild(Node node)
   {
+    node.setParent(this);
     children.add(node);
   }
 
   public void addChildren(List<Node> nodes)
   {
+    for (Node node : nodes) {
+      node.setParent(this);
+    }
     children.addAll(nodes);
   }
 
@@ -125,8 +129,9 @@ public class Node
     return true;
   }
 
-  public void enclose()
+  public boolean enclose()
   {
+    boolean retVal = false;
     float[] minCoords = new float[getNumDims()];
     Arrays.fill(minCoords, Float.MAX_VALUE);
     float[] maxCoords = new float[getNumDims()];
@@ -139,8 +144,16 @@ public class Node
       }
     }
 
-    System.arraycopy(minCoords, 0, minCoordinates, 0, minCoordinates.length);
-    System.arraycopy(maxCoords, 0, maxCoordinates, 0, maxCoordinates.length);
+    if (!Arrays.equals(minCoords, minCoordinates)) {
+      System.arraycopy(minCoords, 0, minCoordinates, 0, minCoordinates.length);
+      retVal = true;
+    }
+    if (!Arrays.equals(maxCoords, maxCoordinates)) {
+      System.arraycopy(maxCoords, 0, maxCoordinates, 0, maxCoordinates.length);
+      retVal = true;
+    }
+
+    return retVal;
   }
 
   private double calculateArea()

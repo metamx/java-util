@@ -10,6 +10,24 @@ import com.metamx.common.spatial.rtree.ImmutablePoint;
  */
 public class RadiusBound extends RectangularBound
 {
+  private static float[] getMinCoords(float[] coords, float radius)
+  {
+    float[] retVal = new float[coords.length];
+    for (int i = 0; i < coords.length; i++) {
+      retVal[i] = coords[i] - radius;
+    }
+    return retVal;
+  }
+
+  private static float[] getMaxCoords(float[] coords, float radius)
+  {
+    float[] retVal = new float[coords.length];
+    for (int i = 0; i < coords.length; i++) {
+      retVal[i] = coords[i] + radius;
+    }
+    return retVal;
+  }
+
   private final float[] coords;
   private final float radius;
 
@@ -19,7 +37,7 @@ public class RadiusBound extends RectangularBound
       @JsonProperty("radius") float radius
   )
   {
-    super(coords, new float[]{radius, radius});
+    super(getMinCoords(coords, radius), getMaxCoords(coords, radius));
 
     this.coords = coords;
     this.radius = radius;

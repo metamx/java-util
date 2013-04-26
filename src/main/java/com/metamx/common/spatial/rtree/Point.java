@@ -73,7 +73,8 @@ public class Point extends Node
   }
 
   @Override
-  public void enclose()
+  public boolean enclose()
   {
+    return false;
   }
 }

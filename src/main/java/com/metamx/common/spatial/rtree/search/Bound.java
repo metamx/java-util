@@ -14,8 +14,6 @@ import com.metamx.common.spatial.rtree.ImmutablePoint;
 })
 public interface Bound
 {
-  public float[] getCoordinates();
-
   public int getNumDims();
 
   public boolean overlaps(ImmutableNode node);
