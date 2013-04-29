@@ -65,6 +65,11 @@ public class Sequences
     return new FilteredSequence<T>(sequence, pred);
   }
 
+  public static <T> Sequence<T> limit(final Sequence<T> sequence, final int limit)
+  {
+    return new LimitedSequence<T>(sequence, limit);
+  }
+
   public static <T, ListType extends List<T>> ListType toList(Sequence<T> seq, ListType list)
   {
     return seq.accumulate(list, Accumulators.<ListType, T>list());
