@@ -16,12 +16,19 @@
 
 package com.metamx.common.lifecycle;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.metamx.common.logger.Logger;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  */
@@ -29,11 +36,31 @@ public class Lifecycle
 {
   private static final Logger log = new Logger(Lifecycle.class);
 
-  private final Deque<Handler> handlers = new LinkedList<Handler>();
+  private final Map<Stage, Deque<Handler>> handlers;
+
+  public static enum Stage
+  {
+    NORMAL,
+    LAST
+  }
+
+  public Lifecycle()
+  {
+    handlers = Maps.newHashMap();
+    for (Stage stage : Stage.values()) {
+      handlers.put(stage, Lists.<Handler>newLinkedList());
+    }
+  }
 
   public <T> T addManagedInstance(T o)
   {
     addHandler(new AnnotationBasedHandler(o));
+    return o;
+  }
+
+  public <T> T addManagedInstance(T o, Stage stage)
+  {
+    addHandler(new AnnotationBasedHandler(o), stage);
     return o;
   }
 
@@ -43,23 +70,38 @@ public class Lifecycle
     return o;
   }
 
+  public <T> T addStartCloseInstance(T o, Stage stage)
+  {
+    addHandler(new StartCloseHandler(o), stage);
+    return o;
+  }
+
   public void addHandler(Handler handler)
   {
-    handlers.addLast(handler);
+    addHandler(handler, Stage.NORMAL);
+  }
+
+  public void addHandler(Handler handler, Stage stage)
+  {
+    handlers.get(stage).addLast(handler);
   }
 
   public void start() throws Exception
   {
-    for (Handler handler : handlers) {
-      handler.start();
+    for (Stage stage : stagesOrdered()) {
+      for (Handler handler : handlers.get(stage)) {
+        handler.start();
+      }
     }
   }
 
   public void stop()
   {
-    final Iterator<Handler> iter = handlers.descendingIterator();
-    while (iter.hasNext()) {
-      iter.next().stop();
+    for (Stage stage : Lists.reverse(stagesOrdered())) {
+      final Iterator<Handler> iter = handlers.get(stage).descendingIterator();
+      while (iter.hasNext()) {
+        iter.next().stop();
+      }
     }
   }
 
@@ -81,6 +123,12 @@ public class Lifecycle
 
     Thread.currentThread().join();
   }
+
+  private static List<Stage> stagesOrdered()
+  {
+    return Arrays.asList(Stage.values());
+  }
+
 
   public static interface Handler
   {
