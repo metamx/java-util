@@ -1,7 +1,5 @@
 package com.metamx.common.guava;
 
-import com.google.common.base.Predicate;
-
 /**
  */
 public class LimitedAccumulator<OutType, T> implements Accumulator<OutType, T>
@@ -12,8 +10,7 @@ public class LimitedAccumulator<OutType, T> implements Accumulator<OutType, T>
   private volatile int count = 0;
 
   public LimitedAccumulator(
-      int limit,
-      Accumulator<OutType, T> accumulator
+      Accumulator<OutType, T> accumulator, int limit
   )
   {
     this.limit = limit;

@@ -27,7 +27,7 @@ import java.util.PriorityQueue;
 
 /**
  */
-public class MergeSequence<T> implements Sequence<T>
+public class MergeSequence<T> extends YieldingSequenceBase<T>
 {
   private final Ordering<T> ordering;
   private final Sequence<Sequence<T>> baseSequences;
@@ -39,19 +39,6 @@ public class MergeSequence<T> implements Sequence<T>
   {
     this.ordering = ordering;
     this.baseSequences = baseSequences;
-  }
-
-  @Override
-  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator)
-  {
-    Yielder<OutType> yielder = toYielder(initValue, YieldingAccumulators.fromAccumulator(accumulator));
-
-    try {
-      return yielder.get();
-    }
-    finally {
-      Closeables.closeQuietly(yielder);
-    }
   }
 
   @Override
