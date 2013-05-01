@@ -609,6 +609,16 @@ public enum Granularity
     return new IntervalIterable(input);
   }
 
+  public Iterable<Interval> getReverseIterable(final DateTime start, final DateTime end)
+  {
+    return getReverseIterable(new Interval(start, end));
+  }
+
+  public Iterable<Interval> getReverseIterable(final Interval input)
+  {
+    return new ReverseIntervalIterable(input);
+  }
+
   public class IntervalIterable implements Iterable<Interval>
   {
     private final Interval inputInterval;
@@ -622,6 +632,23 @@ public enum Granularity
     public Iterator<Interval> iterator()
     {
       return new IntervalIterator(inputInterval);
+    }
+
+  }
+
+  public class ReverseIntervalIterable implements Iterable<Interval>
+  {
+    private final Interval inputInterval;
+
+    public ReverseIntervalIterable(Interval inputInterval)
+    {
+      this.inputInterval = inputInterval;
+    }
+
+    @Override
+    public Iterator<Interval> iterator()
+    {
+      return new ReverseIntervalIterator(inputInterval);
     }
 
   }
@@ -657,6 +684,48 @@ public enum Granularity
 
       currStart = currEnd;
       currEnd = increment(currStart);
+
+      return retVal;
+    }
+
+    @Override
+    public void remove()
+    {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+  public class ReverseIntervalIterator implements Iterator<Interval> {
+    private final Interval inputInterval;
+
+    private DateTime currStart;
+    private DateTime currEnd;
+
+    public ReverseIntervalIterator(Interval inputInterval)
+    {
+      this.inputInterval = inputInterval;
+
+      currEnd = inputInterval.getEnd();
+      currStart = decrement(currEnd);
+
+    }
+
+    @Override
+    public boolean hasNext()
+    {
+      return currEnd.isAfter(inputInterval.getStart());
+    }
+
+    @Override
+    public Interval next()
+    {
+      if (!hasNext()) {
+        throw new NoSuchElementException("There are no more intervals");
+      }
+      Interval retVal = new Interval(currStart, currEnd);
+
+      currEnd = currStart;
+      currStart = decrement(currEnd);
 
       return retVal;
     }
