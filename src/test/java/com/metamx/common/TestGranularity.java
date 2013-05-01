@@ -387,6 +387,36 @@ public class TestGranularity
   }
 
   @Test
+  public void testGetReverseIterable() throws Exception
+  {
+    DateTime start = new DateTime("2011-01-01T00:00:00");
+    DateTime end = new DateTime("2011-01-14T00:00:00");
+
+    Iterator<Interval> intervals = DAY.getReverseIterable(start, end).iterator();
+
+    Assert.assertEquals(new Interval("2011-01-13/P1d"), intervals.next());
+    Assert.assertEquals(new Interval("2011-01-12/P1d"), intervals.next());
+    Assert.assertEquals(new Interval("2011-01-11/P1d"), intervals.next());
+    Assert.assertEquals(new Interval("2011-01-10/P1d"), intervals.next());
+    Assert.assertEquals(new Interval("2011-01-09/P1d"), intervals.next());
+    Assert.assertEquals(new Interval("2011-01-08/P1d"), intervals.next());
+    Assert.assertEquals(new Interval("2011-01-07/P1d"), intervals.next());
+    Assert.assertEquals(new Interval("2011-01-06/P1d"), intervals.next());
+    Assert.assertEquals(new Interval("2011-01-05/P1d"), intervals.next());
+    Assert.assertEquals(new Interval("2011-01-04/P1d"), intervals.next());
+    Assert.assertEquals(new Interval("2011-01-03/P1d"), intervals.next());
+    Assert.assertEquals(new Interval("2011-01-02/P1d"), intervals.next());
+    Assert.assertEquals(new Interval("2011-01-01/P1d"), intervals.next());
+
+    try {
+      intervals.next();
+    }
+    catch (NoSuchElementException e) {
+      Assert.assertTrue(true);
+    }
+  }
+
+  @Test
   public void testBucket()
   {
     DateTime dt = new DateTime("2011-02-03T04:05:06.100");
