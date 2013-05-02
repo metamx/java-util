@@ -18,8 +18,11 @@ package com.metamx.common.guava;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Lists;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -68,6 +71,14 @@ public class Sequences
   public static <T> Sequence<T> limit(final Sequence<T> sequence, final int limit)
   {
     return new LimitedSequence<T>(sequence, limit);
+  }
+
+  // This will materialize the entire sequence in memory. Use at your own risk.
+  public static <T> Sequence<T> sort(final Sequence<T> sequence, final Comparator<T> comparator)
+  {
+    List<T> seqList = Sequences.toList(sequence, Lists.<T>newArrayList());
+    Collections.sort(seqList, comparator);
+    return BaseSequence.simple(seqList);
   }
 
   public static <T, ListType extends List<T>> ListType toList(Sequence<T> seq, ListType list)
