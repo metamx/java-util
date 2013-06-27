@@ -17,14 +17,17 @@
 package com.metamx.common.concurrent;
 
 import org.skife.config.Config;
+import org.skife.config.Default;
 
 /**
  */
 public abstract class ExecutorServiceConfig
 {
   @Config(value="${base_path}.formatString")
+  @Default("processing-%s")
   public abstract String getFormatString();
 
   @Config(value="${base_path}.numThreads")
+  @Default("1")
   public abstract int getNumThreads();
 }
