@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
+import com.metamx.common.ByteBufferUtils;
 import com.metamx.common.ISE;
 
 import java.io.BufferedReader;
@@ -41,6 +42,8 @@ import java.util.Set;
  */
 public class SmooshedFileMapper implements Closeable
 {
+  private static Map<File, SmooshedFileMapper> fileMappers = Maps.newHashMap();
+
   public static SmooshedFileMapper load(File baseDir) throws IOException
   {
     File metaFile = FileSmoosher.metaFile(baseDir);
@@ -81,10 +84,20 @@ public class SmooshedFileMapper implements Closeable
         );
       }
 
-      return new SmooshedFileMapper(outFiles, internalFiles);
+      SmooshedFileMapper retVal = new SmooshedFileMapper(outFiles, internalFiles);
+      fileMappers.put(baseDir, retVal);
+      return retVal;
     }
     finally {
       Closeables.close(in, false);
+    }
+  }
+
+  public static void close(File baseDir) throws IOException
+  {
+    SmooshedFileMapper toRemove = fileMappers.get(baseDir);
+    if (toRemove != null) {
+      toRemove.close();
     }
   }
 
@@ -132,6 +145,8 @@ public class SmooshedFileMapper implements Closeable
   @Override
   public void close() throws IOException
   {
-    // Nothing really to close, but hopefully we'll switch to something that actually lets us close mapped stuffs
+    for (MappedByteBuffer mappedByteBuffer : buffersList) {
+      ByteBufferUtils.unmap(mappedByteBuffer);
+    }
   }
 }

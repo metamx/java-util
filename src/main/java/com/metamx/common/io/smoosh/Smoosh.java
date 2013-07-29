@@ -18,13 +18,11 @@ package com.metamx.common.io.smoosh;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
-import com.google.common.io.InputSupplier;
 import com.metamx.common.collect.Utils;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
@@ -91,4 +89,8 @@ public class Smoosh
     return SmooshedFileMapper.load(inDir);
   }
 
+  public static void close(File inDir) throws IOException
+  {
+    SmooshedFileMapper.close(inDir);
+  }
 }
