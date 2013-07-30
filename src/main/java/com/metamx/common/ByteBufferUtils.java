@@ -35,7 +35,7 @@ public class ByteBufferUtils
       unmap = unmapMethod;
     }
     catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new UOE(e, "Exception thrown while trying to find unmap method on MappedByteBuffer, this method must exist in your VM in order for this to work");
     }
   }
 
