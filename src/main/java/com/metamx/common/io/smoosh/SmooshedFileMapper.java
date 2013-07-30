@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
+import com.metamx.common.ByteBufferUtils;
 import com.metamx.common.ISE;
 
 import java.io.BufferedReader;
@@ -132,6 +133,8 @@ public class SmooshedFileMapper implements Closeable
   @Override
   public void close() throws IOException
   {
-    // Nothing really to close, but hopefully we'll switch to something that actually lets us close mapped stuffs
+    for (MappedByteBuffer mappedByteBuffer : buffersList) {
+      ByteBufferUtils.unmap(mappedByteBuffer);
+    }
   }
 }
