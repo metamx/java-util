@@ -88,9 +88,4 @@ public class Smoosh
   {
     return SmooshedFileMapper.load(inDir);
   }
-
-  public static void close(File inDir) throws IOException
-  {
-    SmooshedFileMapper.close(inDir);
-  }
 }

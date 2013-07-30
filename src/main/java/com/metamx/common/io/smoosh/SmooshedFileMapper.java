@@ -42,8 +42,6 @@ import java.util.Set;
  */
 public class SmooshedFileMapper implements Closeable
 {
-  private static Map<File, SmooshedFileMapper> fileMappers = Maps.newHashMap();
-
   public static SmooshedFileMapper load(File baseDir) throws IOException
   {
     File metaFile = FileSmoosher.metaFile(baseDir);
@@ -84,20 +82,10 @@ public class SmooshedFileMapper implements Closeable
         );
       }
 
-      SmooshedFileMapper retVal = new SmooshedFileMapper(outFiles, internalFiles);
-      fileMappers.put(baseDir, retVal);
-      return retVal;
+      return new SmooshedFileMapper(outFiles, internalFiles);
     }
     finally {
       Closeables.close(in, false);
-    }
-  }
-
-  public static void close(File baseDir) throws IOException
-  {
-    SmooshedFileMapper toRemove = fileMappers.get(baseDir);
-    if (toRemove != null) {
-      toRemove.close();
     }
   }
 
