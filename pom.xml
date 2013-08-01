@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.metamx</groupId>
     <artifactId>java-util</artifactId>
-    <version>0.22.6</version>
+    <version>0.22.7-SNAPSHOT</version>
     <name>java-util</name>
     <description>Java and jvm utilities</description>
     <scm>
