@@ -43,6 +43,59 @@ public class LifecycleTest
     Assert.assertEquals(Lists.reverse(expectedOrder), stopOrder);
   }
 
+  @Test
+  public void testAddToLifecycleInStartMethod() throws Exception
+  {
+    final Lifecycle lifecycle = new Lifecycle();
+
+    final List<Integer> startOrder = Lists.newArrayList();
+    final List<Integer> stopOrder = Lists.newArrayList();
+
+    lifecycle.addManagedInstance(new ObjectToBeLifecycled(0, startOrder, stopOrder));
+    lifecycle.addHandler(
+        new Lifecycle.Handler()
+        {
+          @Override
+          public void start() throws Exception
+          {
+            lifecycle.addMaybeStartManagedInstance(
+                new ObjectToBeLifecycled(1, startOrder, stopOrder), Lifecycle.Stage.NORMAL
+            );
+            lifecycle.addMaybeStartManagedInstance(
+                new ObjectToBeLifecycled(2, startOrder, stopOrder), Lifecycle.Stage.NORMAL
+            );
+            lifecycle.addMaybeStartManagedInstance(
+                new ObjectToBeLifecycled(3, startOrder, stopOrder), Lifecycle.Stage.LAST
+            );
+            lifecycle.addMaybeStartStartCloseInstance(new ObjectToBeLifecycled(4, startOrder, stopOrder));
+            lifecycle.addMaybeStartManagedInstance(new ObjectToBeLifecycled(5, startOrder, stopOrder));
+            lifecycle.addMaybeStartStartCloseInstance(
+                new ObjectToBeLifecycled(6, startOrder, stopOrder), Lifecycle.Stage.LAST
+            );
+            lifecycle.addMaybeStartManagedInstance(new ObjectToBeLifecycled(7, startOrder, stopOrder));
+          }
+
+          @Override
+          public void stop()
+          {
+
+          }
+        }
+    );
+
+    final List<Integer> expectedOrder = Arrays.asList(0, 1, 2, 4, 5, 7, 3, 6);
+
+    lifecycle.start();
+
+    Assert.assertEquals(expectedOrder, startOrder);
+    Assert.assertEquals(0, stopOrder.size());
+
+    lifecycle.stop();
+
+    Assert.assertEquals(expectedOrder, startOrder);
+    Assert.assertEquals(Lists.reverse(expectedOrder), stopOrder);
+  }
+
   public static class ObjectToBeLifecycled
   {
     private final int id;
