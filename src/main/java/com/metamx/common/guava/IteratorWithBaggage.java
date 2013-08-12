@@ -16,13 +16,15 @@
 
 package com.metamx.common.guava;
 
+import com.metamx.common.parsers.CloseableIterator;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
 
 /**
  */
-public class IteratorWithBaggage<T> implements Iterator<T>, Closeable
+public class IteratorWithBaggage<T> implements CloseableIterator<T>
 {
   private final Iterator<T> baseIter;
   private final Closeable baggage;

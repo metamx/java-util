@@ -19,12 +19,14 @@ package com.metamx.common.guava;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.metamx.common.parsers.CloseableIterator;
 import junit.framework.Assert;
 import org.junit.Test;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -92,6 +94,69 @@ public class ConcatSequenceTest
             Arrays.asList(9, 10, 11, 12)
         )
     );
+  }
+
+  @Test
+  public void testClosingOfSequenceSequence() throws Exception
+  {
+    final int[] closedCount = {0};
+    final Sequence<Integer> seq = Sequences.concat(
+        new BaseSequence<Sequence<Integer>, Iterator<Sequence<Integer>>>(
+            new BaseSequence.IteratorMaker<Sequence<Integer>, Iterator<Sequence<Integer>>>()
+            {
+              @Override
+              public Iterator<Sequence<Integer>> make()
+              {
+                return Arrays.asList(
+                    Sequences.simple(Arrays.asList(1, 2, 3, 4)),
+                    Sequences.simple(Arrays.asList(5, 6, 7, 8))
+                ).iterator();
+              }
+
+              @Override
+              public void cleanup(Iterator<Sequence<Integer>> iterFromMake)
+              {
+                ++closedCount[0];
+              }
+            }
+        )
+    );
+
+    Assert.assertEquals(
+        9,
+        seq.accumulate(
+            1,
+            new Accumulator<Integer, Integer>()
+            {
+              @Override
+              public Integer accumulate(Integer accumulated, Integer in)
+              {
+                Assert.assertEquals(accumulated, in);
+                return ++accumulated;
+              }
+            }
+        ).intValue()
+    );
+
+    Assert.assertEquals(1, closedCount[0]);
+
+    final Yielder<Integer> yielder = seq.toYielder(
+        1,
+        new YieldingAccumulator<Integer, Integer>()
+        {
+          @Override
+          public Integer accumulate(Integer accumulated, Integer in)
+          {
+            Assert.assertEquals(accumulated, in);
+            return ++accumulated;
+          }
+        }
+    );
+    Assert.assertEquals(9, yielder.get().intValue());
+
+    Assert.assertEquals(1, closedCount[0]);
+    yielder.close();
+    Assert.assertEquals(2, closedCount[0]);
   }
 
   @SuppressWarnings("unchecked")
