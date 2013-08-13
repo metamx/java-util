@@ -172,24 +172,7 @@ public class ConcatSequenceTest
               {
                 return Arrays.asList(
                     Sequences.simple(Arrays.asList(1, 2, 3, 4)),
-                    new Sequence<Integer>()
-                    {
-                      @Override
-                      public <OutType> OutType accumulate(
-                          OutType initValue, Accumulator<OutType, Integer> accumulator
-                      )
-                      {
-                        throw new UnsupportedOperationException();
-                      }
-
-                      @Override
-                      public <OutType> Yielder<OutType> toYielder(
-                          OutType initValue, YieldingAccumulator<OutType, Integer> accumulator
-                      )
-                      {
-                        throw new UnsupportedOperationException();
-                      }
-                    }
+                    new UnsupportedSequence()
                 ).iterator();
               }
 

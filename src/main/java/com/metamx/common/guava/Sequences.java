@@ -20,6 +20,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 
+import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -71,6 +72,11 @@ public class Sequences
   public static <T> Sequence<T> limit(final Sequence<T> sequence, final int limit)
   {
     return new LimitedSequence<T>(sequence, limit);
+  }
+
+  public static <T> Sequence<T> withBaggage(final Sequence<T> seq, Closeable baggage)
+  {
+    return new ResourceClosingSequence<T>(seq, baggage);
   }
 
   // This will materialize the entire sequence in memory. Use at your own risk.
