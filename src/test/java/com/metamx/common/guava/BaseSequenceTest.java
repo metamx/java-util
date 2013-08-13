@@ -19,7 +19,9 @@ package com.metamx.common.guava;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  */
@@ -38,4 +40,48 @@ public class BaseSequenceTest
     final List<Integer> vals = Arrays.asList();
     SequenceTestHelper.testAll(BaseSequence.simple(vals), vals);
   }
+
+  @Test
+  public void testExceptionThrownInIterator() throws Exception
+  {
+    final AtomicInteger closedCounter = new AtomicInteger(0);
+    Sequence<Integer> seq = new BaseSequence<Integer, Iterator<Integer>>(
+        new BaseSequence.IteratorMaker<Integer, Iterator<Integer>>()
+        {
+          @Override
+          public Iterator<Integer> make()
+          {
+            return new Iterator<Integer>()
+            {
+              @Override
+              public boolean hasNext()
+              {
+                throw new UnsupportedOperationException();
+              }
+
+              @Override
+              public Integer next()
+              {
+                throw new UnsupportedOperationException();
+              }
+
+              @Override
+              public void remove()
+              {
+                throw new UnsupportedOperationException();
+              }
+            };
+          }
+
+          @Override
+          public void cleanup(Iterator<Integer> iterFromMake)
+          {
+            closedCounter.incrementAndGet();
+          }
+        }
+    );
+
+    SequenceTestHelper.testClosed(closedCounter, seq);
+  }
+
 }

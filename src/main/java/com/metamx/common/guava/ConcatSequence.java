@@ -17,6 +17,7 @@
 package com.metamx.common.guava;
 
 import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
 
 import java.io.IOException;
 
@@ -67,7 +68,15 @@ public class ConcatSequence<T> implements Sequence<T>
         }
     );
 
-    return makeYielder(yielderYielder, initValue, accumulator);
+    try {
+      return makeYielder(yielderYielder, initValue, accumulator);
+    }
+    catch (RuntimeException e) {
+      // We caught a RuntimeException instead of returning a really, real, live, real boy, errr, iterator
+      // So we better try to close our stuff, 'cause the exception is what is making it out of here.
+      Closeables.closeQuietly(yielderYielder);
+      throw e;
+    }
   }
 
   public <OutType> Yielder<OutType> makeYielder(

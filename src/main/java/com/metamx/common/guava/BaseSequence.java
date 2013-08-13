@@ -17,6 +17,7 @@
 package com.metamx.common.guava;
 
 import com.google.common.io.Closeables;
+import com.metamx.common.logger.Logger;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -26,6 +27,8 @@ import java.util.Iterator;
  */
 public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T>
 {
+  private static final Logger log = new Logger(BaseSequence.class);
+
   private final IteratorMaker<T, IterType> maker;
 
   public static <T> Sequence<T> simple(final Iterable<T> iterable)
@@ -71,7 +74,22 @@ public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T
   @Override
   public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator)
   {
-    return makeYielder(initValue, accumulator, maker.make());
+    final IterType iterator = maker.make();
+
+    try {
+      return makeYielder(initValue, accumulator, iterator);
+    }
+    catch (RuntimeException e) {
+      // We caught a RuntimeException instead of returning a really, real, live, real boy, errr, iterator
+      // So we better try to close our stuff, 'cause the exception is what is making it out of here.
+      try {
+        maker.cleanup(iterator);
+      }
+      catch (RuntimeException e1) {
+        log.error(e1, "Exception thrown when closing maker.  Logging and ignoring.");
+      }
+      throw e;
+    }
   }
 
   private <OutType> Yielder<OutType> makeYielder(

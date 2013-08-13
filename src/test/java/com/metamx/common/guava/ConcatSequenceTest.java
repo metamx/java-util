@@ -19,7 +19,6 @@ package com.metamx.common.guava;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.metamx.common.parsers.CloseableIterator;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -28,6 +27,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  */
@@ -159,8 +159,54 @@ public class ConcatSequenceTest
     Assert.assertEquals(2, closedCount[0]);
   }
 
+  @Test
+  public void testClosingOfSequenceSequenceWhenExceptionThrown() throws Exception
+  {
+    final AtomicInteger closedCount = new AtomicInteger(0);
+    final Sequence<Integer> seq = Sequences.concat(
+        new BaseSequence<Sequence<Integer>, Iterator<Sequence<Integer>>>(
+            new BaseSequence.IteratorMaker<Sequence<Integer>, Iterator<Sequence<Integer>>>()
+            {
+              @Override
+              public Iterator<Sequence<Integer>> make()
+              {
+                return Arrays.asList(
+                    Sequences.simple(Arrays.asList(1, 2, 3, 4)),
+                    new Sequence<Integer>()
+                    {
+                      @Override
+                      public <OutType> OutType accumulate(
+                          OutType initValue, Accumulator<OutType, Integer> accumulator
+                      )
+                      {
+                        throw new UnsupportedOperationException();
+                      }
+
+                      @Override
+                      public <OutType> Yielder<OutType> toYielder(
+                          OutType initValue, YieldingAccumulator<OutType, Integer> accumulator
+                      )
+                      {
+                        throw new UnsupportedOperationException();
+                      }
+                    }
+                ).iterator();
+              }
+
+              @Override
+              public void cleanup(Iterator<Sequence<Integer>> iterFromMake)
+              {
+                closedCount.incrementAndGet();
+              }
+            }
+        )
+    );
+
+    SequenceTestHelper.testClosed(closedCount, seq);
+  }
+
   @SuppressWarnings("unchecked")
-  public void testAll(Iterable<List<Integer>> vals) throws IOException
+  public void testAll(Iterable <List<Integer>> vals) throws IOException
   {
     final Iterable<TestSequence<Integer>> theSequences = Iterables.transform(
         vals,

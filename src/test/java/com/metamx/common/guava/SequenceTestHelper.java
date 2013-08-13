@@ -21,6 +21,7 @@ import junit.framework.Assert;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  */
@@ -114,5 +115,52 @@ public class SequenceTestHelper
     );
 
     Assert.assertEquals(prefix, expectedSum, sum);
+  }
+
+  public static void testClosed(AtomicInteger closedCounter, Sequence<Integer> seq)
+  {
+    boolean exceptionThrown = false;
+    try {
+      seq.accumulate(
+          1,
+          new Accumulator<Integer, Integer>()
+          {
+            @Override
+            public Integer accumulate(Integer accumulated, Integer in)
+            {
+              return ++accumulated;
+            }
+          }
+      );
+    }
+    catch (UnsupportedOperationException e) {
+      exceptionThrown = true;
+    }
+
+    Assert.assertTrue(exceptionThrown);
+    Assert.assertEquals(1, closedCounter.get());
+
+    exceptionThrown = false;
+    Yielder<Integer> yielder = null;
+    try {
+      yielder = seq.toYielder(
+          1,
+          new YieldingAccumulator<Integer, Integer>()
+          {
+            @Override
+            public Integer accumulate(Integer accumulated, Integer in)
+            {
+              return ++accumulated;
+            }
+          }
+      );
+    }
+    catch (UnsupportedOperationException e) {
+      exceptionThrown = true;
+    }
+
+    Assert.assertNull(yielder);
+    Assert.assertTrue(exceptionThrown);
+    Assert.assertEquals(2, closedCounter.get());
   }
 }
