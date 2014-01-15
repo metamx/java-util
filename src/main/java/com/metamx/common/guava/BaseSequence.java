@@ -16,6 +16,7 @@
 
 package com.metamx.common.guava;
 
+import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.metamx.common.logger.Logger;
 
@@ -79,8 +80,8 @@ public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T
     try {
       return makeYielder(initValue, accumulator, iterator);
     }
-    catch (RuntimeException e) {
-      // We caught a RuntimeException instead of returning a really, real, live, real boy, errr, iterator
+    catch (Exception e) {
+      // We caught an Exception instead of returning a really, real, live, real boy, errr, iterator
       // So we better try to close our stuff, 'cause the exception is what is making it out of here.
       try {
         maker.cleanup(iterator);
@@ -88,7 +89,7 @@ public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T
       catch (RuntimeException e1) {
         log.error(e1, "Exception thrown when closing maker.  Logging and ignoring.");
       }
-      throw e;
+      throw Throwables.propagate(e);
     }
   }
 
@@ -130,7 +131,20 @@ public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T
       public Yielder<OutType> next(OutType initValue)
       {
         accumulator.reset();
-        return makeYielder(initValue, accumulator, iter);
+        try {
+          return makeYielder(initValue, accumulator, iter);
+        }
+        catch (Exception e) {
+          // We caught an Exception instead of returning a really, real, live, real boy, errr, iterator
+          // So we better try to close our stuff, 'cause the exception is what is making it out of here.
+          try {
+            maker.cleanup(iter);
+          }
+          catch (RuntimeException e1) {
+            log.error(e1, "Exception thrown when closing maker.  Logging and ignoring.");
+          }
+          throw Throwables.propagate(e);
+        }
       }
 
       @Override
@@ -150,6 +164,7 @@ public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T
   public static interface IteratorMaker<T, IterType extends Iterator<T>>
   {
     public IterType make();
+
     public void cleanup(IterType iterFromMake);
   }
 }
