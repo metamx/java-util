@@ -37,7 +37,9 @@ public class ResourceClosingYielder<OutType> implements Yielder<OutType>
   @Override
   public void close() throws IOException
   {
-    closeable.close();
+    if (closeable != null) {
+      closeable.close();
+    }
     baseYielder.close();
   }
 }
