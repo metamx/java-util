@@ -23,11 +23,13 @@ import org.skife.config.Default;
  */
 public abstract class ExecutorServiceConfig
 {
-  @Config(value="${base_path}.formatString")
+  @Config(value = "${base_path}.formatString")
   @Default("processing-%s")
   public abstract String getFormatString();
 
-  @Config(value="${base_path}.numThreads")
-  @Default("1")
-  public abstract int getNumThreads();
+  @Config(value = "${base_path}.numThreads")
+  public int getNumThreads()
+  {
+    return Runtime.getRuntime().availableProcessors() - 1;
+  }
 }
