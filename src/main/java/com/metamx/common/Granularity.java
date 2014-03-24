@@ -158,7 +158,7 @@ public enum Granularity
           return date;
         }
       },
-    QUARTER_HOUR
+    FIFTEEN_MINUTE
       {
 
         @Override

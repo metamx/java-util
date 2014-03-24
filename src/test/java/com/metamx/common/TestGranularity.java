@@ -42,7 +42,7 @@ public class TestGranularity
   Granularity SECOND = Granularity.SECOND;
   Granularity MINUTE = Granularity.MINUTE;
   Granularity HOUR = Granularity.HOUR;
-  Granularity QUARTER_HOUR = Granularity.QUARTER_HOUR;
+  Granularity FIFTEEN_MINUTE = Granularity.FIFTEEN_MINUTE;
   Granularity DAY = Granularity.DAY;
   Granularity WEEK = Granularity.WEEK;
   Granularity MONTH = Granularity.MONTH;
@@ -125,7 +125,7 @@ public class TestGranularity
   }
 
   @Test
-  public void testQuarterHourToDate() {
+  public void testFifteenMinuteToDate() {
 
     PathDate[] minuteChecks = {
         new PathDate(new DateTime(2011, 3, 15, 20, 45, 0, 0), null, "y=2011/m=03/d=15/H=20/M=50/S=43/Test0"),
@@ -155,7 +155,7 @@ public class TestGranularity
         new PathDate(null, IllegalFieldValueException.class, "error/y=2011/m=13/d=20/H=20/M=42/S=24/Test15")
     };
 
-    checkToDate(QUARTER_HOUR, Granularity.Formatter.DEFAULT, minuteChecks);
+    checkToDate(FIFTEEN_MINUTE, Granularity.Formatter.DEFAULT, minuteChecks);
   }
 
   @Test
