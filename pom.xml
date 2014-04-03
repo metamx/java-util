@@ -3,14 +3,14 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.metamx</groupId>
     <artifactId>java-util</artifactId>
-    <version>0.25.4-SNAPSHOT</version>
+    <version>0.25.4</version>
     <name>java-util</name>
     <description>Java and jvm utilities</description>
     <scm>
         <connection>scm:git:ssh://git@github.com/metamx/java-util.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/metamx/java-util.git</developerConnection>
         <url>http://www.github.com/metamx/java-util</url>
-      <tag>HEAD</tag>
+      <tag>java-util-0.25.4</tag>
   </scm>
 
     <properties>
