@@ -44,8 +44,8 @@ public class StreamUtils
       ByteStreams.copy(is, os);
     }
     finally {
-      Closeables.closeQuietly(is);
-      Closeables.closeQuietly(os);
+      Closeables.close(is, true);
+      Closeables.close(os, true);
     }
   }
 
@@ -60,8 +60,8 @@ public class StreamUtils
       copyWithTimeout(is, os, timeout);
     }
     finally {
-      Closeables.closeQuietly(is);
-      Closeables.closeQuietly(os);
+      Closeables.close(is, true);
+      Closeables.close(os, true);
     }
   }
 
@@ -71,8 +71,8 @@ public class StreamUtils
       ByteStreams.copy(is, os);
     }
     finally {
-      Closeables.closeQuietly(is);
-      Closeables.closeQuietly(os);
+      Closeables.close(is, true);
+      Closeables.close(os, true);
     }
   }
 

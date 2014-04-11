@@ -3,6 +3,7 @@ package com.metamx.common.guava;
 import com.google.common.io.Closeables;
 
 import java.io.Closeable;
+import java.io.IOException;
 
 /**
  */
@@ -27,7 +28,12 @@ public class ResourceClosingSequence<T> extends YieldingSequenceBase<T>
       baseYielder = baseSequence.toYielder(initValue, accumulator);
     }
     catch (RuntimeException e) {
-      Closeables.closeQuietly(closeable);
+      try {
+        Closeables.close(closeable, true);
+      }
+      catch (IOException e1) {
+        //
+      }
       throw e;
     }
 
