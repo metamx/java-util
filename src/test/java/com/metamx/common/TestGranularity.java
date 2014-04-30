@@ -42,6 +42,7 @@ public class TestGranularity
   Granularity SECOND = Granularity.SECOND;
   Granularity MINUTE = Granularity.MINUTE;
   Granularity HOUR = Granularity.HOUR;
+  Granularity FIFTEEN_MINUTE = Granularity.FIFTEEN_MINUTE;
   Granularity DAY = Granularity.DAY;
   Granularity WEEK = Granularity.WEEK;
   Granularity MONTH = Granularity.MONTH;
@@ -121,6 +122,40 @@ public class TestGranularity
     };
 
     checkToDate(MINUTE, Granularity.Formatter.DEFAULT, minuteChecks);
+  }
+
+  @Test
+  public void testFifteenMinuteToDate() {
+
+    PathDate[] minuteChecks = {
+        new PathDate(new DateTime(2011, 3, 15, 20, 45, 0, 0), null, "y=2011/m=03/d=15/H=20/M=50/S=43/Test0"),
+        new PathDate(new DateTime(2011, 3, 15, 20, 45, 0, 0), null, "/y=2011/m=03/d=15/H=20/M=50/S=43/Test0"),
+        new PathDate(new DateTime(2011, 3, 15, 20, 45, 0, 0), null, "valid/y=2011/m=03/d=15/H=20/M=50/S=43/Test1"),
+        new PathDate(new DateTime(2011, 3, 15, 20, 45, 0, 0), null, "valid/y=2011/m=03/d=15/H=20/M=50/Test2"),
+        new PathDate(new DateTime(2011, 3, 15, 20, 00, 0, 0), null, "valid/y=2011/m=03/d=15/H=20/M=00/Test2a"),
+        new PathDate(new DateTime(2011, 3, 15, 20, 00, 0, 0), null, "valid/y=2011/m=03/d=15/H=20/M=14/Test2b"),
+        new PathDate(new DateTime(2011, 3, 15, 20, 15, 0, 0), null, "valid/y=2011/m=03/d=15/H=20/M=15/Test2c"),
+        new PathDate(new DateTime(2011, 3, 15, 20, 15, 0, 0), null, "valid/y=2011/m=03/d=15/H=20/M=29/Test2d"),
+        new PathDate(new DateTime(2011, 3, 15, 20, 30, 0, 0), null, "valid/y=2011/m=03/d=15/H=20/M=30/Test2e"),
+        new PathDate(new DateTime(2011, 3, 15, 20, 30, 0, 0), null, "valid/y=2011/m=03/d=15/H=20/M=44/Test2f"),
+        new PathDate(new DateTime(2011, 3, 15, 20, 45, 0, 0), null, "valid/y=2011/m=03/d=15/H=20/M=45/Test2g"),
+        new PathDate(new DateTime(2011, 3, 15, 20, 45, 0, 0), null, "valid/y=2011/m=03/d=15/H=20/M=59/Test2h"),
+        new PathDate(null, null, "valid/y=2011/m=03/d=15/H=20/Test3"),
+        new PathDate(null, null, "valid/y=2011/m=03/d=15/Test4"),
+        new PathDate(null, null, "valid/y=2011/m=03/Test5"),
+        new PathDate(null, null, "valid/y=2011/Test6"),
+        new PathDate(null, null, "null/y=/m=/d=/Test7"),
+        new PathDate(null, null, "null/m=10/y=2011/d=23/Test8"),
+        new PathDate(null, null, "null/Test9"),
+        new PathDate(null, null, ""), //Test10 Intentionally empty.
+        new PathDate(new DateTime(2011, 10, 20, 20, 30, 0, 0), null, "error/y=2011/m=10/d=20/H=20/M=42/S=72/Test11"),
+        new PathDate(null, IllegalFieldValueException.class, "error/y=2011/m=10/d=20/H=20/M=90/S=24/Test12"),
+        new PathDate(null, IllegalFieldValueException.class, "error/y=2011/m=10/d=20/H=42/M=42/S=24/Test13"),
+        new PathDate(null, IllegalFieldValueException.class, "error/y=2011/m=10/d=33/H=20/M=42/S=24/Test14"),
+        new PathDate(null, IllegalFieldValueException.class, "error/y=2011/m=13/d=20/H=20/M=42/S=24/Test15")
+    };
+
+    checkToDate(FIFTEEN_MINUTE, Granularity.Formatter.DEFAULT, minuteChecks);
   }
 
   @Test

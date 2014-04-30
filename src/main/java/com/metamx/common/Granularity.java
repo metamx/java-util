@@ -158,6 +158,51 @@ public enum Granularity
           return date;
         }
       },
+    FIFTEEN_MINUTE
+      {
+
+        @Override
+        public DateTimeFormatter getFormatter(Formatter type)
+        {
+          return MINUTE.getFormatter(type);
+        }
+
+        @Override
+        public ReadablePeriod getUnits(int count)
+        {
+          return Minutes.minutes(count * 15);
+        }
+
+        @Override
+        public DateTime truncate(DateTime time)
+        {
+          final MutableDateTime mutableDateTime = time.toMutableDateTime();
+
+          mutableDateTime.setMillisOfSecond(0);
+          mutableDateTime.setSecondOfMinute(0);
+          mutableDateTime.setMinuteOfHour(mutableDateTime.getMinuteOfHour() - (mutableDateTime.getMinuteOfHour() % 15));
+
+          return mutableDateTime.toDateTime();
+        }
+
+        @Override
+        public int numIn(ReadableInterval interval)
+        {
+          return Minutes.minutesIn(interval).getMinutes() / 15;
+        }
+
+        @Override
+        public DateTime toDate(String filePath, Formatter formatter)
+        {
+          Integer[] vals = getDateValues(filePath, formatter);
+
+          if (vals[1] != null && vals[2] != null && vals[3] != null && vals[4] != null && vals[5] != null) {
+            return truncate(new DateTime(vals[1], vals[2], vals[3], vals[4], vals[5], 0, 0));
+          }
+
+          return null;
+        }
+      },
   HOUR
       {
         DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'H'=HH");
