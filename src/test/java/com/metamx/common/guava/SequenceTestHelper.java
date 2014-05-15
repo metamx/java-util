@@ -41,6 +41,7 @@ public class SequenceTestHelper
   public static void testYield(final String prefix, Sequence<Integer> seq, final List<Integer> nums) throws IOException
   {
     testYield(prefix, 3, seq, nums);
+    testYield(prefix, 1, seq, nums);
   }
 
   public static void testYield(

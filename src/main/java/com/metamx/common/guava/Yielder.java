@@ -57,9 +57,9 @@ public interface Yielder<T> extends Closeable
   public Yielder<T> next(T initValue);
 
   /**
-   * Returns true if this is the last Yielder in the chain.  A Yielder that isDone() should have the final non-yielded
-   * result from the accumulator (or the initValue to the previous next() call).  It will probably break your code
-   * to call next() on a Yielder that is done and expect something good from it.
+   * Returns true if this is the last Yielder in the chain.  A Yielder that isDone() may return anything
+   * from both get() and next(), there is no contract and depending on those return values will likely lead to bugs.
+   * It will probably break your code to call next() on a Yielder that is done and expect something good from it.
    *
    * Once next() is called on this Yielder object, all further operations on this object are undefined.
    *
