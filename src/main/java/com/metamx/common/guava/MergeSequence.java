@@ -121,7 +121,7 @@ public class MergeSequence<T> extends YieldingSequenceBase<T>
       }
     }
 
-    if (pQueue.isEmpty()) {
+    if (pQueue.isEmpty() && !accumulator.yielded()) {
       return Yielders.done(retVal,  null);
     }
 

@@ -27,6 +27,30 @@ public class LimitedSequenceTest
   }
 
   @Test
+  public void testTwo() throws Exception
+  {
+    final List<Integer> nums = Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    final int threshold = 2;
+
+    SequenceTestHelper.testAll(
+        Sequences.limit(Sequences.simple(nums), threshold),
+        Lists.newArrayList(Iterables.limit(nums, threshold))
+    );
+  }
+
+  @Test
+  public void testOne() throws Exception
+  {
+    final List<Integer> nums = Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    final int threshold = 1;
+
+    SequenceTestHelper.testAll(
+        Sequences.limit(Sequences.simple(nums), threshold),
+        Lists.newArrayList(Iterables.limit(nums, threshold))
+    );
+  }
+
+  @Test
   public void testNoSideEffects() throws Exception
   {
     final List<Integer> nums = Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);

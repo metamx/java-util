@@ -28,7 +28,9 @@ public class LimitedSequence<T> extends YieldingSequenceBase<T>
   @Override
   public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator)
   {
-    final LimitedYieldingAccumulator<OutType, T> limitedAccumulator = new LimitedYieldingAccumulator<OutType, T>(accumulator);
+    final LimitedYieldingAccumulator<OutType, T> limitedAccumulator = new LimitedYieldingAccumulator<OutType, T>(
+        accumulator
+    );
     final Yielder<OutType> subYielder = baseSequence.toYielder(initValue, limitedAccumulator);
     return new LimitedYielder<OutType>(subYielder, limitedAccumulator);
   }
@@ -56,17 +58,25 @@ public class LimitedSequence<T> extends YieldingSequenceBase<T>
     @Override
     public Yielder<OutType> next(OutType initValue)
     {
-      final Yielder<OutType> next = subYielder.next(initValue);
-      if (! limitedAccumulator.withinThreshold()) {
-        return Yielders.done(next.get(), next);
+      if (!limitedAccumulator.withinThreshold()) {
+        return Yielders.done(initValue, subYielder);
       }
-      return new LimitedYielder<OutType>(LimitedYielder.this, limitedAccumulator);
+
+      Yielder<OutType> next = subYielder.next(initValue);
+      if (!limitedAccumulator.withinThreshold() && (!limitedAccumulator.yielded()
+                                                    || limitedAccumulator.isInterruptYield())) {
+        next = Yielders.done(next.get(), next);
+      }
+      return new LimitedYielder<OutType>(next, limitedAccumulator);
     }
 
     @Override
     public boolean isDone()
     {
-      return false;
+      return subYielder.isDone() || (
+          !limitedAccumulator.withinThreshold() && (!limitedAccumulator.yielded()
+                                                    || limitedAccumulator.isInterruptYield())
+      );
     }
 
     @Override
@@ -79,6 +89,7 @@ public class LimitedSequence<T> extends YieldingSequenceBase<T>
   private class LimitedYieldingAccumulator<OutType, T> extends DelegatingYieldingAccumulator<OutType, T>
   {
     int count;
+    boolean interruptYield = false;
 
     public LimitedYieldingAccumulator(YieldingAccumulator<OutType, T> accumulator)
     {
@@ -91,14 +102,30 @@ public class LimitedSequence<T> extends YieldingSequenceBase<T>
     {
       ++count;
 
-      if (! withinThreshold()) {
+      if (!withinThreshold()) {
+        // yield to interrupt the sequence
+        interruptYield = true;
+      }
+
+      // if delegate yields as well we need to distinguish between the two yields
+      final OutType retVal = super.accumulate(accumulated, in);
+      if (yielded() && interruptYield) {
+        interruptYield = false;
+      }
+      if (interruptYield) {
         yield();
       }
 
-      return super.accumulate(accumulated, in);
+      return retVal;
     }
 
-    private boolean withinThreshold() {
+    public boolean isInterruptYield()
+    {
+      return interruptYield;
+    }
+
+    private boolean withinThreshold()
+    {
       return count < limit;
     }
   }

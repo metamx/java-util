@@ -30,7 +30,7 @@ public class ResourceClosingSequenceTest
 
     SequenceTestHelper.testAll(Sequences.withBaggage(Sequences.simple(nums), closeable), nums);
 
-    Assert.assertEquals(2, closedCounter.get());
+    Assert.assertEquals(3, closedCounter.get());
 
     closedCounter.set(0);
     SequenceTestHelper.testClosed(closedCounter, Sequences.withBaggage(new UnsupportedSequence(), closeable));
