@@ -74,12 +74,7 @@ public class ConcatSequence<T> implements Sequence<T>
     catch (RuntimeException e) {
       // We caught a RuntimeException instead of returning a really, real, live, real boy, errr, iterator
       // So we better try to close our stuff, 'cause the exception is what is making it out of here.
-      try {
-        Closeables.close(yielderYielder, true);
-      }
-      catch (IOException e1) {
-        //
-      }
+      Closeables.closeQuietly(yielderYielder);
       throw e;
     }
   }

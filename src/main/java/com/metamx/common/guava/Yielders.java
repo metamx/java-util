@@ -50,7 +50,7 @@ public class Yielders
       @Override
       public void close() throws IOException
       {
-        Closeables.close(closeable, true);
+        Closeables.closeQuietly(closeable);
       }
     };
   }

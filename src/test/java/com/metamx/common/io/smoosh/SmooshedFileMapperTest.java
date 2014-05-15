@@ -83,7 +83,7 @@ public class SmooshedFileMapperTest
       for (int i = 0; i < 20; ++i) {
         final SmooshedWriter writer = smoosher.addWithSmooshedWriter(String.format("%d", i), 7);
         writer.write(ByteBuffer.wrap(Ints.toByteArray(i)));
-        Closeables.close(writer, true);
+        Closeables.closeQuietly(writer);
       }
       smoosher.close();
 

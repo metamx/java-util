@@ -141,7 +141,7 @@ public class FileSmoosher implements Closeable
       }
     }
     finally {
-      Closeables.close(out, true);
+      Closeables.closeQuietly(out);
     }
   }
 

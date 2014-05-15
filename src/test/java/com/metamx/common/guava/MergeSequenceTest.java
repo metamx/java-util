@@ -33,12 +33,12 @@ public class MergeSequenceTest
   {
     final ArrayList<TestSequence<Integer>> testSeqs = Lists.newArrayList(
         TestSequence.create(1, 3, 5, 7, 9),
-        TestSequence.create(2, 8, 3),
+        TestSequence.create(2, 8),
         TestSequence.create(4, 6, 8)
     );
 
     MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
-    SequenceTestHelper.testAll(seq, Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 8, 3, 9));
+    SequenceTestHelper.testAll(seq, Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 8, 9));
 
     for (TestSequence<Integer> sequence : testSeqs) {
       Assert.assertTrue(sequence.isClosed());

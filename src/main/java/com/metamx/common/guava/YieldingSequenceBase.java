@@ -2,8 +2,6 @@ package com.metamx.common.guava;
 
 import com.google.common.io.Closeables;
 
-import java.io.IOException;
-
 /**
  * A Sequence that is based entirely on the Yielder implementation.
  *
@@ -20,12 +18,7 @@ public abstract class YieldingSequenceBase<T> implements Sequence<T>
       return yielder.get();
     }
     finally {
-      try {
-        Closeables.close(yielder, true);
-      }
-      catch (IOException e) {
-        //
-      }
+      Closeables.closeQuietly(yielder);
     }
   }
 }
