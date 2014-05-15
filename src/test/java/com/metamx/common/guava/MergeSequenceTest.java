@@ -155,4 +155,18 @@ public class MergeSequenceTest
     SequenceTestHelper.testAll(finalMerged, Arrays.asList(1));
   }
 
+  @Test
+  public void testMergeOne() throws Exception
+  {
+    final Sequence<Integer> mergeOne = new MergeSequence<Integer>(
+        Ordering.<Integer>natural(), Sequences.<Sequence<Integer>>simple(
+        Lists.<Sequence<Integer>>newArrayList(
+            TestSequence.create(1)
+        )
+    )
+    );
+
+    SequenceTestHelper.testAll(mergeOne, Arrays.asList(1));
+  }
+
 }
