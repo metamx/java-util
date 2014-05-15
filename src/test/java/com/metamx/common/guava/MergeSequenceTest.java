@@ -134,4 +134,25 @@ public class MergeSequenceTest
     }
   }
 
+  @Test
+  public void testHierarchicalMerge() throws Exception
+  {
+    final Sequence<Integer> seq1 = new MergeSequence<Integer>(
+        Ordering.<Integer>natural(), Sequences.<Sequence<Integer>>simple(
+        Lists.<Sequence<Integer>>newArrayList(
+            TestSequence.create(1)
+        )
+    )
+    );
+
+    final Sequence<Integer> finalMerged = new MergeSequence<Integer>(
+        Ordering.<Integer>natural(),
+        Sequences.simple(
+            Lists.<Sequence<Integer>>newArrayList(seq1)
+        )
+    );
+
+    SequenceTestHelper.testAll(finalMerged, Arrays.asList(1));
+  }
+
 }
