@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.metamx</groupId>
     <artifactId>java-util</artifactId>
-    <version>0.25.7-SNAPSHOT</version>
+    <version>0.26.0-SNAPSHOT</version>
     <name>java-util</name>
     <description>Java and jvm utilities</description>
     <scm>
@@ -31,7 +31,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>11.0.2</version>
+            <version>17.0</version>
         </dependency>
         <dependency>
           <groupId>com.fasterxml.jackson.core</groupId>

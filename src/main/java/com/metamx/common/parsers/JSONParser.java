@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.metamx.common.exception.FormattedException;
+import com.metamx.common.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -32,10 +32,8 @@ import java.util.Map;
 
 public class JSONParser implements Parser<String, Object>
 {
-
-  private final ObjectMapper jsonMapper = new ObjectMapper();
-  private ArrayList<String> fieldNames = null;
-
+  private static final Logger log = new Logger(JSONParser.class);
+  private static final ObjectMapper jsonMapper = new ObjectMapper();
   private static final Function<JsonNode, String> valueFunction = new Function<JsonNode, String>()
   {
     @Override
@@ -45,6 +43,8 @@ public class JSONParser implements Parser<String, Object>
       return (node == null || node.isMissingNode() || node.isNull()) ? null : node.asText();
     }
   };
+
+  private ArrayList<String> fieldNames = null;
 
   public JSONParser()
   {
@@ -69,7 +69,7 @@ public class JSONParser implements Parser<String, Object>
   }
 
   @Override
-  public Map<String, Object> parse(String input) throws FormattedException
+  public Map<String, Object> parse(String input)
   {
     try {
       Map<String, Object> map = new LinkedHashMap<String, Object>();
@@ -83,16 +83,16 @@ public class JSONParser implements Parser<String, Object>
 
         if (node.isArray()) {
           final List<String> nodeValue = Lists.newArrayListWithExpectedSize(node.size());
-          for(final JsonNode subnode : node) {
+          for (final JsonNode subnode : node) {
             final String subnodeValue = valueFunction.apply(subnode);
-            if(subnodeValue != null) {
+            if (subnodeValue != null) {
               nodeValue.add(subnodeValue);
             }
           }
           map.put(key, nodeValue);
         } else {
           final String nodeValue = valueFunction.apply(node);
-          if(nodeValue != null) {
+          if (nodeValue != null) {
             map.put(key, nodeValue);
           }
         }
@@ -100,11 +100,8 @@ public class JSONParser implements Parser<String, Object>
       return map;
     }
     catch (Exception e) {
-      Throwables.propagateIfPossible(e, FormattedException.class);
-      throw new FormattedException.Builder()
-          .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_ROW)
-          .withMessage(e.getMessage())
-          .build();
+      log.error(e, "Unable to parse row [%s]", input);
+      throw Throwables.propagate(e);
     }
   }
 }

@@ -1,7 +1,6 @@
 package com.metamx.common.parsers;
 
 import com.google.common.collect.ImmutableMap;
-import com.metamx.common.exception.FormattedException;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -17,10 +16,12 @@ public class CSVParserTest
     final Parser<String, Object> csvParser;
     boolean parseable = true;
     try {
-      csvParser = new CSVParserFactory().makeParser(null, csv, null);
-    } catch(FormattedException e) {
+      csvParser = new CSVParserFactory().makeParser(null, null, csv, null);
+    }
+    catch (Exception e) {
       parseable = false;
-    } finally {
+    }
+    finally {
       Assert.assertTrue(parseable);
     }
   }
@@ -32,10 +33,12 @@ public class CSVParserTest
     final Parser<String, Object> csvParser;
     boolean parseable = true;
     try {
-      csvParser = new CSVParserFactory().makeParser(null, csv, null);
-    } catch(FormattedException e) {
+      csvParser = new CSVParserFactory().makeParser(null, null, csv, null);
+    }
+    catch (Exception e) {
       parseable = false;
-    } finally {
+    }
+    finally {
       Assert.assertFalse(parseable);
     }
   }
@@ -44,7 +47,7 @@ public class CSVParserTest
   public void testCSVParserWithHeader()
   {
     String header = "time,value1,value2";
-    final Parser<String, Object> csvParser = new CSVParserFactory().makeParser(null, header, null);
+    final Parser<String, Object> csvParser = new CSVParserFactory().makeParser(null, null, header, null);
     String body = "hello,world,foo";
     final Map<String, Object> jsonMap = csvParser.parse(body);
     Assert.assertEquals(
@@ -57,7 +60,7 @@ public class CSVParserTest
   @Test
   public void testCSVParserWithoutHeader()
   {
-    final Parser<String, Object> csvParser = new CSVParserFactory().makeParser(null, null, null);
+    final Parser<String, Object> csvParser = new CSVParserFactory().makeParser(null, null, null, null);
     String body = "hello,world,foo";
     final Map<String, Object> jsonMap = csvParser.parse(body);
     Assert.assertEquals(
@@ -66,6 +69,4 @@ public class CSVParserTest
         jsonMap
     );
   }
-
-
 }

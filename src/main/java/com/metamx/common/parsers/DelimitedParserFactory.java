@@ -16,7 +16,7 @@
 
 package com.metamx.common.parsers;
 
-import com.metamx.common.exception.FormattedException;
+import com.google.common.base.Optional;
 
 import java.util.List;
 
@@ -25,10 +25,13 @@ import java.util.List;
 public class DelimitedParserFactory implements ParserFactory
 {
   @Override
-  public Parser makeParser(String delimiter, String header, List<String> columns) throws FormattedException
+  public Parser makeParser(String delimiter, String listDelimiter, String header, List<String> columns)
   {
-    final DelimitedParser parser = new DelimitedParser(delimiter);
-    
+    final DelimitedParser parser = new DelimitedParser(
+        Optional.fromNullable(delimiter),
+        Optional.fromNullable(listDelimiter)
+    );
+
     if (columns != null) {
       parser.setFieldNames(columns);
     } else if (header != null) {

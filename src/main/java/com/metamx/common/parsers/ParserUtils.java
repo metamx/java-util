@@ -17,30 +17,13 @@
 package com.metamx.common.parsers;
 
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import com.metamx.common.exception.FormattedException;
-import com.metamx.common.exception.SubErrorHolder;
+import com.metamx.common.IAE;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.DateTimeFormatterBuilder;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ParserUtils
 {
@@ -68,10 +51,13 @@ public class ParserUtils
   /**
    * Factored timestamp parsing into its own Parser class, but leaving this here
    * for compatibility
+   *
    * @param format
+   *
    * @return
    */
-  public static Function<String, DateTime> createTimestampParser(final String format) {
+  public static Function<String, DateTime> createTimestampParser(final String format)
+  {
     return TimestampParser.createTimestampParser(format);
   }
 
@@ -96,24 +82,16 @@ public class ParserUtils
   {
     Set<String> duplicates = findDuplicates(fieldNames);
     if (!duplicates.isEmpty()) {
-      throw new FormattedException.Builder()
-          .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
-          .withDetails(
-              new SubErrorHolder(
-                  FormattedException.SubErrorCode.DUPLICATE_KEY,
-                  fieldNames,
-                  duplicates
-              ).get()
-          )
-          .withMessage(String.format("Duplicate entries found: %s", duplicates.toString()))
-          .build();
+      throw new IAE("Duplicate column entries found : %s", duplicates.toString());
     }
   }
 
-  public static String stripQuotes(String input) {
+  public static String stripQuotes(String input)
+  {
     input = input.trim();
-    if(input.charAt(0) == '\"' && input.charAt(input.length()-1) == '\"')
+    if (input.charAt(0) == '\"' && input.charAt(input.length() - 1) == '\"') {
       input = input.substring(1, input.length() - 1).trim();
+    }
     return input;
   }
 }

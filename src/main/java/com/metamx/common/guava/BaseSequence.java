@@ -68,7 +68,7 @@ public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T
       return yielder.get();
     }
     finally {
-      Closeables.closeQuietly(yielder);
+      CloseQuietly.close(yielder);
     }
   }
 

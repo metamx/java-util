@@ -16,8 +16,6 @@
 
 package com.metamx.common.parsers;
 
-import com.metamx.common.exception.FormattedException;
-
 import java.util.List;
 
 /**
@@ -25,7 +23,7 @@ import java.util.List;
 public class JSONParserFactory implements ParserFactory
 {
   @Override
-  public Parser makeParser(String delimiter, String header, List<String> columns) throws FormattedException
+  public Parser makeParser(String delimiter, String listDelimiter, String header, List<String> columns)
   {
     return new JSONParser();
   }

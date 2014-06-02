@@ -21,8 +21,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -35,7 +33,7 @@ public class FilteredSequenceTest
     Predicate<Integer> pred = new Predicate<Integer>()
     {
       @Override
-      public boolean apply(@Nullable Integer input)
+      public boolean apply(Integer input)
       {
         return input % 3 == 0;
       }

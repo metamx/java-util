@@ -20,7 +20,6 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.metamx.common.collect.Utils;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -44,7 +43,7 @@ public class Smoosh
                 new Function<File, String>()
                 {
                   @Override
-                  public String apply(@Nullable File input)
+                  public String apply(File input)
                   {
                     return input.getName();
                   }

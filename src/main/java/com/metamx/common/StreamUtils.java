@@ -17,7 +17,7 @@
 package com.metamx.common;
 
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
+import com.metamx.common.guava.CloseQuietly;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -44,15 +44,15 @@ public class StreamUtils
       ByteStreams.copy(is, os);
     }
     finally {
-      Closeables.closeQuietly(is);
-      Closeables.closeQuietly(os);
+      CloseQuietly.close(is);
+      CloseQuietly.close(os);
     }
   }
 
   public static void copyToFileAndClose(InputStream is, File file, long timeout) throws IOException, TimeoutException
   {
     OutputStream os = null;
-    
+
     try {
       file.getParentFile().mkdirs();
 
@@ -60,8 +60,8 @@ public class StreamUtils
       copyWithTimeout(is, os, timeout);
     }
     finally {
-      Closeables.closeQuietly(is);
-      Closeables.closeQuietly(os);
+      CloseQuietly.close(is);
+      CloseQuietly.close(os);
     }
   }
 
@@ -71,8 +71,8 @@ public class StreamUtils
       ByteStreams.copy(is, os);
     }
     finally {
-      Closeables.closeQuietly(is);
-      Closeables.closeQuietly(os);
+      CloseQuietly.close(is);
+      CloseQuietly.close(os);
     }
   }
 

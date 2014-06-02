@@ -19,9 +19,7 @@ package com.metamx.common.guava;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Ordering;
-import com.google.common.io.Closeables;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.PriorityQueue;
 
@@ -50,7 +48,7 @@ public class MergeSequence<T> extends YieldingSequenceBase<T>
             new Function<Yielder<T>, T>()
             {
               @Override
-              public T apply(@Nullable Yielder<T> input)
+              public T apply(Yielder<T> input)
               {
                 return input.get();
               }
@@ -115,14 +113,13 @@ public class MergeSequence<T> extends YieldingSequenceBase<T>
         catch (IOException e) {
           throw Throwables.propagate(e);
         }
-      }
-      else {
+      } else {
         pQueue.add(yielder);
       }
     }
 
     if (pQueue.isEmpty() && !accumulator.yielded()) {
-      return Yielders.done(retVal,  null);
+      return Yielders.done(retVal, null);
     }
 
     final OutType yieldVal = retVal;
@@ -150,7 +147,7 @@ public class MergeSequence<T> extends YieldingSequenceBase<T>
       @Override
       public void close() throws IOException
       {
-        while(!pQueue.isEmpty()) {
+        while (!pQueue.isEmpty()) {
           pQueue.remove().close();
         }
       }

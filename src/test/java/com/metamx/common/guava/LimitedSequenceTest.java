@@ -6,7 +6,6 @@ import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -62,7 +61,7 @@ public class LimitedSequenceTest
                 new Function<Integer, Integer>()
                 {
                   @Override
-                  public Integer apply(@Nullable Integer input)
+                  public Integer apply(Integer input)
                   {
                     accumulated.addAndGet(input);
                     return input;

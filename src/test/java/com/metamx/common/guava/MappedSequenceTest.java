@@ -17,12 +17,9 @@
 package com.metamx.common.guava;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -35,7 +32,7 @@ public class MappedSequenceTest
     Function<Integer, Integer> fn = new Function<Integer, Integer>()
     {
       @Override
-      public Integer apply(@Nullable Integer input)
+      public Integer apply(Integer input)
       {
         return input + 2;
       }

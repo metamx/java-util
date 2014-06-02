@@ -14,14 +14,26 @@
  * limitations under the License.
  */
 
-package com.metamx.common.parsers;
+package com.metamx.common.guava;
 
-import java.util.List;
-import java.util.Map;
+import com.google.common.io.Closeables;
+import com.metamx.common.ISE;
 
-public interface Parser<K, V>
+import java.io.Closeable;
+import java.io.IOException;
+
+/**
+ */
+public class CloseQuietly
 {
-  public Map<K, V> parse(String input);
-  public void setFieldNames(Iterable<String> fieldNames);
-  public List<String> getFieldNames();
+  public static void close(Closeable closeable)
+  {
+    try {
+      Closeables.close(closeable, true);
+    }
+    catch (IOException e) {
+      // this should never happen
+      throw new ISE("WTF?! A swallowedException bubbled up?!");
+    }
+  }
 }

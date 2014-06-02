@@ -22,7 +22,6 @@ import com.google.common.collect.Lists;
 import junit.framework.Assert;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -196,7 +195,7 @@ public class ConcatSequenceTest
         new Function<Iterable<Integer>, TestSequence<Integer>>()
         {
           @Override
-          public TestSequence<Integer> apply(@Nullable Iterable<Integer> input)
+          public TestSequence<Integer> apply(Iterable<Integer> input)
           {
             return new TestSequence<Integer>(input);
           }

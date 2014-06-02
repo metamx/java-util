@@ -16,7 +16,7 @@
 
 package com.metamx.common.parsers;
 
-import com.metamx.common.exception.FormattedException;
+import com.google.common.base.Optional;
 
 import java.util.List;
 
@@ -25,9 +25,9 @@ import java.util.List;
 public class CSVParserFactory implements ParserFactory
 {
   @Override
-  public Parser makeParser(String delimiter, String header, List<String> columns) throws FormattedException
+  public Parser makeParser(String delimiter, String list_delimiter, String header, List<String> columns)
   {
-    final CSVParser parser = new CSVParser();
+    final CSVParser parser = new CSVParser(Optional.fromNullable(list_delimiter));
 
     if (columns != null) {
       parser.setFieldNames(columns);

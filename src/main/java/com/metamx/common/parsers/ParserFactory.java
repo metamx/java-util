@@ -16,13 +16,19 @@
 
 package com.metamx.common.parsers;
 
-import com.metamx.common.exception.FormattedException;
-
 import java.util.List;
 
 /**
  */
 public interface ParserFactory
 {
-  public Parser makeParser(String delimiter, String header, List<String> columns) throws FormattedException;
+  /**
+   * @param delimiter - delimits different columns
+   * @param list_delimiter - delimits multiple values of a single data entry
+   * @param header - header of column names
+   * @param columns - list of columns
+   * @return - an Object to parse data
+   */
+
+  public Parser makeParser(String delimiter, String list_delimiter, String header, List<String> columns);
 }

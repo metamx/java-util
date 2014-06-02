@@ -16,9 +16,8 @@
 
 package com.metamx.common.parsers;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import com.metamx.common.exception.FormattedException;
+import com.metamx.common.IAE;
 
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,7 @@ public class ToLowerCaseParser implements Parser<String, Object>
   }
 
   @Override
-  public Map parse(String input) throws FormattedException
+  public Map parse(String input)
   {
     Map<String, Object> line = baseParser.parse(input);
     Map<String, Object> retVal = Maps.newLinkedHashMap();
@@ -44,10 +43,7 @@ public class ToLowerCaseParser implements Parser<String, Object>
 
       if(retVal.containsKey(k)) {
         // Duplicate key, case-insensitively
-        throw new FormattedException.Builder()
-            .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_ROW)
-            .withMessage(String.format("Duplicate key [%s]", k))
-            .build();
+        throw new IAE("Unparseable row. Duplicate key found : [%s]", k);
       }
 
       retVal.put(k, entry.getValue());
