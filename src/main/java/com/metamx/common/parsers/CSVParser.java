@@ -35,7 +35,6 @@ public class CSVParser implements Parser<String, Object>
 {
   private static final Logger log = new Logger(CSVParser.class);
 
-
   private final String listDelimiter;
   private final Splitter listSplitter;
   private final Function<String, Object> valueFunction;

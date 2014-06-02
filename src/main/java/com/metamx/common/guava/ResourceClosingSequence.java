@@ -1,10 +1,6 @@
 package com.metamx.common.guava;
 
-import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
-
 import java.io.Closeable;
-import java.io.IOException;
 
 /**
  */
@@ -29,12 +25,7 @@ public class ResourceClosingSequence<T> extends YieldingSequenceBase<T>
       baseYielder = baseSequence.toYielder(initValue, accumulator);
     }
     catch (RuntimeException e) {
-      try {
-        Closeables.close(closeable, true);
-      }
-      catch (IOException ioe) {
-        throw Throwables.propagate(ioe);
-      }
+      CloseQuietly.close(closeable);
       throw e;
     }
 

@@ -16,8 +16,7 @@
 
 package com.metamx.common.guava;
 
-import com.google.common.io.Closeables;
-import com.metamx.common.ISE;
+import com.metamx.common.logger.Logger;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -26,14 +25,18 @@ import java.io.IOException;
  */
 public class CloseQuietly
 {
+  private static final Logger log = new Logger(CloseQuietly.class);
+
   public static void close(Closeable closeable)
   {
+    if (closeable == null) {
+      return;
+    }
     try {
-      Closeables.close(closeable, true);
+      closeable.close();
     }
     catch (IOException e) {
-      // this should never happen
-      throw new ISE("WTF?! A swallowedException bubbled up?!");
+      log.error(e, "IOException thrown while closing Closeable.");
     }
   }
 }
