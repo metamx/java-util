@@ -23,6 +23,8 @@ import java.util.Map;
 
 public class Parsers
 {
+  public static final String DEFAULT_LIST_DELIMITER = "\u0001";
+
   public static <K, V> Function<String, Map<K, V>> toFunction(final Parser p)
   {
     /**

@@ -34,7 +34,6 @@ public class DelimitedParser implements Parser<String, Object>
 {
   private static final Logger log = new Logger(DelimitedParser.class);
   private static final String DEFAULT_DELIMITER = "\t";
-  private static final String DEFAULT_LIST_DELIMITER = "\u0001";
 
   private final String delimiter;
   private final String listDelimiter;
@@ -48,7 +47,7 @@ public class DelimitedParser implements Parser<String, Object>
   public DelimitedParser(final Optional<String> delimiter, Optional<String> listDelimiter)
   {
     this.delimiter = delimiter.isPresent() ? delimiter.get() : DEFAULT_DELIMITER;
-    this.listDelimiter = listDelimiter.isPresent() ? listDelimiter.get() : DEFAULT_LIST_DELIMITER;
+    this.listDelimiter = listDelimiter.isPresent() ? listDelimiter.get() : Parsers.DEFAULT_LIST_DELIMITER;
     this.splitter = Splitter.on(this.delimiter);
     this.listSplitter = Splitter.on(this.listDelimiter);
     this.valueFunction = new Function<String, Object>()

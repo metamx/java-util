@@ -34,7 +34,7 @@ import java.util.Map;
 public class CSVParser implements Parser<String, Object>
 {
   private static final Logger log = new Logger(CSVParser.class);
-  private static final String DEFAULT_LIST_DELIMITER = "\u0001";
+
 
   private final String listDelimiter;
   private final Splitter listSplitter;
@@ -46,7 +46,7 @@ public class CSVParser implements Parser<String, Object>
 
   public CSVParser(final Optional<String> listDelimiter)
   {
-    this.listDelimiter = listDelimiter.isPresent() ? listDelimiter.get() : DEFAULT_LIST_DELIMITER;
+    this.listDelimiter = listDelimiter.isPresent() ? listDelimiter.get() : Parsers.DEFAULT_LIST_DELIMITER;
 
     Preconditions.checkState(
         !this.listDelimiter.equals(String.valueOf(au.com.bytecode.opencsv.CSVParser.DEFAULT_SEPARATOR)),
