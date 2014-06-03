@@ -24,11 +24,11 @@ public interface ParserFactory
 {
   /**
    * @param delimiter - delimits different columns
-   * @param list_delimiter - delimits multiple values of a single data entry
+   * @param listDelimiter - delimits multiple values of a single data entry
    * @param header - header of column names
    * @param columns - list of columns
    * @return - an Object to parse data
    */
 
-  public Parser makeParser(String delimiter, String list_delimiter, String header, List<String> columns);
+  public Parser makeParser(String delimiter, String listDelimiter, String header, List<String> columns);
 }

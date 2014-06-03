@@ -18,6 +18,7 @@ package com.metamx.common.parsers;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -48,6 +49,13 @@ public class DelimitedParser implements Parser<String, Object>
   {
     this.delimiter = delimiter.isPresent() ? delimiter.get() : DEFAULT_DELIMITER;
     this.listDelimiter = listDelimiter.isPresent() ? listDelimiter.get() : Parsers.DEFAULT_LIST_DELIMITER;
+
+    Preconditions.checkState(
+        !this.delimiter.equals(this.listDelimiter),
+        "Cannot have same delimiter and list delimiter of [%s]",
+        this.delimiter
+    );
+
     this.splitter = Splitter.on(this.delimiter);
     this.listSplitter = Splitter.on(this.listDelimiter);
     this.valueFunction = new Function<String, Object>()

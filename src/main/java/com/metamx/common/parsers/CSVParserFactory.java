@@ -25,9 +25,9 @@ import java.util.List;
 public class CSVParserFactory implements ParserFactory
 {
   @Override
-  public Parser makeParser(String delimiter, String list_delimiter, String header, List<String> columns)
+  public Parser makeParser(String delimiter, String listDelimiter, String header, List<String> columns)
   {
-    final CSVParser parser = new CSVParser(Optional.fromNullable(list_delimiter));
+    final CSVParser parser = new CSVParser(Optional.fromNullable(listDelimiter));
 
     if (columns != null) {
       parser.setFieldNames(columns);

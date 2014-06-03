@@ -46,13 +46,6 @@ public class CSVParser implements Parser<String, Object>
   public CSVParser(final Optional<String> listDelimiter)
   {
     this.listDelimiter = listDelimiter.isPresent() ? listDelimiter.get() : Parsers.DEFAULT_LIST_DELIMITER;
-
-    Preconditions.checkState(
-        !this.listDelimiter.equals(String.valueOf(au.com.bytecode.opencsv.CSVParser.DEFAULT_SEPARATOR)),
-        "Cannot have list delimiter of [%s]",
-        au.com.bytecode.opencsv.CSVParser.DEFAULT_SEPARATOR
-    );
-
     this.listSplitter = Splitter.on(this.listDelimiter);
     this.valueFunction = new Function<String, Object>()
     {
