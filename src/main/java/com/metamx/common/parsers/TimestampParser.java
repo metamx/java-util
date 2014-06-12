@@ -14,7 +14,7 @@ public class TimestampParser
 
   public static Function<String, DateTime> createTimestampParser(
       final String format
-  )
+  ) throws ParseException
   {
     if (format.equalsIgnoreCase("auto")) {
       // Could be iso or millis

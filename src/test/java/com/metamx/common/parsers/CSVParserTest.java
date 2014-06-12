@@ -45,7 +45,7 @@ public class CSVParserTest
   }
 
   @Test
-  public void testCSVParserWithHeader()
+  public void testCSVParserWithHeader() throws ParseException
   {
     String header = "time,value1,value2";
     final Parser<String, Object> csvParser = new CSVParser(Optional.<String>fromNullable(null), header);
@@ -59,7 +59,7 @@ public class CSVParserTest
   }
 
   @Test
-  public void testCSVParserWithoutHeader()
+  public void testCSVParserWithoutHeader() throws ParseException
   {
     final Parser<String, Object> csvParser = new CSVParser(Optional.<String>fromNullable(null));
     String body = "hello,world,foo";

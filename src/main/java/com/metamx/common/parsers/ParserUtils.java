@@ -56,7 +56,7 @@ public class ParserUtils
    *
    * @return
    */
-  public static Function<String, DateTime> createTimestampParser(final String format)
+  public static Function<String, DateTime> createTimestampParser(final String format) throws ParseException
   {
     return TimestampParser.createTimestampParser(format);
   }
@@ -78,7 +78,7 @@ public class ParserUtils
     return duplicates;
   }
 
-  public static void validateFields(Iterable<String> fieldNames)
+  public static void validateFields(Iterable<String> fieldNames) throws ParseException
   {
     Set<String> duplicates = findDuplicates(fieldNames);
     if (!duplicates.isEmpty()) {

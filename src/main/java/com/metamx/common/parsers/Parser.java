@@ -21,7 +21,7 @@ import java.util.Map;
 
 public interface Parser<K, V>
 {
-  public Map<K, V> parse(String input);
-  public void setFieldNames(Iterable<String> fieldNames);
+  public Map<K, V> parse(String input) throws ParseException;
+  public void setFieldNames(Iterable<String> fieldNames) throws ParseException;
   public List<String> getFieldNames();
 }
