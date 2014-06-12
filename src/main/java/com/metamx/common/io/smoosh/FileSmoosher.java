@@ -27,6 +27,7 @@ import com.google.common.io.Files;
 import com.google.common.primitives.Ints;
 import com.metamx.common.IAE;
 import com.metamx.common.ISE;
+import com.metamx.common.guava.CloseQuietly;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -141,7 +142,7 @@ public class FileSmoosher implements Closeable
       }
     }
     finally {
-      Closeables.closeQuietly(out);
+      CloseQuietly.close(out);
     }
   }
 

@@ -16,15 +16,14 @@
 
 package com.metamx.common.io.smoosh;
 
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.primitives.Ints;
 import com.metamx.common.ISE;
+import com.metamx.common.guava.CloseQuietly;
 import junit.framework.Assert;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -83,7 +82,7 @@ public class SmooshedFileMapperTest
       for (int i = 0; i < 20; ++i) {
         final SmooshedWriter writer = smoosher.addWithSmooshedWriter(String.format("%d", i), 7);
         writer.write(ByteBuffer.wrap(Ints.toByteArray(i)));
-        Closeables.closeQuietly(writer);
+        CloseQuietly.close(writer);
       }
       smoosher.close();
 

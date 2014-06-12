@@ -14,19 +14,29 @@
  * limitations under the License.
  */
 
-package com.metamx.common.parsers;
+package com.metamx.common.guava;
 
-import com.metamx.common.exception.FormattedException;
+import com.metamx.common.logger.Logger;
 
-import java.util.List;
+import java.io.Closeable;
+import java.io.IOException;
 
 /**
  */
-public class JSONParserFactory implements ParserFactory
+public class CloseQuietly
 {
-  @Override
-  public Parser makeParser(String delimiter, String header, List<String> columns) throws FormattedException
+  private static final Logger log = new Logger(CloseQuietly.class);
+
+  public static void close(Closeable closeable)
   {
-    return new JSONParser();
+    if (closeable == null) {
+      return;
+    }
+    try {
+      closeable.close();
+    }
+    catch (IOException e) {
+      log.error(e, "IOException thrown while closing Closeable.");
+    }
   }
 }

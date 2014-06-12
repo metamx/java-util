@@ -17,55 +17,72 @@
 package com.metamx.common.parsers;
 
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.metamx.common.collect.Utils;
-import com.metamx.common.exception.FormattedException;
-import com.metamx.common.exception.SubErrorHolder;
+import com.metamx.common.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class CSVParser implements Parser<String, Object>
 {
-  protected ArrayList<String> fieldNames = null;
-  protected au.com.bytecode.opencsv.CSVParser parser = new au.com.bytecode.opencsv.CSVParser();
+  private static final Logger log = new Logger(CSVParser.class);
 
-  public static final String DEFAULT_LIST_DELIMITER = "\u0001";
-  protected static final Splitter listSplitter = Splitter.on(DEFAULT_LIST_DELIMITER);
+  private final String listDelimiter;
+  private final Splitter listSplitter;
+  private final Function<String, Object> valueFunction;
 
+  private final au.com.bytecode.opencsv.CSVParser parser = new au.com.bytecode.opencsv.CSVParser();
 
-  protected Function<String, Object> valueFunction = new Function<String, Object>()
+  private ArrayList<String> fieldNames = null;
+
+  public CSVParser(final Optional<String> listDelimiter)
   {
-    @Override
-    public Object apply(String input)
+    this.listDelimiter = listDelimiter.isPresent() ? listDelimiter.get() : Parsers.DEFAULT_LIST_DELIMITER;
+    this.listSplitter = Splitter.on(this.listDelimiter);
+    this.valueFunction = new Function<String, Object>()
     {
-      if (input.contains(DEFAULT_LIST_DELIMITER)) {
-        return Lists.newArrayList(Iterables.transform(listSplitter.split(input), ParserUtils.nullEmptyStringFunction));
-      } else {
-        return ParserUtils.nullEmptyStringFunction.apply(input);
+      @Override
+      public Object apply(String input)
+      {
+        if (input.contains(CSVParser.this.listDelimiter)) {
+          return Lists.newArrayList(
+              Iterables.transform(
+                  listSplitter.split(input),
+                  ParserUtils.nullEmptyStringFunction
+              )
+          );
+        } else {
+          return ParserUtils.nullEmptyStringFunction.apply(input);
+        }
       }
-    }
-  };
-
-  public CSVParser()
-  {
+    };
   }
 
-  public CSVParser(Iterable<String> fieldNames)
+  public CSVParser(final Optional<String> listDelimiter, final Iterable<String> fieldNames)
   {
+    this(listDelimiter);
+
     setFieldNames(fieldNames);
   }
 
-  public CSVParser(String header) throws FormattedException
+  public CSVParser(final Optional<String> listDelimiter, final String header)
   {
+    this(listDelimiter);
+
     setFieldNames(header);
+  }
+
+  public String getListDelimiter()
+  {
+    return listDelimiter;
   }
 
   @Override
@@ -75,28 +92,25 @@ public class CSVParser implements Parser<String, Object>
   }
 
   @Override
-  public void setFieldNames(Iterable<String> fieldNames)
+  public void setFieldNames(final Iterable<String> fieldNames)
   {
     ParserUtils.validateFields(fieldNames);
     this.fieldNames = Lists.newArrayList(fieldNames);
   }
 
-  public void setFieldNames(String header) throws FormattedException
+  public void setFieldNames(final String header)
   {
     try {
       setFieldNames(Arrays.asList(parser.parseLine(header)));
     }
     catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, FormattedException.class);
-      throw new FormattedException.Builder()
-          .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_HEADER)
-          .withMessage(e.getMessage())
-          .build();
+      log.error(e, "Unable to parse header [%s]", header);
+      throw Throwables.propagate(e);
     }
   }
 
   @Override
-  public Map<String, Object> parse(String input) throws FormattedException
+  public Map<String, Object> parse(final String input)
   {
     try {
       String[] values = parser.parseLine(input);
@@ -108,11 +122,8 @@ public class CSVParser implements Parser<String, Object>
       return Utils.zipMapPartial(fieldNames, Iterables.transform(Lists.newArrayList(values), valueFunction));
     }
     catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, FormattedException.class);
-      throw new FormattedException.Builder()
-          .withErrorCode(FormattedException.ErrorCode.UNPARSABLE_ROW)
-          .withMessage(e.getMessage())
-          .build();
+      log.error(e, "Unable to parse row [%s]", input);
+      throw Throwables.propagate(e);
     }
   }
 }

@@ -18,6 +18,7 @@ package com.metamx.common;
 
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
+import com.metamx.common.guava.CloseQuietly;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -36,32 +37,23 @@ public class StreamUtils
 
   public static void copyToFileAndClose(InputStream is, File file) throws IOException
   {
-    OutputStream os = null;
-    try {
-      file.getParentFile().mkdirs();
-
-      os = new BufferedOutputStream(new FileOutputStream(file));
+    file.getParentFile().mkdirs();
+    try (OutputStream os = new BufferedOutputStream(new FileOutputStream(file))) {
       ByteStreams.copy(is, os);
     }
     finally {
-      Closeables.closeQuietly(is);
-      Closeables.closeQuietly(os);
+      CloseQuietly.close(is);
     }
   }
 
   public static void copyToFileAndClose(InputStream is, File file, long timeout) throws IOException, TimeoutException
   {
-    OutputStream os = null;
-    
-    try {
-      file.getParentFile().mkdirs();
-
-      os = new BufferedOutputStream(new FileOutputStream(file));
+    file.getParentFile().mkdirs();
+    try (OutputStream os = new BufferedOutputStream(new FileOutputStream(file))) {
       copyWithTimeout(is, os, timeout);
     }
     finally {
       Closeables.closeQuietly(is);
-      Closeables.closeQuietly(os);
     }
   }
 
@@ -71,15 +63,14 @@ public class StreamUtils
       ByteStreams.copy(is, os);
     }
     finally {
-      Closeables.closeQuietly(is);
-      Closeables.closeQuietly(os);
+      CloseQuietly.close(is);
+      CloseQuietly.close(os);
     }
   }
 
   public static void copyWithTimeout(InputStream is, OutputStream os, long timeout) throws IOException, TimeoutException
   {
     byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-    long count = 0;
     int n = 0;
     long startTime = System.currentTimeMillis();
 
@@ -88,7 +79,6 @@ public class StreamUtils
         throw new TimeoutException(String.format("Copy time has exceeded %,d millis", timeout));
       }
       os.write(buffer, 0, n);
-      count += n;
     }
   }
 }

@@ -1,7 +1,7 @@
 package com.metamx.common.parsers;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
-import com.metamx.common.exception.FormattedException;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -17,10 +17,12 @@ public class DelimitedParserTest
     final Parser<String, Object> delimitedParser;
     boolean parseable = true;
     try {
-      delimitedParser = new DelimitedParserFactory().makeParser("\t", tsv, null);
-    } catch(FormattedException e) {
+      delimitedParser = new DelimitedParser(Optional.of("\t"), Optional.<String>absent(), tsv);
+    }
+    catch (Exception e) {
       parseable = false;
-    } finally {
+    }
+    finally {
       Assert.assertTrue(parseable);
     }
   }
@@ -32,10 +34,12 @@ public class DelimitedParserTest
     final Parser<String, Object> delimitedParser;
     boolean parseable = true;
     try {
-      delimitedParser = new DelimitedParserFactory().makeParser("\t", tsv, null);
-    } catch(FormattedException e) {
+      delimitedParser = new DelimitedParser(Optional.of("\t"), Optional.<String>absent(), tsv);
+    }
+    catch (Exception e) {
       parseable = false;
-    } finally {
+    }
+    finally {
       Assert.assertFalse(parseable);
     }
   }
@@ -44,7 +48,7 @@ public class DelimitedParserTest
   public void testTSVParserWithHeader()
   {
     String header = "time\tvalue1\tvalue2";
-    final Parser<String, Object> delimitedParser = new DelimitedParserFactory().makeParser("\t", header, null);
+    final Parser<String, Object> delimitedParser = new DelimitedParser(Optional.of("\t"), Optional.<String>absent(), header);
     String body = "hello\tworld\tfoo";
     final Map<String, Object> jsonMap = delimitedParser.parse(body);
     Assert.assertEquals(
@@ -57,7 +61,7 @@ public class DelimitedParserTest
   @Test
   public void testTSVParserWithoutHeader()
   {
-    final Parser<String, Object> delimitedParser = new DelimitedParserFactory().makeParser("\t", null, null);
+    final Parser<String, Object> delimitedParser = new DelimitedParser(Optional.of("\t"), Optional.<String>absent());
     String body = "hello\tworld\tfoo";
     final Map<String, Object> jsonMap = delimitedParser.parse(body);
     Assert.assertEquals(
@@ -66,5 +70,4 @@ public class DelimitedParserTest
         jsonMap
     );
   }
-
 }

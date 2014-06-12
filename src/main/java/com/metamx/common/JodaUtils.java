@@ -27,7 +27,6 @@ import com.metamx.common.guava.Comparators;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TreeSet;
@@ -91,7 +90,7 @@ public class JodaUtils
         intervals, new Predicate<Interval>()
     {
       @Override
-      public boolean apply(@Nullable Interval input)
+      public boolean apply(Interval input)
       {
         return input.overlaps(i);
       }
