@@ -2,7 +2,7 @@ package com.metamx.common.parsers;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
+import com.metamx.common.IAE;
 import com.metamx.common.logger.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -14,7 +14,7 @@ public class TimestampParser
 
   public static Function<String, DateTime> createTimestampParser(
       final String format
-  ) throws ParseException
+  )
   {
     if (format.equalsIgnoreCase("auto")) {
       // Could be iso or millis
@@ -90,7 +90,7 @@ public class TimestampParser
         };
       }
       catch (Exception e) {
-        throw new ParseException(e, "Unable to parse timestamps with format [%s]", format);
+        throw new IAE(e, "Unable to parse timestamps with format [%s]", format);
       }
     }
   }
