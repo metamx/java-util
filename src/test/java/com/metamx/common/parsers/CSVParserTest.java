@@ -1,5 +1,6 @@
 package com.metamx.common.parsers;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import junit.framework.Assert;
 import org.junit.Test;
@@ -16,7 +17,7 @@ public class CSVParserTest
     final Parser<String, Object> csvParser;
     boolean parseable = true;
     try {
-      csvParser = new CSVParserFactory().makeParser(null, null, csv, null);
+      csvParser = new CSVParser(Optional.<String>fromNullable(null), csv);
     }
     catch (Exception e) {
       parseable = false;
@@ -33,7 +34,7 @@ public class CSVParserTest
     final Parser<String, Object> csvParser;
     boolean parseable = true;
     try {
-      csvParser = new CSVParserFactory().makeParser(null, null, csv, null);
+      csvParser = new CSVParser(Optional.<String>fromNullable(null), csv);
     }
     catch (Exception e) {
       parseable = false;
@@ -47,7 +48,7 @@ public class CSVParserTest
   public void testCSVParserWithHeader()
   {
     String header = "time,value1,value2";
-    final Parser<String, Object> csvParser = new CSVParserFactory().makeParser(null, null, header, null);
+    final Parser<String, Object> csvParser = new CSVParser(Optional.<String>fromNullable(null), header);
     String body = "hello,world,foo";
     final Map<String, Object> jsonMap = csvParser.parse(body);
     Assert.assertEquals(
@@ -60,7 +61,7 @@ public class CSVParserTest
   @Test
   public void testCSVParserWithoutHeader()
   {
-    final Parser<String, Object> csvParser = new CSVParserFactory().makeParser(null, null, null, null);
+    final Parser<String, Object> csvParser = new CSVParser(Optional.<String>fromNullable(null));
     String body = "hello,world,foo";
     final Map<String, Object> jsonMap = csvParser.parse(body);
     Assert.assertEquals(

@@ -1,5 +1,6 @@
 package com.metamx.common.parsers;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import junit.framework.Assert;
 import org.junit.Test;
@@ -16,7 +17,7 @@ public class DelimitedParserTest
     final Parser<String, Object> delimitedParser;
     boolean parseable = true;
     try {
-      delimitedParser = new DelimitedParserFactory().makeParser("\t", null, tsv, null);
+      delimitedParser = new DelimitedParser(Optional.of("\t"), Optional.<String>absent(), tsv);
     }
     catch (Exception e) {
       parseable = false;
@@ -33,7 +34,7 @@ public class DelimitedParserTest
     final Parser<String, Object> delimitedParser;
     boolean parseable = true;
     try {
-      delimitedParser = new DelimitedParserFactory().makeParser("\t", null, tsv, null);
+      delimitedParser = new DelimitedParser(Optional.of("\t"), Optional.<String>absent(), tsv);
     }
     catch (Exception e) {
       parseable = false;
@@ -47,7 +48,7 @@ public class DelimitedParserTest
   public void testTSVParserWithHeader()
   {
     String header = "time\tvalue1\tvalue2";
-    final Parser<String, Object> delimitedParser = new DelimitedParserFactory().makeParser("\t", null, header, null);
+    final Parser<String, Object> delimitedParser = new DelimitedParser(Optional.of("\t"), Optional.<String>absent(), header);
     String body = "hello\tworld\tfoo";
     final Map<String, Object> jsonMap = delimitedParser.parse(body);
     Assert.assertEquals(
@@ -60,7 +61,7 @@ public class DelimitedParserTest
   @Test
   public void testTSVParserWithoutHeader()
   {
-    final Parser<String, Object> delimitedParser = new DelimitedParserFactory().makeParser("\t", null, null, null);
+    final Parser<String, Object> delimitedParser = new DelimitedParser(Optional.of("\t"), Optional.<String>absent());
     String body = "hello\tworld\tfoo";
     final Map<String, Object> jsonMap = delimitedParser.parse(body);
     Assert.assertEquals(
