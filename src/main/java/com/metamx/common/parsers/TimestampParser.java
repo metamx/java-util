@@ -90,8 +90,7 @@ public class TimestampParser
         };
       }
       catch (Exception e) {
-        log.error("Unable to parse timestamps with format [%s]", format);
-        throw Throwables.propagate(e);
+        throw new ParseException(e, "Unable to parse timestamps with format [%s]", format);
       }
     }
   }

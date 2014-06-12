@@ -18,9 +18,7 @@ package com.metamx.common.parsers;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.metamx.common.collect.Utils;
@@ -104,8 +102,7 @@ public class CSVParser implements Parser<String, Object>
       setFieldNames(Arrays.asList(parser.parseLine(header)));
     }
     catch (Exception e) {
-      log.error(e, "Unable to parse header [%s]", header);
-      throw Throwables.propagate(e);
+      throw new ParseException(e, "Unable to parse header [%s]", header);
     }
   }
 
@@ -122,8 +119,7 @@ public class CSVParser implements Parser<String, Object>
       return Utils.zipMapPartial(fieldNames, Iterables.transform(Lists.newArrayList(values), valueFunction));
     }
     catch (Exception e) {
-      log.error(e, "Unable to parse row [%s]", input);
-      throw Throwables.propagate(e);
+      throw new ParseException(e, "Unable to parse row [%s]", input);
     }
   }
 }

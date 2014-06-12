@@ -124,8 +124,7 @@ public class DelimitedParser implements Parser<String, Object>
       setFieldNames(splitter.split(header));
     }
     catch (Exception e) {
-      log.error(e, "Unable to parse header [%s]", header);
-      throw Throwables.propagate(e);
+      throw new ParseException(e, "Unable to parse header [%s]", header);
     }
   }
 
@@ -142,8 +141,7 @@ public class DelimitedParser implements Parser<String, Object>
       return Utils.zipMapPartial(fieldNames, Iterables.transform(values, valueFunction));
     }
     catch (Exception e) {
-      log.error(e, "Unable to parse row [%s]", input);
-      throw Throwables.propagate(e);
+      throw new ParseException(e, "Unable to parse row [%s]", input);
     }
   }
 }

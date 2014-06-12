@@ -43,7 +43,7 @@ public class ToLowerCaseParser implements Parser<String, Object>
 
       if(retVal.containsKey(k)) {
         // Duplicate key, case-insensitively
-        throw new IAE("Unparseable row. Duplicate key found : [%s]", k);
+        throw new ParseException("Unparseable row. Duplicate key found : [%s]", k);
       }
 
       retVal.put(k, entry.getValue());

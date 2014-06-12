@@ -20,7 +20,6 @@ package com.metamx.common.parsers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.metamx.common.logger.Logger;
 
@@ -100,8 +99,7 @@ public class JSONParser implements Parser<String, Object>
       return map;
     }
     catch (Exception e) {
-      log.error(e, "Unable to parse row [%s]", input);
-      throw Throwables.propagate(e);
+      throw new ParseException(e, "Unable to parse row [%s]", input);
     }
   }
 }
