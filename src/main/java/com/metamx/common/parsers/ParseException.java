@@ -18,7 +18,7 @@ package com.metamx.common.parsers;
 
 /**
  */
-public class ParseException extends RuntimeException
+public class ParseException extends Exception
 {
   public ParseException(String formatText, Object... arguments)
   {
