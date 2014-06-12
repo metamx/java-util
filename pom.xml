@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.metamx</groupId>
     <artifactId>java-util</artifactId>
-    <version>0.26.0-SNAPSHOT</version>
+    <version>0.26.0</version>
     <name>java-util</name>
     <description>Java and jvm utilities</description>
     <scm>
         <connection>scm:git:ssh://git@github.com/metamx/java-util.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/metamx/java-util.git</developerConnection>
         <url>http://www.github.com/metamx/java-util</url>
-        <tag>HEAD</tag>
+        <tag>java-util-0.26.0</tag>
     </scm>
 
     <properties>
