@@ -56,7 +56,7 @@ public class ParserUtils
    *
    * @return
    */
-  public static Function<String, DateTime> createTimestampParser(final String format) throws ParseException
+  public static Function<String, DateTime> createTimestampParser(final String format)
   {
     return TimestampParser.createTimestampParser(format);
   }
