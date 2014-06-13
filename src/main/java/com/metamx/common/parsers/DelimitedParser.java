@@ -81,7 +81,7 @@ public class DelimitedParser implements Parser<String, Object>
       final Optional<String> delimiter,
       final Optional<String> listDelimiter,
       final Iterable<String> fieldNames
-  ) throws ParseException
+  )
   {
     this(delimiter, listDelimiter);
 
@@ -89,7 +89,7 @@ public class DelimitedParser implements Parser<String, Object>
   }
 
   public DelimitedParser(final Optional<String> delimiter, final Optional<String> listDelimiter, final String header)
-      throws ParseException
+
   {
     this(delimiter, listDelimiter);
 
@@ -113,13 +113,13 @@ public class DelimitedParser implements Parser<String, Object>
   }
 
   @Override
-  public void setFieldNames(final Iterable<String> fieldNames) throws ParseException
+  public void setFieldNames(final Iterable<String> fieldNames)
   {
     ParserUtils.validateFields(fieldNames);
     this.fieldNames = Lists.newArrayList(fieldNames);
   }
 
-  public void setFieldNames(String header) throws ParseException
+  public void setFieldNames(String header)
   {
     try {
       setFieldNames(splitter.split(header));
@@ -130,7 +130,7 @@ public class DelimitedParser implements Parser<String, Object>
   }
 
   @Override
-  public Map<String, Object> parse(final String input) throws ParseException
+  public Map<String, Object> parse(final String input)
   {
     try {
       Iterable<String> values = splitter.split(input);

@@ -45,7 +45,7 @@ public class DelimitedParserTest
   }
 
   @Test
-  public void testTSVParserWithHeader() throws ParseException
+  public void testTSVParserWithHeader()
   {
     String header = "time\tvalue1\tvalue2";
     final Parser<String, Object> delimitedParser = new DelimitedParser(Optional.of("\t"), Optional.<String>absent(), header);
@@ -59,7 +59,7 @@ public class DelimitedParserTest
   }
 
   @Test
-  public void testTSVParserWithoutHeader() throws ParseException
+  public void testTSVParserWithoutHeader()
   {
     final Parser<String, Object> delimitedParser = new DelimitedParser(Optional.of("\t"), Optional.<String>absent());
     String body = "hello\tworld\tfoo";

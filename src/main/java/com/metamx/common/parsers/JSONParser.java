@@ -49,7 +49,7 @@ public class JSONParser implements Parser<String, Object>
   {
   }
 
-  public JSONParser(Iterable<String> fieldNames) throws ParseException
+  public JSONParser(Iterable<String> fieldNames)
   {
     setFieldNames(fieldNames);
   }
@@ -61,14 +61,14 @@ public class JSONParser implements Parser<String, Object>
   }
 
   @Override
-  public void setFieldNames(Iterable<String> fieldNames) throws ParseException
+  public void setFieldNames(Iterable<String> fieldNames)
   {
     ParserUtils.validateFields(fieldNames);
     this.fieldNames = Lists.newArrayList(fieldNames);
   }
 
   @Override
-  public Map<String, Object> parse(String input) throws ParseException
+  public Map<String, Object> parse(String input)
   {
     try {
       Map<String, Object> map = new LinkedHashMap<String, Object>();

@@ -12,7 +12,7 @@ public class JSONParserTest
   final String json = "{\"one\": \"foo\", \"two\" : [\"bar\", \"baz\"], \"three\" : \"qux\", \"four\" : null}";
 
   @Test
-  public void testSimple() throws ParseException
+  public void testSimple()
   {
     final Parser<String, Object> jsonParser = new JSONParser();
     final Map<String, Object> jsonMap = jsonParser.parse(json);
@@ -24,7 +24,7 @@ public class JSONParserTest
   }
 
   @Test
-  public void testWithFields() throws ParseException
+  public void testWithFields()
   {
     final Parser<String, Object> jsonParser = new JSONParser();
     jsonParser.setFieldNames(ImmutableList.of("two", "three", "five"));

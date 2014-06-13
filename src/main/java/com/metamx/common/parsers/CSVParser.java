@@ -64,14 +64,14 @@ public class CSVParser implements Parser<String, Object>
     };
   }
 
-  public CSVParser(final Optional<String> listDelimiter, final Iterable<String> fieldNames) throws ParseException
+  public CSVParser(final Optional<String> listDelimiter, final Iterable<String> fieldNames)
   {
     this(listDelimiter);
 
     setFieldNames(fieldNames);
   }
 
-  public CSVParser(final Optional<String> listDelimiter, final String header) throws ParseException
+  public CSVParser(final Optional<String> listDelimiter, final String header)
   {
     this(listDelimiter);
 
@@ -90,13 +90,13 @@ public class CSVParser implements Parser<String, Object>
   }
 
   @Override
-  public void setFieldNames(final Iterable<String> fieldNames) throws ParseException
+  public void setFieldNames(final Iterable<String> fieldNames)
   {
     ParserUtils.validateFields(fieldNames);
     this.fieldNames = Lists.newArrayList(fieldNames);
   }
 
-  public void setFieldNames(final String header) throws ParseException
+  public void setFieldNames(final String header)
   {
     try {
       setFieldNames(Arrays.asList(parser.parseLine(header)));
@@ -107,7 +107,7 @@ public class CSVParser implements Parser<String, Object>
   }
 
   @Override
-  public Map<String, Object> parse(final String input) throws ParseException
+  public Map<String, Object> parse(final String input)
   {
     try {
       String[] values = parser.parseLine(input);

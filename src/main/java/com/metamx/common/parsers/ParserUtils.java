@@ -78,7 +78,7 @@ public class ParserUtils
     return duplicates;
   }
 
-  public static void validateFields(Iterable<String> fieldNames) throws ParseException
+  public static void validateFields(Iterable<String> fieldNames)
   {
     Set<String> duplicates = findDuplicates(fieldNames);
     if (!duplicates.isEmpty()) {

@@ -34,7 +34,7 @@ public class ToLowerCaseParser implements Parser<String, Object>
   }
 
   @Override
-  public Map parse(String input) throws ParseException
+  public Map parse(String input)
   {
     Map<String, Object> line = baseParser.parse(input);
     Map<String, Object> retVal = Maps.newLinkedHashMap();
@@ -52,7 +52,7 @@ public class ToLowerCaseParser implements Parser<String, Object>
   }
 
   @Override
-  public void setFieldNames(Iterable<String> fieldNames) throws ParseException
+  public void setFieldNames(Iterable<String> fieldNames)
   {
     baseParser.setFieldNames(fieldNames);
   }
