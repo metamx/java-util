@@ -53,7 +53,7 @@ public class StreamUtils
       copyWithTimeout(is, os, timeout);
     }
     finally {
-      Closeables.closeQuietly(is);
+      CloseQuietly.close(is);
     }
   }
 
