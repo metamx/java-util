@@ -9,7 +9,8 @@ import java.util.Map;
 
 public class JSONParserTest
 {
-  final String json = "{\"one\": \"foo\", \"two\" : [\"bar\", \"baz\"], \"three\" : \"qux\", \"four\" : null}";
+  private static final String json = "{\"one\": \"foo\", \"two\" : [\"bar\", \"baz\"], \"three\" : \"qux\", \"four\" : null}";
+  private static final String whackyCharacterJson = "{\"one\": \"foo\\uD900\"}";
 
   @Test
   public void testSimple()
@@ -19,6 +20,18 @@ public class JSONParserTest
     Assert.assertEquals(
         "jsonMap",
         ImmutableMap.of("one", "foo", "two", ImmutableList.of("bar", "baz"), "three", "qux"),
+        jsonMap
+    );
+  }
+
+  @Test
+  public void testWithWhackyCharacters()
+  {
+    final Parser<String, Object> jsonParser = new JSONParser();
+    final Map<String, Object> jsonMap = jsonParser.parse(whackyCharacterJson);
+    Assert.assertEquals(
+        "jsonMap",
+        ImmutableMap.of("one", "foo?"),
         jsonMap
     );
   }

@@ -19,10 +19,12 @@ package com.metamx.common.parsers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.metamx.common.logger.Logger;
 
+import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -38,8 +40,16 @@ public class JSONParser implements Parser<String, Object>
     @Override
     public String apply(JsonNode node)
     {
-      // use getValueAsText for compatibility with older jackson implementations on EMR
-      return (node == null || node.isMissingNode() || node.isNull()) ? null : node.asText();
+      final String s = (node == null || node.isMissingNode() || node.isNull()) ? null : node.asText();
+      final CharsetEncoder enc = Charsets.UTF_8.newEncoder();
+      if (s != null && !enc.canEncode(s)) {
+        // Some whacky characters are in this string (e.g. \uD900). These are problematic because they are decodeable
+        // by new String(...) but will not encode into the same character. This dance here will replace these
+        // characters with something more sane.
+        return new String(s.getBytes(Charsets.UTF_8), Charsets.UTF_8);
+      } else {
+        return s;
+      }
     }
   };
 
