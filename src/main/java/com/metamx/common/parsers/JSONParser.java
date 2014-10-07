@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.metamx.common.logger.Logger;
 
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
@@ -33,14 +32,25 @@ import java.util.Map;
 
 public class JSONParser implements Parser<String, Object>
 {
-  private static final Logger log = new Logger(JSONParser.class);
-  private static final ObjectMapper jsonMapper = new ObjectMapper();
-  private static final Function<JsonNode, String> valueFunction = new Function<JsonNode, String>()
+  private static final Function<JsonNode, Object> valueFunction = new Function<JsonNode, Object>()
   {
     @Override
-    public String apply(JsonNode node)
+    public Object apply(JsonNode node)
     {
-      final String s = (node == null || node.isMissingNode() || node.isNull()) ? null : node.asText();
+      if (node == null || node.isMissingNode() || node.isNull()) {
+        return null;
+      }
+      if (node.isIntegralNumber()) {
+        if (node.canConvertToLong()) {
+          return node.asLong();
+        } else {
+          return node.asDouble();
+        }
+      }
+      if (node.isFloatingPointNumber()) {
+        return node.asDouble();
+      }
+      final String s = node.asText();
       final CharsetEncoder enc = Charsets.UTF_8.newEncoder();
       if (s != null && !enc.canEncode(s)) {
         // Some whacky characters are in this string (e.g. \uD900). These are problematic because they are decodeable
@@ -53,15 +63,26 @@ public class JSONParser implements Parser<String, Object>
     }
   };
 
-  private ArrayList<String> fieldNames = null;
+  private final ObjectMapper objectMapper;
+  private ArrayList<String> fieldNames;
 
   public JSONParser()
   {
+    this(new ObjectMapper(), null);
   }
 
+  @Deprecated
   public JSONParser(Iterable<String> fieldNames)
   {
-    setFieldNames(fieldNames);
+    this(new ObjectMapper(), fieldNames);
+  }
+
+  public JSONParser(ObjectMapper objectMapper, Iterable<String> fieldNames)
+  {
+    this.objectMapper = objectMapper;
+    if (fieldNames != null) {
+      setFieldNames(fieldNames);
+    }
   }
 
   @Override
@@ -82,7 +103,7 @@ public class JSONParser implements Parser<String, Object>
   {
     try {
       Map<String, Object> map = new LinkedHashMap<String, Object>();
-      JsonNode root = jsonMapper.readTree(input);
+      JsonNode root = objectMapper.readTree(input);
 
       Iterator<String> keysIter = (fieldNames == null ? root.fieldNames() : fieldNames.iterator());
 
@@ -91,16 +112,16 @@ public class JSONParser implements Parser<String, Object>
         JsonNode node = root.path(key);
 
         if (node.isArray()) {
-          final List<String> nodeValue = Lists.newArrayListWithExpectedSize(node.size());
+          final List<Object> nodeValue = Lists.newArrayListWithExpectedSize(node.size());
           for (final JsonNode subnode : node) {
-            final String subnodeValue = valueFunction.apply(subnode);
+            final Object subnodeValue = valueFunction.apply(subnode);
             if (subnodeValue != null) {
               nodeValue.add(subnodeValue);
             }
           }
           map.put(key, nodeValue);
         } else {
-          final String nodeValue = valueFunction.apply(node);
+          final Object nodeValue = valueFunction.apply(node);
           if (nodeValue != null) {
             map.put(key, nodeValue);
           }
