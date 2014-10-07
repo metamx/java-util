@@ -1,7 +1,9 @@
 package com.metamx.common.parsers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -21,6 +23,18 @@ public class JSONParserTest
     Assert.assertEquals(
         "jsonMap",
         ImmutableMap.of("one", "foo", "two", ImmutableList.of("bar", "baz"), "three", "qux"),
+        jsonMap
+    );
+  }
+
+  @Test
+  public void testSimpleWithFields()
+  {
+    final Parser<String, Object> jsonParser = new JSONParser(new ObjectMapper(), Lists.newArrayList("two"));
+    final Map<String, Object> jsonMap = jsonParser.parse(json);
+    Assert.assertEquals(
+        "jsonMap",
+        ImmutableMap.of("two", ImmutableList.of("bar", "baz")),
         jsonMap
     );
   }
