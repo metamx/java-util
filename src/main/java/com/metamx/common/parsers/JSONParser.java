@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class JSONParser implements Parser<String, Object>
 {
@@ -65,24 +67,31 @@ public class JSONParser implements Parser<String, Object>
 
   private final ObjectMapper objectMapper;
   private ArrayList<String> fieldNames;
+  private Set<String> exclude;
 
   public JSONParser()
   {
-    this(new ObjectMapper(), null);
+    this(new ObjectMapper(), null, null);
   }
 
   @Deprecated
   public JSONParser(Iterable<String> fieldNames)
   {
-    this(new ObjectMapper(), fieldNames);
+    this(new ObjectMapper(), fieldNames, null);
   }
 
   public JSONParser(ObjectMapper objectMapper, Iterable<String> fieldNames)
+  {
+    this(objectMapper, fieldNames, null);
+  }
+
+  public JSONParser(ObjectMapper objectMapper, Iterable<String> fieldNames, Iterable<String> exclude)
   {
     this.objectMapper = objectMapper;
     if (fieldNames != null) {
       setFieldNames(fieldNames);
     }
+    this.exclude = exclude != null ? Sets.newHashSet(exclude) : Sets.<String>newHashSet();
   }
 
   @Override
@@ -109,6 +118,10 @@ public class JSONParser implements Parser<String, Object>
 
       while (keysIter.hasNext()) {
         String key = keysIter.next();
+        if (exclude.contains(key)) {
+          continue;
+        }
+
         JsonNode node = root.path(key);
 
         if (node.isArray()) {

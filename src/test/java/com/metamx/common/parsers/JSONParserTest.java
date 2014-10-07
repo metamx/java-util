@@ -40,6 +40,18 @@ public class JSONParserTest
   }
 
   @Test
+  public void testSimpleWithExclude()
+  {
+    final Parser<String, Object> jsonParser = new JSONParser(new ObjectMapper(), null, Lists.newArrayList("two"));
+    final Map<String, Object> jsonMap = jsonParser.parse(json);
+    Assert.assertEquals(
+        "jsonMap",
+        ImmutableMap.of("one", "foo", "three", "qux"),
+        jsonMap
+    );
+  }
+
+  @Test
   public void testWithWhackyCharacters()
   {
     final Parser<String, Object> jsonParser = new JSONParser();
