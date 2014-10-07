@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.metamx.common.logger.Logger;
+import com.google.common.collect.Sets;
 
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
@@ -30,17 +30,29 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class JSONParser implements Parser<String, Object>
 {
-  private static final Logger log = new Logger(JSONParser.class);
-  private static final ObjectMapper jsonMapper = new ObjectMapper();
-  private static final Function<JsonNode, String> valueFunction = new Function<JsonNode, String>()
+  private static final Function<JsonNode, Object> valueFunction = new Function<JsonNode, Object>()
   {
     @Override
-    public String apply(JsonNode node)
+    public Object apply(JsonNode node)
     {
-      final String s = (node == null || node.isMissingNode() || node.isNull()) ? null : node.asText();
+      if (node == null || node.isMissingNode() || node.isNull()) {
+        return null;
+      }
+      if (node.isIntegralNumber()) {
+        if (node.canConvertToLong()) {
+          return node.asLong();
+        } else {
+          return node.asDouble();
+        }
+      }
+      if (node.isFloatingPointNumber()) {
+        return node.asDouble();
+      }
+      final String s = node.asText();
       final CharsetEncoder enc = Charsets.UTF_8.newEncoder();
       if (s != null && !enc.canEncode(s)) {
         // Some whacky characters are in this string (e.g. \uD900). These are problematic because they are decodeable
@@ -53,15 +65,33 @@ public class JSONParser implements Parser<String, Object>
     }
   };
 
-  private ArrayList<String> fieldNames = null;
+  private final ObjectMapper objectMapper;
+  private ArrayList<String> fieldNames;
+  private Set<String> exclude;
 
   public JSONParser()
   {
+    this(new ObjectMapper(), null, null);
   }
 
+  @Deprecated
   public JSONParser(Iterable<String> fieldNames)
   {
-    setFieldNames(fieldNames);
+    this(new ObjectMapper(), fieldNames, null);
+  }
+
+  public JSONParser(ObjectMapper objectMapper, Iterable<String> fieldNames)
+  {
+    this(objectMapper, fieldNames, null);
+  }
+
+  public JSONParser(ObjectMapper objectMapper, Iterable<String> fieldNames, Iterable<String> exclude)
+  {
+    this.objectMapper = objectMapper;
+    if (fieldNames != null) {
+      setFieldNames(fieldNames);
+    }
+    this.exclude = exclude != null ? Sets.newHashSet(exclude) : Sets.<String>newHashSet();
   }
 
   @Override
@@ -82,25 +112,29 @@ public class JSONParser implements Parser<String, Object>
   {
     try {
       Map<String, Object> map = new LinkedHashMap<String, Object>();
-      JsonNode root = jsonMapper.readTree(input);
+      JsonNode root = objectMapper.readTree(input);
 
       Iterator<String> keysIter = (fieldNames == null ? root.fieldNames() : fieldNames.iterator());
 
       while (keysIter.hasNext()) {
         String key = keysIter.next();
+        if (exclude.contains(key)) {
+          continue;
+        }
+
         JsonNode node = root.path(key);
 
         if (node.isArray()) {
-          final List<String> nodeValue = Lists.newArrayListWithExpectedSize(node.size());
+          final List<Object> nodeValue = Lists.newArrayListWithExpectedSize(node.size());
           for (final JsonNode subnode : node) {
-            final String subnodeValue = valueFunction.apply(subnode);
+            final Object subnodeValue = valueFunction.apply(subnode);
             if (subnodeValue != null) {
               nodeValue.add(subnodeValue);
             }
           }
           map.put(key, nodeValue);
         } else {
-          final String nodeValue = valueFunction.apply(node);
+          final Object nodeValue = valueFunction.apply(node);
           if (nodeValue != null) {
             map.put(key, nodeValue);
           }
