@@ -158,9 +158,96 @@ public enum Granularity
           return date;
         }
       },
-    FIFTEEN_MINUTE
+  FIVE_MINUTE
       {
+        @Override
+        public DateTimeFormatter getFormatter(Formatter type)
+        {
+          return MINUTE.getFormatter(type);
+        }
 
+        @Override
+        public ReadablePeriod getUnits(int count)
+        {
+          return Minutes.minutes(count * 5);
+        }
+
+        @Override
+        public DateTime truncate(DateTime time)
+        {
+          final MutableDateTime mutableDateTime = time.toMutableDateTime();
+
+          mutableDateTime.setMillisOfSecond(0);
+          mutableDateTime.setSecondOfMinute(0);
+          mutableDateTime.setMinuteOfHour(mutableDateTime.getMinuteOfHour() - (mutableDateTime.getMinuteOfHour() % 5));
+
+          return mutableDateTime.toDateTime();
+        }
+
+        @Override
+        public int numIn(ReadableInterval interval)
+        {
+          return Minutes.minutesIn(interval).getMinutes() / 5;
+        }
+
+        @Override
+        public DateTime toDate(String filePath, Formatter formatter)
+        {
+          Integer[] vals = getDateValues(filePath, formatter);
+
+          if (vals[1] != null && vals[2] != null && vals[3] != null && vals[4] != null && vals[5] != null) {
+            return truncate(new DateTime(vals[1], vals[2], vals[3], vals[4], vals[5], 0, 0));
+          }
+
+          return null;
+        }
+      },
+  TEN_MINUTE
+      {
+        @Override
+        public DateTimeFormatter getFormatter(Formatter type)
+        {
+          return MINUTE.getFormatter(type);
+        }
+
+        @Override
+        public ReadablePeriod getUnits(int count)
+        {
+          return Minutes.minutes(count * 10);
+        }
+
+        @Override
+        public DateTime truncate(DateTime time)
+        {
+          final MutableDateTime mutableDateTime = time.toMutableDateTime();
+
+          mutableDateTime.setMillisOfSecond(0);
+          mutableDateTime.setSecondOfMinute(0);
+          mutableDateTime.setMinuteOfHour(mutableDateTime.getMinuteOfHour() - (mutableDateTime.getMinuteOfHour() % 10));
+
+          return mutableDateTime.toDateTime();
+        }
+
+        @Override
+        public int numIn(ReadableInterval interval)
+        {
+          return Minutes.minutesIn(interval).getMinutes() / 10;
+        }
+
+        @Override
+        public DateTime toDate(String filePath, Formatter formatter)
+        {
+          Integer[] vals = getDateValues(filePath, formatter);
+
+          if (vals[1] != null && vals[2] != null && vals[3] != null && vals[4] != null && vals[5] != null) {
+            return truncate(new DateTime(vals[1], vals[2], vals[3], vals[4], vals[5], 0, 0));
+          }
+
+          return null;
+        }
+      },
+  FIFTEEN_MINUTE
+      {
         @Override
         public DateTimeFormatter getFormatter(Formatter type)
         {
@@ -528,7 +615,9 @@ public enum Granularity
 
   // Default patterns for parsing paths.
   protected final Pattern defaultPathPattern =
-      Pattern.compile("^.*[Yy]=(\\d{4})/(?:[Mm]=(\\d{2})/(?:[Dd]=(\\d{2})/(?:[Hh]=(\\d{2})/(?:[Mm]=(\\d{2})/(?:[Ss]=(\\d{2})/)?)?)?)?)?.*$");
+      Pattern.compile(
+          "^.*[Yy]=(\\d{4})/(?:[Mm]=(\\d{2})/(?:[Dd]=(\\d{2})/(?:[Hh]=(\\d{2})/(?:[Mm]=(\\d{2})/(?:[Ss]=(\\d{2})/)?)?)?)?)?.*$"
+      );
   protected final Pattern hivePathPattern =
       Pattern.compile("^.*dt=(\\d{4})(?:-(\\d{2})(?:-(\\d{2})(?:-(\\d{2})(?:-(\\d{2})(?:-(\\d{2})?)?)?)?)?)?/.*$");
 
@@ -552,7 +641,7 @@ public enum Granularity
   protected final Integer[] getDateValues(String filePath, Formatter formatter)
   {
     Pattern pattern = defaultPathPattern;
-    switch(formatter) {
+    switch (formatter) {
       case DEFAULT:
       case LOWER_DEFAULT:
         break;
@@ -616,23 +705,27 @@ public enum Granularity
     return getFormatter(type).print(time);
   }
 
-  /** Return a granularity-sized Interval containing a particular DateTime. */
+  /**
+   * Return a granularity-sized Interval containing a particular DateTime.
+   */
   public final Interval bucket(DateTime t)
   {
     DateTime start = truncate(t);
     return new Interval(start, increment(start));
   }
 
-  /** Round out Interval such that it becomes granularity-aligned and nonempty. */
+  /**
+   * Round out Interval such that it becomes granularity-aligned and nonempty.
+   */
   public final Interval widen(Interval interval)
   {
     final DateTime start = truncate(interval.getStart());
     final DateTime end;
 
-    if(interval.getEnd().equals(start)) {
+    if (interval.getEnd().equals(start)) {
       // Empty with aligned start/end; expand into a granularity-sized interval
       end = increment(start);
-    } else if(truncate(interval.getEnd()).equals(interval.getEnd())) {
+    } else if (truncate(interval.getEnd()).equals(interval.getEnd())) {
       // Non-empty with aligned end; keep the same end
       end = interval.getEnd();
     } else {
@@ -740,7 +833,8 @@ public enum Granularity
     }
   }
 
-  public class ReverseIntervalIterator implements Iterator<Interval> {
+  public class ReverseIntervalIterator implements Iterator<Interval>
+  {
     private final Interval inputInterval;
 
     private DateTime currStart;
