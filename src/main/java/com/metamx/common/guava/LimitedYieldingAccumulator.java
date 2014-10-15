@@ -4,7 +4,7 @@ package com.metamx.common.guava;
  */
 public class LimitedYieldingAccumulator<OutType, T> extends YieldingAccumulator<OutType, T>
 {
-  private int limit;
+  private final int limit;
   private final YieldingAccumulator<OutType, T> delegate;
 
   private volatile int count = 0;

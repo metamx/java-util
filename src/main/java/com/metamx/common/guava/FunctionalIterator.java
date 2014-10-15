@@ -35,17 +35,17 @@ public class FunctionalIterator<T> implements Iterator<T>
 
   public static <T> FunctionalIterator<T> create(Iterator<T> delegate)
   {
-    return new FunctionalIterator<T>(delegate);
+    return new FunctionalIterator<>(delegate);
   }
 
   public static <T> FunctionalIterator<T> fromConcatenation(Iterator<T>... toConcat)
   {
-    return new FunctionalIterator<T>(Iterators.concat(toConcat));
+    return new FunctionalIterator<>(Iterators.concat(toConcat));
   }
 
   public static <T> FunctionalIterator<T> fromConcatenation(Iterator<Iterator<T>> toConcat)
   {
-    return new FunctionalIterator<T>(Iterators.concat(toConcat));
+    return new FunctionalIterator<>(Iterators.concat(toConcat));
   }
 
   public FunctionalIterator(
@@ -72,52 +72,52 @@ public class FunctionalIterator<T> implements Iterator<T>
 
   public <RetType> FunctionalIterator<RetType> transform(Function<T, RetType> fn)
   {
-    return new FunctionalIterator<RetType>(Iterators.transform(delegate, fn));
+    return new FunctionalIterator<>(Iterators.transform(delegate, fn));
   }
 
   public <RetType> FunctionalIterator<RetType> transformCat(Function<T, Iterator<RetType>> fn)
   {
-    return new FunctionalIterator<RetType>(Iterators.concat(Iterators.transform(delegate, fn)));
+    return new FunctionalIterator<>(Iterators.concat(Iterators.transform(delegate, fn)));
   }
 
   public <RetType> FunctionalIterator<RetType> keep(Function<T, RetType> fn)
   {
-    return new FunctionalIterator<RetType>(Iterators.filter(Iterators.transform(delegate, fn), Predicates.notNull()));
+    return new FunctionalIterator<>(Iterators.filter(Iterators.transform(delegate, fn), Predicates.notNull()));
   }
 
   public FunctionalIterator<T> filter(Predicate<T> pred)
   {
-    return new FunctionalIterator<T>(Iterators.filter(delegate, pred));
+    return new FunctionalIterator<>(Iterators.filter(delegate, pred));
   }
 
   public FunctionalIterator<T> drop(int numToDrop)
   {
-    return new FunctionalIterator<T>(new DroppingIterator<T>(delegate, numToDrop));
+    return new FunctionalIterator<>(new DroppingIterator<>(delegate, numToDrop));
   }
 
   public FunctionalIterator<T> limit(int limit)
   {
-    return new FunctionalIterator<T>(Iterators.limit(delegate, limit));
+    return new FunctionalIterator<>(Iterators.limit(delegate, limit));
   }
 
   public FunctionalIterator<T> concat(Iterator<T>... toConcat)
   {
     if (toConcat.length == 1) {
-      return new FunctionalIterator<T>(Iterators.concat(delegate, toConcat[0]));
+      return new FunctionalIterator<>(Iterators.concat(delegate, toConcat[0]));
     }
-    return new FunctionalIterator<T>(Iterators.concat(delegate, Iterators.concat(toConcat)));
+    return new FunctionalIterator<>(Iterators.concat(delegate, Iterators.concat(toConcat)));
   }
 
   public FunctionalIterator<T> concat(Iterator<Iterator<T>> toConcat)
   {
-    return new FunctionalIterator<T>(Iterators.concat(delegate, Iterators.concat(toConcat)));
+    return new FunctionalIterator<>(Iterators.concat(delegate, Iterators.concat(toConcat)));
   }
 
   public <InType, RetType> FunctionalIterator<RetType> binaryTransform(
       final Iterator<InType> otherIterator, final BinaryFn<T, InType, RetType> binaryFn
   )
   {
-    return new FunctionalIterator<RetType>(BinaryTransformIterator.create(delegate, otherIterator, binaryFn));
+    return new FunctionalIterator<>(BinaryTransformIterator.create(delegate, otherIterator, binaryFn));
   }
 
   public <InType1, InType2, RetType> FunctionalIterator<RetType> trinaryTransform(
@@ -126,6 +126,6 @@ public class FunctionalIterator<T> implements Iterator<T>
       final TrinaryFn<T, InType1, InType2, RetType> trinaryFn
   )
   {
-    return new FunctionalIterator<RetType>(TrinaryTransformIterator.create(delegate, iterator1, iterator2, trinaryFn));
+    return new FunctionalIterator<>(TrinaryTransformIterator.create(delegate, iterator1, iterator2, trinaryFn));
   }
 }

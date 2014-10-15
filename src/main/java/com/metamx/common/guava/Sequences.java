@@ -57,27 +57,27 @@ public class Sequences
 
   public static <T> Sequence<T> concat(Sequence<Sequence<T>> sequences)
   {
-    return new ConcatSequence<T>(sequences);
+    return new ConcatSequence<>(sequences);
   }
 
   public static <From, To> Sequence<To> map(Sequence<From> sequence, Function<From, To> fn)
   {
-    return new MappedSequence<From, To>(sequence, fn);
+    return new MappedSequence<>(sequence, fn);
   }
 
   public static <T> Sequence<T> filter(Sequence<T> sequence, Predicate<T> pred)
   {
-    return new FilteredSequence<T>(sequence, pred);
+    return new FilteredSequence<>(sequence, pred);
   }
 
   public static <T> Sequence<T> limit(final Sequence<T> sequence, final int limit)
   {
-    return new LimitedSequence<T>(sequence, limit);
+    return new LimitedSequence<>(sequence, limit);
   }
 
   public static <T> Sequence<T> withBaggage(final Sequence<T> seq, Closeable baggage)
   {
-    return new ResourceClosingSequence<T>(seq, baggage);
+    return new ResourceClosingSequence<>(seq, baggage);
   }
 
   public static <T> Sequence<T> withEffect(final Sequence <T> seq, final Runnable effect, final Executor exec)
@@ -95,7 +95,7 @@ public class Sequences
       @Override
       public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator)
       {
-        return new ExecuteWhenDoneYielder<OutType>(seq.toYielder(initValue, accumulator), effect, exec);
+        return new ExecuteWhenDoneYielder<>(seq.toYielder(initValue, accumulator), effect, exec);
       }
     };
   }

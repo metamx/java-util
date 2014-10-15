@@ -56,7 +56,7 @@ public class Lifecycle
   private static final Logger log = new Logger(Lifecycle.class);
 
   private final Map<Stage, CopyOnWriteArrayList<Handler>> handlers;
-  private AtomicBoolean started = new AtomicBoolean(false);
+  private final AtomicBoolean started = new AtomicBoolean(false);
   private volatile Stage currStage = null;
 
   public static enum Stage
@@ -148,7 +148,7 @@ public class Lifecycle
    */
   public void addHandler(Handler handler, Stage stage)
   {
-    synchronized (handler) {
+    synchronized (handlers) {
       if (started.get()) {
         throw new ISE("Cannot add a handler after the Lifecycle has started, it doesn't work that way.");
       }

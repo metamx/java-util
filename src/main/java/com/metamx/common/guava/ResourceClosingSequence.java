@@ -29,6 +29,6 @@ public class ResourceClosingSequence<T> extends YieldingSequenceBase<T>
       throw e;
     }
 
-    return new ResourceClosingYielder<OutType>(baseYielder, closeable);
+    return new ResourceClosingYielder<>(baseYielder, closeable);
   }
 }

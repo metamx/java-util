@@ -67,7 +67,7 @@ public class JSONParser implements Parser<String, Object>
 
   private final ObjectMapper objectMapper;
   private ArrayList<String> fieldNames;
-  private Set<String> exclude;
+  private final Set<String> exclude;
 
   public JSONParser()
   {
@@ -111,7 +111,7 @@ public class JSONParser implements Parser<String, Object>
   public Map<String, Object> parse(String input)
   {
     try {
-      Map<String, Object> map = new LinkedHashMap<String, Object>();
+      Map<String, Object> map = new LinkedHashMap<>();
       JsonNode root = objectMapper.readTree(input);
 
       Iterator<String> keysIter = (fieldNames == null ? root.fieldNames() : fieldNames.iterator());

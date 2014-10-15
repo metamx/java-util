@@ -45,7 +45,7 @@ public class BaseSequenceTest
   public void testExceptionThrownInIterator() throws Exception
   {
     final AtomicInteger closedCounter = new AtomicInteger(0);
-    Sequence<Integer> seq = new BaseSequence<Integer, Iterator<Integer>>(
+    Sequence<Integer> seq = new BaseSequence<>(
         new BaseSequence.IteratorMaker<Integer, Iterator<Integer>>()
         {
           @Override

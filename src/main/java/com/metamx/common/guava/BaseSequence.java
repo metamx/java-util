@@ -34,7 +34,7 @@ public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T
 
   public static <T> Sequence<T> simple(final Iterable<T> iterable)
   {
-    return new BaseSequence<T, Iterator<T>>(
+    return new BaseSequence<>(
         new BaseSequence.IteratorMaker<T, Iterator<T>>()
         {
           @Override

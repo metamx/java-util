@@ -46,6 +46,6 @@ public class MergeIterable<T> implements Iterable<T>
       iterators.add(baseIterable.iterator());
     }
 
-    return new MergeIterator<T>(comparator, iterators);
+    return new MergeIterator<>(comparator, iterators);
   }
 }

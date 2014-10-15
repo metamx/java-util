@@ -66,7 +66,7 @@ public class Comparators
 
   private static final Comparator<Interval> INTERVAL_COMPARATOR = new Comparator<Interval>()
   {
-    private DateTimeComparator dateTimeComp = DateTimeComparator.getInstance();
+    private final DateTimeComparator dateTimeComp = DateTimeComparator.getInstance();
 
     @Override
     public int compare(Interval lhs, Interval rhs)

@@ -30,7 +30,7 @@ public class MergeIteratorTest
   @Test
   public void testSanity() throws Exception
   {
-    MergeIterator<Integer> iter = new MergeIterator<Integer>(
+    MergeIterator<Integer> iter = new MergeIterator<>(
         Ordering.<Integer>natural(),
         Lists.newArrayList(
             Arrays.asList(1, 3, 5, 7, 9).iterator(),
@@ -45,7 +45,7 @@ public class MergeIteratorTest
   @Test
   public void testScrewsUpOnOutOfOrder() throws Exception
   {
-    MergeIterator<Integer> iter = new MergeIterator<Integer>(
+    MergeIterator<Integer> iter = new MergeIterator<>(
         Ordering.<Integer>natural(),
         Lists.newArrayList(
             Arrays.asList(1, 3, 5, 4, 7, 9).iterator(),

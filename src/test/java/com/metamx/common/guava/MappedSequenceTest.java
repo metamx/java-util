@@ -46,7 +46,7 @@ public class MappedSequenceTest
 
       SequenceTestHelper.testAll(
           String.format("Run %,d: ", i),
-          new MappedSequence<Integer, Integer>(Sequences.simple(vals), fn),
+          new MappedSequence<>(Sequences.simple(vals), fn),
           Lists.transform(vals, fn)
       );
     }

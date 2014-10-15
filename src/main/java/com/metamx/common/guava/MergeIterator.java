@@ -36,7 +36,7 @@ public class MergeIterator<T> implements Iterator<T>
       List<Iterator<T>> iterators
   )
   {
-    pQueue = new PriorityQueue<PeekingIterator<T>>(
+    pQueue = new PriorityQueue<>(
         16,
         new Comparator<PeekingIterator<T>>()
         {

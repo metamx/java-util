@@ -28,11 +28,11 @@ public class LimitedSequence<T> extends YieldingSequenceBase<T>
   @Override
   public <OutType> Yielder<OutType> toYielder(OutType initValue, YieldingAccumulator<OutType, T> accumulator)
   {
-    final LimitedYieldingAccumulator<OutType, T> limitedAccumulator = new LimitedYieldingAccumulator<OutType, T>(
+    final LimitedYieldingAccumulator<OutType, T> limitedAccumulator = new LimitedYieldingAccumulator<>(
         accumulator
     );
     final Yielder<OutType> subYielder = baseSequence.toYielder(initValue, limitedAccumulator);
-    return new LimitedYielder<OutType>(subYielder, limitedAccumulator);
+    return new LimitedYielder<>(subYielder, limitedAccumulator);
   }
 
   private class LimitedYielder<OutType> implements Yielder<OutType>
@@ -67,7 +67,7 @@ public class LimitedSequence<T> extends YieldingSequenceBase<T>
                                                     || limitedAccumulator.isInterruptYield())) {
         next = Yielders.done(next.get(), next);
       }
-      return new LimitedYielder<OutType>(next, limitedAccumulator);
+      return new LimitedYielder<>(next, limitedAccumulator);
     }
 
     @Override

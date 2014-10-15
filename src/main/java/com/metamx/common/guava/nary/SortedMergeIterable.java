@@ -30,7 +30,7 @@ public class SortedMergeIterable<InType, OutType> implements Iterable<OutType>
       BinaryFn<InType, InType, OutType> fn
   )
   {
-    return new SortedMergeIterable<InType, OutType>(lhs, rhs, comparator, fn);
+    return new SortedMergeIterable<>(lhs, rhs, comparator, fn);
   }
 
   private final Iterable<InType> lhs;

@@ -44,7 +44,7 @@ public class ExecuteWhenDoneYielder<T> implements Yielder<T>
   @Override
   public Yielder<T> next(T initValue)
   {
-    return new ExecuteWhenDoneYielder<T>(baseYielder.next(initValue), runnable, executor);
+    return new ExecuteWhenDoneYielder<>(baseYielder.next(initValue), runnable, executor);
   }
 
   @Override

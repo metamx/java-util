@@ -35,7 +35,7 @@ public class MoreIterators
   {
     return new Iterator<X>()
     {
-      private Runnable fOnlyOnce = new RunOnlyOnce(f);
+      private final Runnable fOnlyOnce = new RunOnlyOnce(f);
 
       @Override
       public boolean hasNext()
@@ -68,7 +68,7 @@ public class MoreIterators
   {
     return new Iterator<X>()
     {
-      private Runnable fOnlyOnce = new RunOnlyOnce(f);
+      private final Runnable fOnlyOnce = new RunOnlyOnce(f);
 
       @Override
       public boolean hasNext()
