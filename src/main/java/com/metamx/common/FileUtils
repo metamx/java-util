@@ -1,0 +1,177 @@
+package com.metamx.common;
+
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
+
+/**
+ * @author Bhavik Patel
+ */
+public class FileUtils {
+	
+    private static final int BUFFER_SIZE = 4096;
+
+    public static byte[] readBytes(File file) throws IOException {
+        FileInputStream is = new FileInputStream(file);
+        return readAllBytesAndClose(is);
+    }
+    
+    public static byte[] readAllBytesAndClose(InputStream in) throws IOException {
+        try {
+            return readAllBytes(in);
+        } finally {
+            Close(in);
+        }
+    }
+    
+    public static byte[] readAllBytes(InputStream in) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        copyAllBytes(in, out);
+        return out.toByteArray();
+    }
+    
+    public static int copyAllBytes(InputStream in, OutputStream out) throws IOException {
+        int byteCount = 0;
+        byte[] buffer = new byte[BUFFER_SIZE];
+        while (true) {
+            int read = in.read(buffer);
+            if (read == -1) {
+                break;
+            }
+            out.write(buffer, 0, read);
+            byteCount += read;
+        }
+        return byteCount;
+    }
+    
+    public static void writeBytes(File file, byte[] content) throws IOException {
+        OutputStream out = new FileOutputStream(file);
+        try {
+            out.write(content);
+        } finally {
+            Close(out);
+        }
+    }
+    
+    /** Closes the given stream inside a try/catch. Does nothing if stream is null. */
+    public static void Close(InputStream in) {
+        if (in != null) {
+            try {
+                in.close();
+            } catch (IOException e) {
+                // Silent
+            }
+        }
+    }
+    
+    public static String readUtf8(File file) throws IOException {
+        return readChars(file, "UTF-8");
+    }
+
+    public static String readChars(File file, String charset) throws IOException {
+        Reader reader = new InputStreamReader(new FileInputStream(file), charset);
+        return readAllCharsAndClose(reader);
+    }
+    public static String readAllCharsAndClose(Reader reader) throws IOException {
+        try {
+            return readAllChars(reader);
+        } finally {
+            Close(reader);
+        }
+    }
+    
+
+    public static String readAllChars(Reader reader) throws IOException {
+        char[] buffer = new char[2048];
+        StringBuilder builder = new StringBuilder();
+        while (true) {
+            int read = reader.read(buffer);
+            if (read == -1) {
+                break;
+            }
+            builder.append(buffer, 0, read);
+        }
+        return builder.toString();
+    }
+
+    public static void writeUtf8(File file, CharSequence text) throws IOException {
+        writeChars(file, "UTF-8", text);
+    }
+
+    public static void writeChars(File file, String charset, CharSequence text) throws IOException {
+        Writer writer = new OutputStreamWriter(new FileOutputStream(file), charset);
+        writeAllCharsAndClose(writer, text);
+    }
+    
+    public static void writeAllCharsAndClose(Writer writer, CharSequence text) throws IOException {
+        try {
+            writer.append(text);
+        } finally {
+            Close(writer);
+        }
+    }
+
+    /** Copies a file to another location. */
+    public static void copyFile(File from, File to) throws IOException {
+        InputStream in = new BufferedInputStream(new FileInputStream(from));
+        try {
+            OutputStream out = new BufferedOutputStream(new FileOutputStream(to));
+            try {
+                copyAllBytes(in, out);
+            } finally {
+            	Close(out);
+            }
+        } finally {
+            Close(in);
+        }
+    }
+
+    /** Copies a file to another location. */
+    public static void copyFile(String fromFilename, String toFilename) throws IOException {
+        copyFile(new File(fromFilename), new File(toFilename));
+    }
+    /** Closes the given stream inside a try/catch. Does nothing if stream is null. */
+    public static void Close(Reader in) {
+        if (in != null) {
+            try {
+                in.close();
+            } catch (IOException e) {
+                // Silent
+            }
+        }
+    }
+    
+    /** Closes the given stream inside a try/catch. Does nothing if stream is null. */
+    public static void Close(Writer out) {
+        if (out != null) {
+            try {
+                out.close();
+            } catch (IOException e) {
+                // Silent
+            }
+        }
+    }
+
+    /** Closes the given stream inside a try/catch. Does nothing if stream is null. */
+    public static void Close(OutputStream out) {
+        if (out != null) {
+            try {
+                out.close();
+            } catch (IOException e) {
+                // Silent
+            }
+        }
+    }
+
+}
