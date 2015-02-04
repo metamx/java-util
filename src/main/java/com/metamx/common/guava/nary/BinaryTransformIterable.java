@@ -28,7 +28,7 @@ public class BinaryTransformIterable<Type1, Type2, RetType> implements Iterable<
       BinaryFn<Type1, Type2, RetType> fn
   )
   {
-    return new BinaryTransformIterable<Type1, Type2, RetType>(lhs, rhs, fn);
+    return new BinaryTransformIterable<>(lhs, rhs, fn);
   }
 
   private final Iterable<Type1> lhs;

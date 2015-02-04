@@ -41,7 +41,7 @@ public class ResourceClosingYielder<OutType> implements Yielder<OutType>
   @Override
   public Yielder<OutType> next(OutType initValue)
   {
-    return new ResourceClosingYielder<OutType>(baseYielder.next(initValue), closeable);
+    return new ResourceClosingYielder<>(baseYielder.next(initValue), closeable);
   }
 
   @Override

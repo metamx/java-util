@@ -39,14 +39,14 @@ import java.util.NoSuchElementException;
  */
 public class TestGranularity
 {
-  Granularity SECOND = Granularity.SECOND;
-  Granularity MINUTE = Granularity.MINUTE;
-  Granularity HOUR = Granularity.HOUR;
-  Granularity FIFTEEN_MINUTE = Granularity.FIFTEEN_MINUTE;
-  Granularity DAY = Granularity.DAY;
-  Granularity WEEK = Granularity.WEEK;
-  Granularity MONTH = Granularity.MONTH;
-  Granularity YEAR = Granularity.YEAR;
+  final Granularity SECOND = Granularity.SECOND;
+  final Granularity MINUTE = Granularity.MINUTE;
+  final Granularity HOUR = Granularity.HOUR;
+  final Granularity FIFTEEN_MINUTE = Granularity.FIFTEEN_MINUTE;
+  final Granularity DAY = Granularity.DAY;
+  final Granularity WEEK = Granularity.WEEK;
+  final Granularity MONTH = Granularity.MONTH;
+  final Granularity YEAR = Granularity.YEAR;
 
   @Test
   public void testHiveFormat() {
@@ -487,10 +487,10 @@ public class TestGranularity
    */
   private class PathDate
   {
-    public String path;
-    public DateTime date;
+    public final String path;
+    public final DateTime date;
 
-    public Class<? extends Exception> exception;
+    public final Class<? extends Exception> exception;
 
     private PathDate(DateTime date, Class<? extends Exception> exception, String path)
     {

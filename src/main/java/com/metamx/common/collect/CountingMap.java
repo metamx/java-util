@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 // so I just pick Long/MutableLong.
 public class CountingMap<K> extends AbstractMap<K, Long>
 {
-  private final HashMap<K, AtomicLong> counts = new HashMap<K, AtomicLong>();
+  private final HashMap<K, AtomicLong> counts = new HashMap<>();
 
   public void add(K k, Long n)
   {

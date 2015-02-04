@@ -26,7 +26,7 @@ public class Pair<T1, T2>
 {
   
   public static <T1, T2> Pair<T1, T2> of(T1 lhs, T2 rhs) {
-    return new Pair<T1, T2>(lhs, rhs);
+    return new Pair<>(lhs, rhs);
   }
   
   public final T1 lhs;

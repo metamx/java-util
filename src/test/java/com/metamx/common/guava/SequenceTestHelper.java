@@ -104,7 +104,7 @@ public class SequenceTestHelper
     int sum = seq.accumulate(
         0, new Accumulator<Integer, Integer>()
     {
-      Iterator<Integer> valsIter = nums.iterator();
+      final Iterator<Integer> valsIter = nums.iterator();
 
       @Override
       public Integer accumulate(Integer accumulated, Integer in)

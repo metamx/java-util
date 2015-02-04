@@ -26,7 +26,7 @@ public class TestSequence<T> implements Sequence<T>
 {
   public static <T> TestSequence<T> create(Iterable<T> iterable)
   {
-    return new TestSequence<T>(iterable);
+    return new TestSequence<>(iterable);
   }
 
   public static <T> TestSequence<T> create(T... vals)
@@ -39,7 +39,7 @@ public class TestSequence<T> implements Sequence<T>
 
   public TestSequence(final Iterable<T> iterable)
   {
-    base = new BaseSequence<T, Iterator<T>>(
+    base = new BaseSequence<>(
         new BaseSequence.IteratorMaker<T, Iterator<T>>()
     {
       @Override

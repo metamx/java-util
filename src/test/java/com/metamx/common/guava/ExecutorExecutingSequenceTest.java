@@ -41,7 +41,7 @@ public class ExecutorExecutingSequenceTest
   {
     TestExecutor exec = new TestExecutor();
     final List<Integer> vals = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13);
-    ExecutorExecutingSequence<Integer> seq = new ExecutorExecutingSequence<Integer>(Sequences.simple(vals), exec);
+    ExecutorExecutingSequence<Integer> seq = new ExecutorExecutingSequence<>(Sequences.simple(vals), exec);
 
     SequenceTestHelper.testAccumulation("", seq, vals);
     Assert.assertEquals(1, exec.getTimesCalled());
@@ -57,7 +57,7 @@ public class ExecutorExecutingSequenceTest
   {
     TestExecutor exec = new TestExecutor();
     final List<Integer> vals = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
-    ExecutorExecutingSequence<Integer> seq = new ExecutorExecutingSequence<Integer>(Sequences.simple(vals), exec);
+    ExecutorExecutingSequence<Integer> seq = new ExecutorExecutingSequence<>(Sequences.simple(vals), exec);
 
     SequenceTestHelper.testAccumulation("", seq, vals);
     Assert.assertEquals(1, exec.getTimesCalled());

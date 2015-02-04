@@ -37,7 +37,7 @@ public class MergeSequenceTest
         TestSequence.create(4, 6, 8)
     );
 
-    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
+    MergeSequence<Integer> seq = new MergeSequence<>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
     SequenceTestHelper.testAll(seq, Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 8, 9));
 
     for (TestSequence<Integer> sequence : testSeqs) {
@@ -54,7 +54,7 @@ public class MergeSequenceTest
         TestSequence.create(4, 6, 8)
     );
 
-    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
+    MergeSequence<Integer> seq = new MergeSequence<>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
     SequenceTestHelper.testAll(seq, Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 8, 9));
 
     for (TestSequence<Integer> sequence : testSeqs) {
@@ -72,7 +72,7 @@ public class MergeSequenceTest
         TestSequence.create(4, 6, 8)
     );
 
-    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
+    MergeSequence<Integer> seq = new MergeSequence<>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
     SequenceTestHelper.testAll(seq, Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 8, 9));
 
     for (TestSequence<Integer> sequence : testSeqs) {
@@ -90,7 +90,7 @@ public class MergeSequenceTest
         TestSequence.create(4, 6, 8)
     );
 
-    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
+    MergeSequence<Integer> seq = new MergeSequence<>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
     SequenceTestHelper.testAll(seq, Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 8, 9));
 
     for (TestSequence<Integer> sequence : testSeqs) {
@@ -109,7 +109,7 @@ public class MergeSequenceTest
         TestSequence.<Integer>create()
     );
 
-    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
+    MergeSequence<Integer> seq = new MergeSequence<>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
     SequenceTestHelper.testAll(seq, Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 8, 9));
 
     for (TestSequence<Integer> sequence : testSeqs) {
@@ -126,7 +126,7 @@ public class MergeSequenceTest
         TestSequence.create(4, 6)
     );
 
-    MergeSequence<Integer> seq = new MergeSequence<Integer>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
+    MergeSequence<Integer> seq = new MergeSequence<>(Ordering.<Integer>natural(), (Sequence) Sequences.simple(testSeqs));
     SequenceTestHelper.testAll(seq, Arrays.asList(1, 2, 3, 4, 5, 4, 6, 7, 8, 9));
 
     for (TestSequence<Integer> sequence : testSeqs) {
@@ -137,7 +137,7 @@ public class MergeSequenceTest
   @Test
   public void testHierarchicalMerge() throws Exception
   {
-    final Sequence<Integer> seq1 = new MergeSequence<Integer>(
+    final Sequence<Integer> seq1 = new MergeSequence<>(
         Ordering.<Integer>natural(), Sequences.<Sequence<Integer>>simple(
         Lists.<Sequence<Integer>>newArrayList(
             TestSequence.create(1)
@@ -145,7 +145,7 @@ public class MergeSequenceTest
     )
     );
 
-    final Sequence<Integer> finalMerged = new MergeSequence<Integer>(
+    final Sequence<Integer> finalMerged = new MergeSequence<>(
         Ordering.<Integer>natural(),
         Sequences.simple(
             Lists.<Sequence<Integer>>newArrayList(seq1)
@@ -158,7 +158,7 @@ public class MergeSequenceTest
   @Test
   public void testMergeOne() throws Exception
   {
-    final Sequence<Integer> mergeOne = new MergeSequence<Integer>(
+    final Sequence<Integer> mergeOne = new MergeSequence<>(
         Ordering.<Integer>natural(), Sequences.<Sequence<Integer>>simple(
         Lists.<Sequence<Integer>>newArrayList(
             TestSequence.create(1)

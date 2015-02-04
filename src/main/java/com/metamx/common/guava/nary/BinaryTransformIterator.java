@@ -29,7 +29,7 @@ public class BinaryTransformIterator<Type1, Type2, RetType> implements Iterator<
       BinaryFn<Type1, Type2, RetType> fn
   )
   {
-    return new BinaryTransformIterator<Type1, Type2, RetType>(lhs, rhs, fn);
+    return new BinaryTransformIterator<>(lhs, rhs, fn);
   }
 
   private final Iterator<Type1> lhsIter;

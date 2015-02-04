@@ -41,7 +41,7 @@ public class SortedMergeIterator<InType, OutType> implements Iterator<OutType>
       BinaryFn<InType, InType, OutType> fn
   )
   {
-    return new SortedMergeIterator<InType, OutType>(lhs, rhs, comparator, fn);
+    return new SortedMergeIterator<>(lhs, rhs, comparator, fn);
   }
 
   private final PeekingIterator<InType> lhs;

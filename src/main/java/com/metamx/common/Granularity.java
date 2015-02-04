@@ -42,9 +42,9 @@ public enum Granularity
 {
   SECOND
       {
-        DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'H'=HH/'M'=mm/'S'=ss");
-        DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd-HH-mm-ss");
-        DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'h'=HH/'m'=mm/'s'=ss");
+        final DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'H'=HH/'M'=mm/'S'=ss");
+        final DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd-HH-mm-ss");
+        final DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'h'=HH/'m'=mm/'s'=ss");
 
         @Override
         public DateTimeFormatter getFormatter(Formatter type)
@@ -103,9 +103,9 @@ public enum Granularity
       },
   MINUTE
       {
-        DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'H'=HH/'M'=mm");
-        DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd-HH-mm");
-        DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'h'=HH/'m'=mm");
+        final DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'H'=HH/'M'=mm");
+        final DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd-HH-mm");
+        final DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'h'=HH/'m'=mm");
 
         @Override
         public DateTimeFormatter getFormatter(Formatter type)
@@ -292,9 +292,9 @@ public enum Granularity
       },
   HOUR
       {
-        DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'H'=HH");
-        DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd-HH");
-        DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'h'=HH");
+        final DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'H'=HH");
+        final DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd-HH");
+        final DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd/'h'=HH");
 
         @Override
         public DateTimeFormatter getFormatter(Formatter type)
@@ -394,9 +394,9 @@ public enum Granularity
       },
   DAY
       {
-        DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd");
-        DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd");
-        DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd");
+        final DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd");
+        final DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM-dd");
+        final DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM/'d'=dd");
 
         @Override
         public DateTimeFormatter getFormatter(Formatter type)
@@ -498,9 +498,9 @@ public enum Granularity
       },
   MONTH
       {
-        DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM");
-        DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM");
-        DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM");
+        final DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM");
+        final DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy-MM");
+        final DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy/'m'=MM");
 
         @Override
         public DateTimeFormatter getFormatter(Formatter type)
@@ -555,9 +555,9 @@ public enum Granularity
       },
   YEAR
       {
-        DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy");
-        DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy");
-        DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy");
+        final DateTimeFormatter defaultFormat = DateTimeFormat.forPattern("'y'=yyyy");
+        final DateTimeFormatter hiveFormat = DateTimeFormat.forPattern("'dt'=yyyy");
+        final DateTimeFormatter lowerDefaultFormat = DateTimeFormat.forPattern("'y'=yyyy");
 
         @Override
         public DateTimeFormatter getFormatter(Formatter type)

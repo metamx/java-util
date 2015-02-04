@@ -41,7 +41,7 @@ public class ParserUtils
 
   public static ArrayList<String> generateFieldNames(int length)
   {
-    ArrayList<String> names = new ArrayList<String>(length);
+    ArrayList<String> names = new ArrayList<>(length);
     for (int i = 0; i < length; ++i) {
       names.add("column_" + (i + 1));
     }
@@ -65,10 +65,9 @@ public class ParserUtils
   {
     Set<String> duplicates = Sets.newHashSet();
     Set<String> uniqueNames = Sets.newHashSet();
-    Iterator<String> iter = fieldNames.iterator();
 
-    while (iter.hasNext()) {
-      String next = iter.next().toLowerCase();
+    for (String fieldName : fieldNames) {
+      String next = fieldName.toLowerCase();
       if (uniqueNames.contains(next)) {
         duplicates.add(next);
       }

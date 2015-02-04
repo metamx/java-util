@@ -30,7 +30,7 @@ public class ComparatorsTest
   @Test
   public void testInverse() throws Exception
   {
-    Comparator<Integer> normal = Comparators.<Integer>comparable();
+    Comparator<Integer> normal = Comparators.comparable();
     Comparator<Integer> inverted = Comparators.inverse(normal);
 
     Assert.assertEquals(-1, normal.compare(0, 1));

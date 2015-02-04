@@ -29,7 +29,7 @@ public class TrinaryTransformIterable<Type1, Type2, Type3, RetType> implements I
       TrinaryFn<Type1, Type2, Type3, RetType> fn
   )
   {
-    return new TrinaryTransformIterable<Type1, Type2, Type3, RetType>(iterable1, iterable2, iterable3, fn);
+    return new TrinaryTransformIterable<>(iterable1, iterable2, iterable3, fn);
   }
 
   private final Iterable<Type1> iterable1;

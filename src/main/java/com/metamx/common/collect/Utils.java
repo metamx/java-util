@@ -41,7 +41,7 @@ public class Utils
                                 "number of values[%s] exceeds number of keys[%s]",
                                 values.length, keys.length);
 
-    Map<K, V> retVal = new LinkedHashMap<K, V>();
+    Map<K, V> retVal = new LinkedHashMap<>();
 
     for(int i = 0; i < values.length; ++i) retVal.put(keys[i], values[i]);
 
@@ -51,7 +51,7 @@ public class Utils
   /** Create a Map from iterables of keys and values. Will throw an exception if there are more keys than values,
    *  or more values than keys. */
   public static <K, V> Map<K, V> zipMap(Iterable<K> keys, Iterable<V> values) {
-    Map<K, V> retVal = new LinkedHashMap<K, V>();
+    Map<K, V> retVal = new LinkedHashMap<>();
 
     Iterator<K> keysIter = keys.iterator();
     Iterator<V> valsIter = values.iterator();
@@ -77,7 +77,7 @@ public class Utils
     * the excess will be omitted. */
   public static <K, V> Map<K, V> zipMapPartial(Iterable<K> keys, Iterable<V> values)
   {
-    Map<K, V> retVal = new LinkedHashMap<K, V>();
+    Map<K, V> retVal = new LinkedHashMap<>();
 
     Iterator<K> keysIter = keys.iterator();
     Iterator<V> valsIter = values.iterator();

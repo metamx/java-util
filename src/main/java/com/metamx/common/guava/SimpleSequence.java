@@ -24,7 +24,7 @@ public class SimpleSequence<T> extends BaseSequence<T, Iterator<T>>
 {
   public static <T> Sequence<T> create(Iterable<T> iterable)
   {
-    return new SimpleSequence<T>(iterable);
+    return new SimpleSequence<>(iterable);
   }
 
   public SimpleSequence(

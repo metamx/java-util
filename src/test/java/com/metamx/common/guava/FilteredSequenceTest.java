@@ -47,7 +47,7 @@ public class FilteredSequenceTest
 
       SequenceTestHelper.testAll(
           String.format("Run %,d: ", i),
-          new FilteredSequence<Integer>(Sequences.simple(vals), pred),
+          new FilteredSequence<>(Sequences.simple(vals), pred),
           Lists.newArrayList(Iterables.filter(vals, pred))
       );
     }
