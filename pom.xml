@@ -35,8 +35,8 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:git@github.com/metamx/java-util.git</connection>
-        <developerConnection>scm:git:git@github.com/metamx/java-util.git</developerConnection>
+        <connection>scm:git:ssh://git@github.com/metamx/java-util.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/metamx/java-util.git</developerConnection>
         <url>https://www.github.com/metamx/java-util.git</url>
     </scm>
 
