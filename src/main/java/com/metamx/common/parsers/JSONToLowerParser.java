@@ -16,15 +16,13 @@
 
 package com.metamx.common.parsers;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -32,79 +30,43 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class JSONParser implements Parser<String, Object>
+/**
+ * TODO:
+ * There is a lot of code copy and pasted from JSONParser. JSONParser needs to be rewritten
+ * to actually take a map transformer instead of what it is doing now. For the purposes of moving forward in 0.7.0,
+ * I am going to have a different parser to lower case data from JSON. This code needs to be removed the next time
+ * we touch java-util.
+ */
+@Deprecated
+public class JSONToLowerParser extends JSONParser
 {
-  public static final Function<JsonNode, Object> valueFunction = new Function<JsonNode, Object>()
-  {
-    @Override
-    public Object apply(JsonNode node)
-    {
-      if (node == null || node.isMissingNode() || node.isNull()) {
-        return null;
-      }
-      if (node.isIntegralNumber()) {
-        if (node.canConvertToLong()) {
-          return node.asLong();
-        } else {
-          return node.asDouble();
-        }
-      }
-      if (node.isFloatingPointNumber()) {
-        return node.asDouble();
-      }
-      final String s = node.asText();
-      final CharsetEncoder enc = Charsets.UTF_8.newEncoder();
-      if (s != null && !enc.canEncode(s)) {
-        // Some whacky characters are in this string (e.g. \uD900). These are problematic because they are decodeable
-        // by new String(...) but will not encode into the same character. This dance here will replace these
-        // characters with something more sane.
-        return new String(s.getBytes(Charsets.UTF_8), Charsets.UTF_8);
-      } else {
-        return s;
-      }
-    }
-  };
-
   private final ObjectMapper objectMapper;
-  private ArrayList<String> fieldNames;
   private final Set<String> exclude;
 
-  public JSONParser()
-  {
-    this(new ObjectMapper(), null, null);
-  }
+  private ArrayList<String> fieldNames;
 
-  @Deprecated
-  public JSONParser(Iterable<String> fieldNames)
+  public JSONToLowerParser(
+      ObjectMapper objectMapper, Iterable<String> fieldNames, Iterable<String> exclude
+  )
   {
-    this(new ObjectMapper(), fieldNames, null);
-  }
-
-  public JSONParser(ObjectMapper objectMapper, Iterable<String> fieldNames)
-  {
-    this(objectMapper, fieldNames, null);
-  }
-
-  public JSONParser(ObjectMapper objectMapper, Iterable<String> fieldNames, Iterable<String> exclude)
-  {
+    super(objectMapper, fieldNames, exclude);
     this.objectMapper = objectMapper;
     if (fieldNames != null) {
       setFieldNames(fieldNames);
     }
-    this.exclude = exclude != null ? Sets.newHashSet(exclude) : Sets.<String>newHashSet();
-  }
-
-  @Override
-  public List<String> getFieldNames()
-  {
-    return fieldNames;
-  }
-
-  @Override
-  public void setFieldNames(Iterable<String> fieldNames)
-  {
-    ParserUtils.validateFields(fieldNames);
-    this.fieldNames = Lists.newArrayList(fieldNames);
+    this.exclude = exclude != null ? Sets.newHashSet(
+        Iterables.transform(
+            exclude,
+            new Function<String, String>()
+            {
+              @Override
+              public String apply(String input)
+              {
+                return input.toLowerCase();
+              }
+            }
+        )
+    ) : Sets.<String>newHashSet();
   }
 
   @Override
@@ -117,7 +79,7 @@ public class JSONParser implements Parser<String, Object>
       Iterator<String> keysIter = (fieldNames == null ? root.fieldNames() : fieldNames.iterator());
 
       while (keysIter.hasNext()) {
-        String key = keysIter.next();
+        String key = keysIter.next().toLowerCase(); // only difference from JSONParser parse()
 
         if (exclude.contains(key)) {
           continue;
