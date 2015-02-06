@@ -79,9 +79,9 @@ public class JSONToLowerParser extends JSONParser
       Iterator<String> keysIter = (fieldNames == null ? root.fieldNames() : fieldNames.iterator());
 
       while (keysIter.hasNext()) {
-        String key = keysIter.next().toLowerCase(); // only difference from JSONParser parse()
+        String key = keysIter.next();
 
-        if (exclude.contains(key)) {
+        if (exclude.contains(key.toLowerCase())) {
           continue;
         }
 
@@ -95,11 +95,11 @@ public class JSONToLowerParser extends JSONParser
               nodeValue.add(subnodeValue);
             }
           }
-          map.put(key, nodeValue);
+          map.put(key.toLowerCase(), nodeValue); // difference from JSONParser parse()
         } else {
           final Object nodeValue = valueFunction.apply(node);
           if (nodeValue != null) {
-            map.put(key, nodeValue);
+            map.put(key.toLowerCase(), nodeValue); // difference from JSONParser parse()
           }
         }
       }
