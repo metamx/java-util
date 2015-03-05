@@ -16,6 +16,7 @@
 
 package com.metamx.common.concurrent;
 
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.metamx.common.lifecycle.Lifecycle;
 
@@ -37,22 +38,26 @@ public class ExecutorServices
 
   public static <T extends ExecutorService> T manageLifecycle(Lifecycle lifecycle, final T service)
   {
-    lifecycle.addHandler(
-        new Lifecycle.Handler()
-        {
-          @Override
-          public void start() throws Exception
+    try {
+      lifecycle.addMaybeStartHandler(
+          new Lifecycle.Handler()
           {
-          }
+            @Override
+            public void start() throws Exception
+            {
+            }
 
-          @Override
-          public void stop()
-          {
-            service.shutdownNow();
+            @Override
+            public void stop()
+            {
+              service.shutdownNow();
+            }
           }
-        }
-    );
-
+      );
+    }
+    catch (Exception e) {
+      Throwables.propagate(e);
+    }
     return service;
   }
 }
