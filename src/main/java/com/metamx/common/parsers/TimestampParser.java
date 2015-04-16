@@ -92,6 +92,16 @@ public class TimestampParser
           return new DateTime(Long.parseLong(ParserUtils.stripQuotes(input)));
         }
       };
+    } else if (format.equalsIgnoreCase("nano")) {
+      return new Function<String, DateTime>() {
+        @Override
+        public DateTime apply(String input) {
+          Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
+          long timeNs = Long.parseLong(ParserUtils.stripQuotes(input));
+          // Convert to milliseconds, effectively: ms = floor(time in ns / 1000000)
+          return new DateTime(timeNs / 1000000L);
+        }
+      };
     } else {
       try {
         final DateTimeFormatter formatter = DateTimeFormat.forPattern(format);

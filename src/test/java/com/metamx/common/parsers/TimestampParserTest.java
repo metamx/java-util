@@ -45,6 +45,21 @@ public class TimestampParserTest
     Assert.assertEquals(new DateTime("2013-01-16T15:41:47+01:00"), parser.apply("1358347307.435447"));
   }
 
+  @Test
+  public void testNano() throws Exception {
+    String timeNsStr = "1427504794977098494";
+    DateTime expectedDt = new DateTime("2015-3-28T01:06:34.977Z");
+    final Function<String, DateTime> parser = ParserUtils.createTimestampParser("nano");
+    Assert.assertEquals("Incorrect truncation of nanoseconds -> milliseconds",
+        expectedDt, parser.apply(timeNsStr));
+
+    // Confirm sub-millisecond timestamps are handled correctly
+    expectedDt = new DateTime("1970-1-1T00:00:00.000Z");
+    Assert.assertEquals(expectedDt, parser.apply("999999"));
+    Assert.assertEquals(expectedDt, parser.apply("0"));
+    Assert.assertEquals(expectedDt, parser.apply("0000"));
+  }
+
   /*Commenting out until Joda 2.1 supported
   @Test
   public void testTimeStampParserWithQuotes() throws Exception {
