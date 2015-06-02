@@ -99,6 +99,7 @@ public class CompressionUtils
         totalSize += Files.asByteSource(file).copyTo(zipOut);
       }
       zipOut.closeEntry();
+      zipOut.flush();
     }
 
     return totalSize;
@@ -317,7 +318,9 @@ public class CompressionUtils
   public static long gunzip(InputStream in, OutputStream out) throws IOException
   {
     try (GZIPInputStream gzipInputStream = gzipInputStream(in)) {
-      return ByteStreams.copy(gzipInputStream, out);
+      final long result =  ByteStreams.copy(gzipInputStream, out);
+      out.flush();
+      return result;
     }
     finally {
       out.close();
@@ -382,7 +385,9 @@ public class CompressionUtils
   public static long gzip(InputStream inputStream, OutputStream out) throws IOException
   {
     try (GZIPOutputStream outputStream = new GZIPOutputStream(out)) {
-      return ByteStreams.copy(inputStream, outputStream);
+      final long result = ByteStreams.copy(inputStream, outputStream);
+      out.flush();
+      return result;
     }
     finally {
       CloseQuietly.close(out);
