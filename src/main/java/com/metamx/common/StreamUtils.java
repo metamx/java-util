@@ -55,7 +55,9 @@ public class StreamUtils
   {
     file.getParentFile().mkdirs();
     try (OutputStream os = new BufferedOutputStream(new FileOutputStream(file))) {
-      return ByteStreams.copy(is, os);
+      final long result =  ByteStreams.copy(is, os);
+      os.flush();
+      return result;
     }
     finally {
       CloseQuietly.close(is);
@@ -79,7 +81,9 @@ public class StreamUtils
   {
     file.getParentFile().mkdirs();
     try (OutputStream os = new BufferedOutputStream(new FileOutputStream(file))) {
-      return copyWithTimeout(is, os, timeout);
+      final long retval = copyWithTimeout(is, os, timeout);
+      os.flush();
+      return retval;
     }
     finally {
       CloseQuietly.close(is);
@@ -99,7 +103,9 @@ public class StreamUtils
   public static long copyAndClose(InputStream is, OutputStream os) throws IOException
   {
     try {
-      return ByteStreams.copy(is, os);
+      final long retval = ByteStreams.copy(is, os);
+      os.flush();
+      return retval;
     }
     finally {
       CloseQuietly.close(is);
@@ -133,6 +139,7 @@ public class StreamUtils
       os.write(buffer, 0, n);
       size += n;
     }
+    os.flush();
     return size;
   }
 
@@ -163,7 +170,9 @@ public class StreamUtils
               try {
                 inputStream = byteSource.openStream();
                 outputStream = byteSink.openStream();
-                return ByteStreams.copy(inputStream, outputStream);
+                final long retval =  ByteStreams.copy(inputStream, outputStream);
+                outputStream.flush();
+                return retval;
               }
               finally {
                 CloseQuietly.close(inputStream);
