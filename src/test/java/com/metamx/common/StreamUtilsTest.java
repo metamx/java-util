@@ -83,29 +83,4 @@ public class StreamUtilsTest
     Assert.assertEquals(4, outputFlushes.get());// 2 closes and 2 manual flushes
     Assert.assertArrayEquals(bytes, byteArrayOutputStream.toByteArray());
   }
-  @Test(expected = IOException.class)
-  public void testTimeoutCopyExceptionOnFlush() throws IOException, TimeoutException
-  {
-    final byte[] bytes = new byte[1 << 10];
-    Random random = new Random(47831947819L);
-    random.nextBytes(bytes);
-    final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    final AtomicLong outputFlushes = new AtomicLong(0);
-    StreamUtils.copyWithTimeout(
-        new ByteArrayInputStream(bytes),
-        new FilterOutputStream(byteArrayOutputStream)
-        {
-          @Override
-          public void flush() throws IOException
-          {
-            if (outputFlushes.getAndIncrement() > 0) {
-              out.flush();
-            } else {
-              throw new IOException("Test exception");
-            }
-          }
-        },
-        1 << 10
-    );
-  }
 }

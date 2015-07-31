@@ -55,12 +55,13 @@ public class StreamUtils
   {
     file.getParentFile().mkdirs();
     try (OutputStream os = new BufferedOutputStream(new FileOutputStream(file))) {
-      final long result =  ByteStreams.copy(is, os);
+      final long result = ByteStreams.copy(is, os);
+      // Workarround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
       os.flush();
       return result;
     }
     finally {
-      CloseQuietly.close(is);
+      is.close();
     }
   }
 
@@ -82,11 +83,12 @@ public class StreamUtils
     file.getParentFile().mkdirs();
     try (OutputStream os = new BufferedOutputStream(new FileOutputStream(file))) {
       final long retval = copyWithTimeout(is, os, timeout);
+      // Workarround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
       os.flush();
       return retval;
     }
     finally {
-      CloseQuietly.close(is);
+      is.close();
     }
   }
 
@@ -104,12 +106,13 @@ public class StreamUtils
   {
     try {
       final long retval = ByteStreams.copy(is, os);
+      // Workarround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
       os.flush();
       return retval;
     }
     finally {
-      CloseQuietly.close(is);
-      CloseQuietly.close(os);
+      is.close();
+      os.close();
     }
   }
 
@@ -139,7 +142,6 @@ public class StreamUtils
       os.write(buffer, 0, n);
       size += n;
     }
-    os.flush();
     return size;
   }
 
@@ -165,18 +167,13 @@ public class StreamUtils
             @Override
             public Long call() throws Exception
             {
-              InputStream inputStream = null;
-              OutputStream outputStream = null;
-              try {
-                inputStream = byteSource.openStream();
-                outputStream = byteSink.openStream();
-                final long retval =  ByteStreams.copy(inputStream, outputStream);
-                outputStream.flush();
-                return retval;
-              }
-              finally {
-                CloseQuietly.close(inputStream);
-                CloseQuietly.close(outputStream);
+              try (InputStream inputStream = byteSource.openStream()) {
+                try (OutputStream outputStream = byteSink.openStream()) {
+                  final long retval = ByteStreams.copy(inputStream, outputStream);
+                  // Workarround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
+                  outputStream.flush();
+                  return retval;
+                }
               }
             }
           },

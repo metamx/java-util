@@ -572,7 +572,7 @@ public class CompressionUtilsTest
       assertGoodDataStream(inputStream);
     }
     if (testFile.exists() && !testFile.delete()) {
-      throw new IOException(String.format("Unable to delete file [%s]", testFile.getAbsolutePath()));
+      throw new RuntimeException(String.format("Unable to delete file [%s]", testFile.getAbsolutePath()));
     }
     Assert.assertFalse(testFile.exists());
     final AtomicLong flushes = new AtomicLong(0L);

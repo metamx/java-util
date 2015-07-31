@@ -74,7 +74,7 @@ public class CompressionUtils
    * Zips the contents of the input directory to the output stream. Sub directories are skipped
    *
    * @param directory The directory whose contents should be added to the zip in the output stream.
-   * @param out       The output stream to write the zip data to.
+   * @param out       The output stream to write the zip data to. It is closed in the process
    *
    * @return The number of bytes (uncompressed) read from the input directory.
    *
@@ -99,6 +99,7 @@ public class CompressionUtils
         totalSize += Files.asByteSource(file).copyTo(zipOut);
       }
       zipOut.closeEntry();
+      // Workarround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
       zipOut.flush();
     }
 
@@ -230,7 +231,7 @@ public class CompressionUtils
    * The behavior of directories in the input stream's zip is undefined.
    * If possible, it is recommended to use unzip(ByteStream, File) instead
    *
-   * @param in     The input stream of the zip data
+   * @param in     The input stream of the zip data. This stream is closed
    * @param outDir The directory to copy the unzipped data to
    *
    * @return The FileUtils.FileCopyResult containing information on all the files which were written
@@ -308,8 +309,8 @@ public class CompressionUtils
   /**
    * gunzip from the source stream to the destination stream.
    *
-   * @param in  The input stream which is to be decompressed
-   * @param out The output stream to write to
+   * @param in  The input stream which is to be decompressed. This stream is closed.
+   * @param out The output stream to write to. This stream is closed
    *
    * @return The number of bytes written to the output stream.
    *
@@ -375,8 +376,8 @@ public class CompressionUtils
    * Copy inputStream to out while wrapping out in a GZIPOutputStream
    * Closes both input and output
    *
-   * @param inputStream The input stream to copy data from
-   * @param out         The output stream to wrap in a GZIPOutputStream beore copying
+   * @param inputStream The input stream to copy data from. This stream is closed
+   * @param out         The output stream to wrap in a GZIPOutputStream before copying. This stream is closed
    *
    * @return The size of the data copied
    *
@@ -390,8 +391,7 @@ public class CompressionUtils
       return result;
     }
     finally {
-      CloseQuietly.close(out);
-      CloseQuietly.close(inputStream);
+      inputStream.close();
     }
   }
 
