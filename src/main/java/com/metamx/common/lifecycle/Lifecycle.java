@@ -51,6 +51,7 @@ public class Lifecycle
 
   private final Map<Stage, CopyOnWriteArrayList<Handler>> handlers;
   private final AtomicBoolean started = new AtomicBoolean(false);
+  private final AtomicBoolean shutdownHookRegistered = new AtomicBoolean(false);
   private volatile Stage currStage = null;
 
   public static enum Stage
@@ -72,6 +73,7 @@ public class Lifecycle
    * Stage.NORMAL. If the lifecycle has already been started, it throws an {@link ISE}
    *
    * @param o The object to add to the lifecycle
+   *
    * @throws ISE {@link Lifecycle#addHandler(Handler, Stage)}
    */
   public <T> T addManagedInstance(T o)
@@ -84,8 +86,9 @@ public class Lifecycle
    * Adds a "managed" instance (annotated with {@link LifecycleStart} and {@link LifecycleStop}) to the Lifecycle.
    * If the lifecycle has already been started, it throws an {@link ISE}
    *
-   * @param o The object to add to the lifecycle
+   * @param o     The object to add to the lifecycle
    * @param stage The stage to add the lifecycle at
+   *
    * @throws ISE {@link Lifecycle#addHandler(Handler, Stage)}
    */
   public <T> T addManagedInstance(T o, Stage stage)
@@ -99,6 +102,7 @@ public class Lifecycle
    * already been started, it throws an {@link ISE}
    *
    * @param o The object to add to the lifecycle
+   *
    * @throws ISE {@link Lifecycle#addHandler(Handler, Stage)}
    */
   public <T> T addStartCloseInstance(T o)
@@ -111,8 +115,9 @@ public class Lifecycle
    * Adds an instance with a start() and/or close() method to the Lifecycle.  If the lifecycle has already been started,
    * it throws an {@link ISE}
    *
-   * @param o The object to add to the lifecycle
+   * @param o     The object to add to the lifecycle
    * @param stage The stage to add the lifecycle at
+   *
    * @throws ISE {@link Lifecycle#addHandler(Handler, Stage)}
    */
   public <T> T addStartCloseInstance(T o, Stage stage)
@@ -126,6 +131,7 @@ public class Lifecycle
    * an {@link ISE}
    *
    * @param handler The hander to add to the lifecycle
+   *
    * @throws ISE {@link Lifecycle#addHandler(Handler, Stage)}
    */
   public void addHandler(Handler handler)
@@ -137,7 +143,8 @@ public class Lifecycle
    * Adds a handler to the Lifecycle. If the lifecycle has already been started, it throws an {@link ISE}
    *
    * @param handler The hander to add to the lifecycle
-   * @param stage The stage to add the lifecycle at
+   * @param stage   The stage to add the lifecycle at
+   *
    * @throws ISE indicates that the lifecycle has already been started and thus cannot be added to
    */
   public void addHandler(Handler handler, Stage stage)
@@ -155,6 +162,7 @@ public class Lifecycle
    * Stage.NORMAL and starts it if the lifecycle has already been started.
    *
    * @param o The object to add to the lifecycle
+   *
    * @throws Exception {@link Lifecycle#addMaybeStartHandler(Handler, Stage)}
    */
   public <T> T addMaybeStartManagedInstance(T o) throws Exception
@@ -167,8 +175,9 @@ public class Lifecycle
    * Adds a "managed" instance (annotated with {@link LifecycleStart} and {@link LifecycleStop}) to the Lifecycle
    * and starts it if the lifecycle has already been started.
    *
-   * @param o The object to add to the lifecycle
+   * @param o     The object to add to the lifecycle
    * @param stage The stage to add the lifecycle at
+   *
    * @throws Exception {@link Lifecycle#addMaybeStartHandler(Handler, Stage)}
    */
   public <T> T addMaybeStartManagedInstance(T o, Stage stage) throws Exception
@@ -182,6 +191,7 @@ public class Lifecycle
    * lifecycle has already been started.
    *
    * @param o The object to add to the lifecycle
+   *
    * @throws Exception {@link Lifecycle#addMaybeStartHandler(Handler, Stage)}
    */
   public <T> T addMaybeStartStartCloseInstance(T o) throws Exception
@@ -194,8 +204,9 @@ public class Lifecycle
    * Adds an instance with a start() and/or close() method to the Lifecycle and starts it if the lifecycle has
    * already been started.
    *
-   * @param o The object to add to the lifecycle
+   * @param o     The object to add to the lifecycle
    * @param stage The stage to add the lifecycle at
+   *
    * @throws Exception {@link Lifecycle#addMaybeStartHandler(Handler, Stage)}
    */
   public <T> T addMaybeStartStartCloseInstance(T o, Stage stage) throws Exception
@@ -208,6 +219,7 @@ public class Lifecycle
    * Adds a handler to the Lifecycle at the Stage.NORMAL stage and starts it if the lifecycle has already been started.
    *
    * @param handler The hander to add to the lifecycle
+   *
    * @throws Exception {@link Lifecycle#addMaybeStartHandler(Handler, Stage)}
    */
   public void addMaybeStartHandler(Handler handler) throws Exception
@@ -219,7 +231,8 @@ public class Lifecycle
    * Adds a handler to the Lifecycle and starts it if the lifecycle has already been started.
    *
    * @param handler The hander to add to the lifecycle
-   * @param stage The stage to add the lifecycle at
+   * @param stage   The stage to add the lifecycle at
+   *
    * @throws Exception an exception thrown from handler.start().  If an exception is thrown, the handler is *not* added
    */
   public void addMaybeStartHandler(Handler handler, Stage stage) throws Exception
@@ -237,7 +250,9 @@ public class Lifecycle
   public void start() throws Exception
   {
     synchronized (handlers) {
-      started.set(true);
+      if (!started.compareAndSet(false, true)) {
+        throw new ISE("Already started");
+      }
       for (Stage stage : stagesOrdered()) {
         currStage = stage;
         for (Handler handler : handlers.get(stage)) {
@@ -250,6 +265,10 @@ public class Lifecycle
   public void stop()
   {
     synchronized (handlers) {
+      if (!started.compareAndSet(true, false)) {
+        log.info("Already stopped and stop was called. Silently skipping");
+        return;
+      }
       List<Exception> exceptions = Lists.newArrayList();
 
       for (Stage stage : Lists.reverse(stagesOrdered())) {
@@ -266,7 +285,6 @@ public class Lifecycle
           }
         }
       }
-      started.set(false);
 
       if (!exceptions.isEmpty()) {
         throw Throwables.propagate(exceptions.get(0));
@@ -274,22 +292,28 @@ public class Lifecycle
     }
   }
 
+  public void ensureShutdownHook()
+  {
+    if (shutdownHookRegistered.compareAndSet(false, true)) {
+      Runtime.getRuntime().addShutdownHook(
+          new Thread(
+              new Runnable()
+              {
+                @Override
+                public void run()
+                {
+                  log.info("Running shutdown hook");
+                  stop();
+                }
+              }
+          )
+      );
+    }
+  }
+
   public void join() throws InterruptedException
   {
-    Runtime.getRuntime().addShutdownHook(
-        new Thread(
-            new Runnable()
-            {
-              @Override
-              public void run()
-              {
-                log.info("Running shutdown hook");
-                stop();
-              }
-            }
-        )
-    );
-
+    ensureShutdownHook();
     Thread.currentThread().join();
   }
 
@@ -302,6 +326,7 @@ public class Lifecycle
   public static interface Handler
   {
     public void start() throws Exception;
+
     public void stop();
   }
 
