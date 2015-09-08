@@ -24,15 +24,9 @@ import com.metamx.common.logger.Logger;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -348,6 +342,11 @@ public class Lifecycle
         }
       }
     }
+  }
+
+  public boolean isStarted()
+  {
+    return started.get();
   }
 
   private static class StartCloseHandler implements Handler
