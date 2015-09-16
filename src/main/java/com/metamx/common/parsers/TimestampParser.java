@@ -60,46 +60,29 @@ public class TimestampParser
           return new DateTime(ParserUtils.stripQuotes(input));
         }
       };
-    } else if (format.equalsIgnoreCase("posix")) {
+    } else if (format.equalsIgnoreCase("posix")
+               || format.equalsIgnoreCase("millis")
+               || format.equalsIgnoreCase("nano")) {
+      final Function<Number, DateTime> numericFun = createNumericTimestampParser(format);
       return new Function<String, DateTime>()
       {
         @Override
         public DateTime apply(String input)
         {
           Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-          return new DateTime(Long.parseLong(ParserUtils.stripQuotes(input)) * 1000);
+          return numericFun.apply(Long.parseLong(ParserUtils.stripQuotes(input)));
         }
       };
     } else if (format.equalsIgnoreCase("ruby")) {
+      // Numeric parser ignores millis for ruby.
+      final Function<Number, DateTime> numericFun = createNumericTimestampParser(format);
       return new Function<String, DateTime>()
       {
         @Override
         public DateTime apply(String input)
         {
           Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-          Double ts = Double.parseDouble(ParserUtils.stripQuotes(input));
-          Long jts = ts.longValue() * 1000; // ignoring milli secs
-          return new DateTime(jts);
-        }
-      };
-    } else if (format.equalsIgnoreCase("millis")) {
-      return new Function<String, DateTime>()
-      {
-        @Override
-        public DateTime apply(String input)
-        {
-          Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-          return new DateTime(Long.parseLong(ParserUtils.stripQuotes(input)));
-        }
-      };
-    } else if (format.equalsIgnoreCase("nano")) {
-      return new Function<String, DateTime>() {
-        @Override
-        public DateTime apply(String input) {
-          Preconditions.checkArgument(input != null && !input.isEmpty(), "null timestamp");
-          long timeNs = Long.parseLong(ParserUtils.stripQuotes(input));
-          // Convert to milliseconds, effectively: ms = floor(time in ns / 1000000)
-          return new DateTime(timeNs / 1000000L);
+          return numericFun.apply(Double.parseDouble(ParserUtils.stripQuotes(input)));
         }
       };
     } else {
@@ -119,5 +102,63 @@ public class TimestampParser
         throw new IAE(e, "Unable to parse timestamps with format [%s]", format);
       }
     }
+  }
+
+  public static Function<Number, DateTime> createNumericTimestampParser(
+      final String format
+  )
+  {
+    // Ignore millis for ruby
+    if (format.equalsIgnoreCase("posix") || format.equalsIgnoreCase("ruby")) {
+      return new Function<Number, DateTime>()
+      {
+        @Override
+        public DateTime apply(Number input)
+        {
+          return new DateTime(input.longValue() * 1000);
+        }
+      };
+    } else if (format.equalsIgnoreCase("nano")) {
+      return new Function<Number, DateTime>()
+      {
+        @Override
+        public DateTime apply(Number input)
+        {
+          return new DateTime(input.longValue() / 1000000L);
+        }
+      };
+    } else {
+      return new Function<Number, DateTime>()
+      {
+        @Override
+        public DateTime apply(Number input)
+        {
+          return new DateTime(input.longValue());
+        }
+      };
+    }
+  }
+
+  public static Function<Object, DateTime> createObjectTimestampParser(
+      final String format
+  )
+  {
+    final Function<String, DateTime> stringFun = createTimestampParser(format);
+    final Function<Number, DateTime> numericFun = createNumericTimestampParser(format);
+
+    return new Function<Object, DateTime>()
+    {
+      @Override
+      public DateTime apply(Object o)
+      {
+        Preconditions.checkArgument(o != null, "null timestamp");
+
+        if (o instanceof Number) {
+          return numericFun.apply((Number) o);
+        } else {
+          return stringFun.apply(o.toString());
+        }
+      }
+    };
   }
 }
