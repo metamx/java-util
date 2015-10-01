@@ -92,7 +92,7 @@ public class ConcatSequence<T> implements Sequence<T>
     while (!yielderYielder.isDone()) {
       Yielder<OutType> yielder = yielderYielder.get().toYielder(initValue, accumulator);
       if (accumulator.yielded()) {
-        return wrapYielder(yielder, yielderYielder.next(null), accumulator);
+        return wrapYielder(yielder, yielderYielder, accumulator);
       }
 
       initValue = yielder.get();
@@ -124,7 +124,7 @@ public class ConcatSequence<T> implements Sequence<T>
         throw Throwables.propagate(e);
       }
 
-      return makeYielder(yielderYielder, nextInit, accumulator);
+      return makeYielder(yielderYielder.next(null), nextInit, accumulator);
     }
 
     return new Yielder<OutType>()
