@@ -17,15 +17,18 @@
 package com.metamx.common.guava;
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import junit.framework.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -185,6 +188,91 @@ public class ConcatSequenceTest
     );
 
     SequenceTestHelper.testClosed(closedCount, seq);
+  }
+
+  @Test
+  public void testEnsureNextSequenceIsCalledLazilyInToYielder() throws Exception
+  {
+    final AtomicBoolean lastSeqFullyRead = new AtomicBoolean(true);
+
+    Sequence<Integer> seq = Sequences.concat(
+        Sequences.map(
+            Sequences.simple(
+                ImmutableList.of(
+                    ImmutableList.of(1, 2, 3),
+                    ImmutableList.of(4, 5, 6)
+                )
+            ),
+            new Function<ImmutableList<Integer>, Sequence<Integer>>()
+            {
+              @Override
+              public Sequence<Integer> apply(final ImmutableList<Integer> input)
+              {
+                if (lastSeqFullyRead.getAndSet(false)) {
+                  return Sequences.simple(
+                      new Iterable<Integer>()
+                      {
+                        private Iterator<Integer> baseIter = input.iterator();
+
+                        @Override
+                        public Iterator<Integer> iterator()
+                        {
+                          return new Iterator<Integer>()
+                          {
+                            @Override
+                            public boolean hasNext()
+                            {
+                              boolean result = baseIter.hasNext();
+                              if(!result) {
+                                lastSeqFullyRead.set(true);
+                              }
+                              return result;
+                            }
+
+                            @Override
+                            public Integer next()
+                            {
+                              return baseIter.next();
+                            }
+
+                            @Override
+                            public void remove()
+                            {
+                              throw new UnsupportedOperationException("Remove Not Supported");
+                            }
+                          };
+                        }
+                      }
+                  );
+                } else {
+                  throw new IllegalStateException("called before previous sequence is read fully");
+                }
+              }
+            }
+        )
+    );
+
+    Yielder<Integer> yielder = seq.toYielder(
+        null,
+        new YieldingAccumulator<Integer, Integer>()
+        {
+          @Override
+          public Integer accumulate(Integer accumulated, Integer in)
+          {
+            yield();
+            return in;
+          }
+        }
+    );
+
+    List<Integer> result = new ArrayList<>();
+    while(!yielder.isDone()) {
+      result.add(yielder.get());
+      yielder = yielder.next(null);
+    }
+    yielder.close();
+
+    Assert.assertEquals(ImmutableList.of(1,2,3,4,5,6), result);
   }
 
   @SuppressWarnings("unchecked")
