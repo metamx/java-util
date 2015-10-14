@@ -110,6 +110,9 @@ public class Logger
 
   private String safeFormat(String message, Object... formatArgs)
   {
+    if(formatArgs == null || formatArgs.length == 0) {
+      return message;
+    }
     try {
       return String.format(message, formatArgs);
     }
