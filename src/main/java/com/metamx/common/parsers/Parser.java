@@ -20,9 +20,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Class that can parse Strings into Maps.
+ */
 public interface Parser<K, V>
 {
-  public Map<K, V> parse(String input) ;
-  public void setFieldNames(Iterable<String> fieldNames) ;
+  /**
+   * Parse a String into a Map.
+   *
+   * @throws ParseException if the String cannot be parsed
+   */
+  public Map<K, V> parse(String input);
+
+  /**
+   * Set the fieldNames that you expect to see in parsed Maps. Deprecated; Parsers should not, in general, be
+   * expected to know what fields they will return. Some individual types of parsers do need to know (like a TSV
+   * parser) and those parsers have their own way of setting field names.
+   */
+  @Deprecated
+  public void setFieldNames(Iterable<String> fieldNames);
+
+  /**
+   * Returns the fieldNames that we expect to see in parsed Maps, if known, or null otherwise. Deprecated; Parsers
+   * should not, in general, be expected to know what fields they will return.
+   */
+  @Deprecated
   public List<String> getFieldNames();
 }
