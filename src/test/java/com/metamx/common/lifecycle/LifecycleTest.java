@@ -16,17 +16,156 @@
 
 package com.metamx.common.lifecycle;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.metamx.common.ISE;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  */
 public class LifecycleTest
 {
+  @Test
+  public void testConcurrentStartStopOnce() throws Exception
+  {
+    final int numThreads = 10;
+    ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numThreads));
+
+    final Lifecycle lifecycle = new Lifecycle();
+    final AtomicLong startedCount = new AtomicLong(0L);
+    final AtomicLong failedCount = new AtomicLong(0L);
+    final Lifecycle.Handler exceptionalHandler = new Lifecycle.Handler()
+    {
+      final AtomicBoolean started = new AtomicBoolean(false);
+
+      @Override
+      public void start() throws Exception
+      {
+        if (!started.compareAndSet(false, true)) {
+          failedCount.incrementAndGet();
+          throw new ISE("Already started");
+        }
+        startedCount.incrementAndGet();
+      }
+
+      @Override
+      public void stop()
+      {
+        if (!started.compareAndSet(true, false)) {
+          failedCount.incrementAndGet();
+          throw new ISE("Not yet started started");
+        }
+      }
+    };
+    lifecycle.addHandler(exceptionalHandler);
+    Collection<ListenableFuture<?>> futures = new ArrayList<>(numThreads);
+    final CyclicBarrier barrier = new CyclicBarrier(numThreads);
+    final AtomicBoolean started = new AtomicBoolean(false);
+    for (int i = 0; i < numThreads; ++i) {
+      futures.add(
+          executorService.submit(
+              new Runnable()
+              {
+                @Override
+                public void run()
+                {
+                  try {
+                    for (int i = 0; i < 1024; ++i) {
+                      if (started.compareAndSet(false, true)) {
+                        lifecycle.start();
+                      }
+                      barrier.await();
+                      lifecycle.stop();
+                      barrier.await();
+                      started.set(false);
+                      barrier.await();
+                    }
+                  }
+                  catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw Throwables.propagate(e);
+                  }
+                  catch (Exception e) {
+                    throw Throwables.propagate(e);
+                  }
+                }
+              }
+          )
+      );
+    }
+    try {
+      Futures.allAsList(futures).get();
+    }
+    finally {
+      lifecycle.stop();
+    }
+    Assert.assertEquals(0, failedCount.get());
+    Assert.assertTrue(startedCount.get() > 0);
+    executorService.shutdownNow();
+  }
+
+  @Test
+  public void testStartStopOnce() throws Exception
+  {
+    final Lifecycle lifecycle = new Lifecycle();
+    final AtomicLong startedCount = new AtomicLong(0L);
+    final AtomicLong failedCount = new AtomicLong(0L);
+    Lifecycle.Handler exceptionalHandler = new Lifecycle.Handler()
+    {
+      final AtomicBoolean started = new AtomicBoolean(false);
+
+      @Override
+      public void start() throws Exception
+      {
+        if (!started.compareAndSet(false, true)) {
+          failedCount.incrementAndGet();
+          throw new ISE("Already started");
+        }
+        startedCount.incrementAndGet();
+      }
+
+      @Override
+      public void stop()
+      {
+        if (!started.compareAndSet(true, false)) {
+          failedCount.incrementAndGet();
+          throw new ISE("Not yet started started");
+        }
+      }
+    };
+    lifecycle.addHandler(exceptionalHandler);
+    lifecycle.start();
+    lifecycle.stop();
+    lifecycle.stop();
+    lifecycle.stop();
+    lifecycle.start();
+    lifecycle.stop();
+    Assert.assertEquals(2, startedCount.get());
+    Assert.assertEquals(0, failedCount.get());
+    Exception ex = null;
+    try {
+      exceptionalHandler.stop();
+    }
+    catch (Exception e) {
+      ex = e;
+    }
+    Assert.assertNotNull("Should have exception", ex);
+  }
+
   @Test
   public void testSanity() throws Exception
   {
