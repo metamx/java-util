@@ -42,9 +42,9 @@ public class ComparatorsTest
   }
 
   @Test
-  public void testIntervals() throws Exception
+  public void testIntervalsByStartThenEnd() throws Exception
   {
-    Comparator<Interval> comp = Comparators.intervals();
+    Comparator<Interval> comp = Comparators.intervalsByStartThenEnd();
 
     Assert.assertEquals(0, comp.compare(new Interval("P1d/2011-04-02"), new Interval("2011-04-01/2011-04-02")));
     Assert.assertEquals(-1, comp.compare(new Interval("2011-03-31/2011-04-02"), new Interval("2011-04-01/2011-04-02")));
@@ -73,6 +73,42 @@ public class ComparatorsTest
             new Interval("2011-04-02/2011-04-03T06"),
             new Interval("2011-04-02/2011-04-04"),
         },
+        intervals
+    );
+  }
+
+  @Test
+  public void testIntervalsByEndThenStart() throws Exception
+  {
+    Comparator<Interval> comp = Comparators.intervalsByEndThenStart();
+
+    Assert.assertEquals(0, comp.compare(new Interval("P1d/2011-04-02"), new Interval("2011-04-01/2011-04-02")));
+    Assert.assertEquals(-1, comp.compare(new Interval("2011-04-01/2011-04-03"), new Interval("2011-04-01/2011-04-04")));
+    Assert.assertEquals(1, comp.compare(new Interval("2011-04-01/2011-04-02"), new Interval("2011-04-01/2011-04-01")));
+    Assert.assertEquals(-1, comp.compare(new Interval("2011-04-01/2011-04-03"), new Interval("2011-04-02/2011-04-03")));
+    Assert.assertEquals(1, comp.compare(new Interval("2011-04-01/2011-04-03"), new Interval("2011-03-31/2011-04-03")));
+
+    Interval[] intervals = new Interval[]{
+        new Interval("2011-04-01T18/2011-04-02T13"),
+        new Interval("2011-04-01/2011-04-03"),
+        new Interval("2011-04-01/2011-04-04"),
+        new Interval("2011-04-02/2011-04-04"),
+        new Interval("2011-04-01/2011-04-02"),
+        new Interval("2011-04-02/2011-04-03"),
+        new Interval("2011-04-02/2011-04-03T06")
+    };
+    Arrays.sort(intervals, comp);
+
+    Assert.assertArrayEquals(
+        new Interval[]{
+            new Interval("2011-04-01/2011-04-02"),
+            new Interval("2011-04-01T18/2011-04-02T13"),
+            new Interval("2011-04-01/2011-04-03"),
+            new Interval("2011-04-02/2011-04-03"),
+            new Interval("2011-04-02/2011-04-03T06"),
+            new Interval("2011-04-01/2011-04-04"),
+            new Interval("2011-04-02/2011-04-04")
+            },
         intervals
     );
   }

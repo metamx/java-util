@@ -64,7 +64,7 @@ public class Comparators
     };
   }
 
-  private static final Comparator<Interval> INTERVAL_COMPARATOR = new Comparator<Interval>()
+  private static final Comparator<Interval> INTERVAL_BY_START_THEN_END = new Comparator<Interval>()
   {
     private final DateTimeComparator dateTimeComp = DateTimeComparator.getInstance();
 
@@ -79,6 +79,21 @@ public class Comparators
     }
   };
 
+  private static final Comparator<Interval> INTERVAL_BY_END_THEN_START = new Comparator<Interval>()
+  {
+    private final DateTimeComparator dateTimeComp = DateTimeComparator.getInstance();
+
+    @Override
+    public int compare(Interval lhs, Interval rhs)
+    {
+      int retVal = dateTimeComp.compare(lhs.getEnd(), rhs.getEnd());
+      if (retVal == 0) {
+        retVal = dateTimeComp.compare(lhs.getStart(), rhs.getStart());
+      }
+      return retVal;
+    }
+  };
+
   @Deprecated
   public static Comparator<Interval> intervals()
   {
@@ -87,6 +102,12 @@ public class Comparators
 
   public static Comparator<Interval> intervalsByStartThenEnd()
   {
-    return INTERVAL_COMPARATOR;
+    return INTERVAL_BY_START_THEN_END;
   }
+
+  public static Comparator<Interval> intervalsByEndThenStart()
+  {
+    return INTERVAL_BY_END_THEN_START;
+  }
+
 }
