@@ -16,9 +16,8 @@
 
 package com.metamx.common.logger;
 
+import com.metamx.common.StringUtils;
 import org.slf4j.LoggerFactory;
-
-import java.util.MissingFormatArgumentException;
 
 /**
  */
@@ -39,90 +38,73 @@ public class Logger
   public void trace(String message, Object... formatArgs)
   {
     if (log.isTraceEnabled()) {
-      log.trace(safeFormat(message, formatArgs));
+      log.trace(StringUtils.safeFormat(message, formatArgs));
     }
   }
 
   public void trace(Throwable t, String message, Object... formatArgs)
   {
     if (log.isTraceEnabled()) {
-      log.trace(safeFormat(message, formatArgs), t);
+      log.trace(StringUtils.safeFormat(message, formatArgs), t);
     }
   }
 
   public void debug(String message, Object... formatArgs)
   {
     if (log.isDebugEnabled()) {
-      log.debug(safeFormat(message, formatArgs));
+      log.debug(StringUtils.safeFormat(message, formatArgs));
     }
   }
 
   public void debug(Throwable t, String message, Object... formatArgs)
   {
     if (log.isDebugEnabled()) {
-      log.debug(safeFormat(message, formatArgs), t);
+      log.debug(StringUtils.safeFormat(message, formatArgs), t);
     }
   }
 
   public void info(String message, Object... formatArgs)
   {
     if (log.isInfoEnabled()) {
-      log.info(safeFormat(message, formatArgs));
+      log.info(StringUtils.safeFormat(message, formatArgs));
     }
   }
 
   public void info(Throwable t, String message, Object... formatArgs)
   {
     if (log.isInfoEnabled()) {
-      log.info(safeFormat(message, formatArgs), t);
+      log.info(StringUtils.safeFormat(message, formatArgs), t);
     }
   }
 
   public void warn(String message, Object... formatArgs)
   {
-    log.warn(safeFormat(message, formatArgs));
+    log.warn(StringUtils.safeFormat(message, formatArgs));
   }
 
   public void warn(Throwable t, String message, Object... formatArgs)
   {
-    log.warn(safeFormat(message, formatArgs), t);
+    log.warn(StringUtils.safeFormat(message, formatArgs), t);
   }
 
   public void error(String message, Object... formatArgs)
   {
-    log.error(safeFormat(message, formatArgs));
+    log.error(StringUtils.safeFormat(message, formatArgs));
   }
 
   public void error(Throwable t, String message, Object... formatArgs)
   {
-    log.error(safeFormat(message, formatArgs), t);
+    log.error(StringUtils.safeFormat(message, formatArgs), t);
   }
 
   public void wtf(String message, Object... formatArgs)
   {
-    log.error(safeFormat("WTF?!: " + message, formatArgs), new Exception());
+    log.error(StringUtils.safeFormat("WTF?!: " + message, formatArgs), new Exception());
   }
 
   public void wtf(Throwable t, String message, Object... formatArgs)
   {
-    log.error(safeFormat("WTF?!: " + message, formatArgs), t);
-  }
-
-  private String safeFormat(String message, Object... formatArgs)
-  {
-    if(formatArgs == null || formatArgs.length == 0) {
-      return message;
-    }
-    try {
-      return String.format(message, formatArgs);
-    }
-    catch (MissingFormatArgumentException e) {
-      StringBuilder bob = new StringBuilder(message);
-      for (Object formatArg : formatArgs) {
-        bob.append("; ").append(formatArg);
-      }
-      return bob.toString();
-    }
+    log.error(StringUtils.safeFormat("WTF?!: " + message, formatArgs), t);
   }
 
   public boolean isTraceEnabled()
