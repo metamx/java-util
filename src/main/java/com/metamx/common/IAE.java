@@ -22,11 +22,11 @@ public class IAE extends IllegalArgumentException
 {
   public IAE(String formatText, Object... arguments)
   {
-    super(String.format(formatText, arguments));
+    super(StringUtils.safeFormat(formatText, arguments));
   }
 
   public IAE(Throwable cause, String formatText, Object... arguments)
   {
-    super(String.format(formatText, arguments), cause);
+    super(StringUtils.safeFormat(formatText, arguments), cause);
   }
 }

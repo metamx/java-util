@@ -22,6 +22,7 @@ import com.metamx.common.logger.Logger;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.MissingFormatArgumentException;
 
 /**
  * As of right now (Dec 2014) the JVM is optimized around String charset variablse instead of Charset passing.
@@ -64,6 +65,23 @@ public class StringUtils
     catch (UnsupportedEncodingException e) {
       // Should never happen
       throw Throwables.propagate(e);
+    }
+  }
+
+  public static String safeFormat(String message, Object... formatArgs)
+  {
+    if(formatArgs == null || formatArgs.length == 0) {
+      return message;
+    }
+    try {
+      return String.format(message, formatArgs);
+    }
+    catch (MissingFormatArgumentException e) {
+      StringBuilder bob = new StringBuilder(message);
+      for (Object formatArg : formatArgs) {
+        bob.append("; ").append(formatArg);
+      }
+      return bob.toString();
     }
   }
 }
