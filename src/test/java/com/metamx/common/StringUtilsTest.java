@@ -103,4 +103,11 @@ public class StringUtilsTest
     // Not actually a runnable test, just checking the IDE
     Assert.assertNotNull(StringUtils.UTF8_CHARSET);
   }
+
+  @Test
+  public void testSafeFormat()
+  {
+    Assert.assertEquals("test%d; format", StringUtils.safeFormat("test%d", "format"));
+    Assert.assertEquals("test%s%s; format", StringUtils.safeFormat("test%s%s", "format"));
+  }
 }
