@@ -22,7 +22,7 @@ import com.metamx.common.logger.Logger;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.MissingFormatArgumentException;
+import java.util.IllegalFormatException;
 
 /**
  * As of right now (Dec 2014) the JVM is optimized around String charset variablse instead of Charset passing.
@@ -76,7 +76,7 @@ public class StringUtils
     try {
       return String.format(message, formatArgs);
     }
-    catch (MissingFormatArgumentException e) {
+    catch (IllegalFormatException e) {
       StringBuilder bob = new StringBuilder(message);
       for (Object formatArg : formatArgs) {
         bob.append("; ").append(formatArg);
