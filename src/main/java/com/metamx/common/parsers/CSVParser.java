@@ -21,13 +21,17 @@ import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.primitives.Ints;
 import com.metamx.common.collect.Utils;
 import com.metamx.common.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class CSVParser implements Parser<String, Object>
 {
@@ -40,8 +44,10 @@ public class CSVParser implements Parser<String, Object>
   private final au.com.bytecode.opencsv.CSVParser parser = new au.com.bytecode.opencsv.CSVParser();
 
   private ArrayList<String> fieldNames = null;
+  private final Set<String> skipSplitFields;
+  private int[] skipSplitIndices = null;
 
-  public CSVParser(final Optional<String> listDelimiter)
+  public CSVParser(final Optional<String> listDelimiter, String[] skipSplitFields)
   {
     this.listDelimiter = listDelimiter.isPresent() ? listDelimiter.get() : Parsers.DEFAULT_LIST_DELIMITER;
     this.listSplitter = Splitter.on(this.listDelimiter);
@@ -62,18 +68,26 @@ public class CSVParser implements Parser<String, Object>
         }
       }
     };
+    this.skipSplitFields = skipSplitFields == null
+                           ? Collections.<String>emptySet()
+                           : new HashSet<>(Arrays.asList(skipSplitFields));
+  }
+
+  public CSVParser(final Optional<String> listDelimiter)
+  {
+    this(listDelimiter, (String[])null);
   }
 
   public CSVParser(final Optional<String> listDelimiter, final Iterable<String> fieldNames)
   {
-    this(listDelimiter);
+    this(listDelimiter, (String[])null);
 
     setFieldNames(fieldNames);
   }
 
   public CSVParser(final Optional<String> listDelimiter, final String header)
   {
-    this(listDelimiter);
+    this(listDelimiter, (String[])null);
 
     setFieldNames(header);
   }
@@ -94,6 +108,15 @@ public class CSVParser implements Parser<String, Object>
   {
     ParserUtils.validateFields(fieldNames);
     this.fieldNames = Lists.newArrayList(fieldNames);
+    List<Integer> indices = Lists.newArrayListWithCapacity(skipSplitFields.size());
+    for (String skipField : skipSplitFields) {
+      int index = this.fieldNames.indexOf(skipField);
+      if (index >= 0) {
+        indices.add(index);
+      }
+    }
+    Collections.sort(indices);
+    this.skipSplitIndices = Ints.toArray(indices);
   }
 
   public void setFieldNames(final String header)
@@ -115,8 +138,19 @@ public class CSVParser implements Parser<String, Object>
       if (fieldNames == null) {
         setFieldNames(ParserUtils.generateFieldNames(values.length));
       }
-
-      return Utils.zipMapPartial(fieldNames, Iterables.transform(Lists.newArrayList(values), valueFunction));
+      final int[] skipper = skipSplitIndices;
+      if (skipper == null || skipper.length == 0) {
+        return Utils.zipMapPartial(fieldNames, Iterables.transform(Lists.newArrayList(values), valueFunction));
+      }
+      List<Object> objects = Lists.newArrayListWithCapacity(values.length);
+      for (int i = 0, j = 0; i < values.length; i++) {
+        if (j < skipper.length && i == skipper[j++]) {
+          objects.add(ParserUtils.nullEmptyStringFunction.apply(values[i]));
+        } else {
+          objects.add(valueFunction.apply(values[i]));
+        }
+      }
+      return Utils.zipMapPartial(fieldNames, objects);
     }
     catch (Exception e) {
       throw new ParseException(e, "Unable to parse row [%s]", input);
