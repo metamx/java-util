@@ -25,7 +25,7 @@ import java.nio.charset.Charset;
 import java.util.IllegalFormatException;
 
 /**
- * As of right now (Dec 2014) the JVM is optimized around String charset variablse instead of Charset passing.
+ * As of right now (Dec 2014) the JVM is optimized around String charset variable instead of Charset passing.
  */
 public class StringUtils
 {
@@ -70,7 +70,7 @@ public class StringUtils
 
   public static String safeFormat(String message, Object... formatArgs)
   {
-    if(formatArgs == null || formatArgs.length == 0) {
+    if (formatArgs == null || formatArgs.length == 0) {
       return message;
     }
     try {
@@ -83,5 +83,27 @@ public class StringUtils
       }
       return bob.toString();
     }
+  }
+
+  // should be used only for estimation
+  // returns the same result with StringUtils.fromUtf8(value).length for valid string values
+  // does not check validity of format and returns over-estimated result for invalid string (see UT)
+  public static int binaryLengthAsUTF8(String value)
+  {
+    int length = 0;
+    for (int i = 0; i < value.length(); i++) {
+      final char val = value.charAt(i);
+      if (val < 0x80) {
+        length += 1;
+      } else if (val < 0x800) {
+        length += 2;
+      } else if (Character.isSurrogate(val)) {
+        length += 4;
+        i++;
+      } else {
+        length += 3;
+      }
+    }
+    return length;
   }
 }
