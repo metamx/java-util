@@ -56,7 +56,7 @@ public class StreamUtils
     file.getParentFile().mkdirs();
     try (OutputStream os = new BufferedOutputStream(new FileOutputStream(file))) {
       final long result = ByteStreams.copy(is, os);
-      // Workarround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
+      // Workaround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
       os.flush();
       return result;
     }
@@ -83,7 +83,7 @@ public class StreamUtils
     file.getParentFile().mkdirs();
     try (OutputStream os = new BufferedOutputStream(new FileOutputStream(file))) {
       final long retval = copyWithTimeout(is, os, timeout);
-      // Workarround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
+      // Workaround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
       os.flush();
       return retval;
     }
@@ -106,7 +106,7 @@ public class StreamUtils
   {
     try {
       final long retval = ByteStreams.copy(is, os);
-      // Workarround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
+      // Workaround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
       os.flush();
       return retval;
     }
@@ -127,7 +127,7 @@ public class StreamUtils
    * @return The total size of bytes written to `os`
    *
    * @throws IOException
-   * @throws TimeoutException If `tiemout` is exceeded
+   * @throws TimeoutException If `timeout` is exceeded
    */
   public static long copyWithTimeout(InputStream is, OutputStream os, long timeout) throws IOException, TimeoutException
   {
@@ -170,7 +170,7 @@ public class StreamUtils
               try (InputStream inputStream = byteSource.openStream()) {
                 try (OutputStream outputStream = byteSink.openStream()) {
                   final long retval = ByteStreams.copy(inputStream, outputStream);
-                  // Workarround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
+                  // Workaround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
                   outputStream.flush();
                   return retval;
                 }
