@@ -40,6 +40,7 @@ import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -246,7 +247,7 @@ public class FileSmoosher implements Closeable
   public static class Outer implements SmooshedWriter
   {
     private final int fileNum;
-    private final FileChannel channel;
+    private final WritableByteChannel channel;
     private final int maxLength;
 
     private int currOffset = 0;
@@ -254,7 +255,7 @@ public class FileSmoosher implements Closeable
     Outer(int fileNum, FileChannel channel, int maxLength)
     {
       this.fileNum = fileNum;
-      this.channel = channel;
+      this.channel = new BufferedWritableByteChannel(channel);
       this.maxLength = maxLength;
     }
 
@@ -305,6 +306,72 @@ public class FileSmoosher implements Closeable
     @Override
     public void close() throws IOException
     {
+      channel.close();
+    }
+  }
+
+  private static class BufferedWritableByteChannel
+      implements WritableByteChannel
+  {
+    private static final int MAX_BUFFER_SIZE = 65536;
+    private static final int DEFAULT_BUFFER_SIZE = 8192;  // default of buffered output stream
+
+    private final WritableByteChannel channel;
+    private final ByteBuffer buffer;
+
+    BufferedWritableByteChannel(WritableByteChannel channel)
+    {
+      this(channel, DEFAULT_BUFFER_SIZE);
+    }
+
+    BufferedWritableByteChannel(WritableByteChannel channel, int buffer)
+    {
+      this.channel = channel;
+      this.buffer = ByteBuffer.allocateDirect(Math.min(buffer, MAX_BUFFER_SIZE));
+    }
+
+    public int write(ByteBuffer src) throws IOException
+    {
+      int position = src.position();
+      while (src.hasRemaining()) {
+        ByteBuffer toWrite = src;
+        int bytesToWrite = Math.min(buffer.remaining(), src.remaining());
+        if (bytesToWrite != src.remaining()) {
+          toWrite = src.duplicate();
+          toWrite.limit(toWrite.position() + bytesToWrite);
+        }
+        buffer.put(toWrite);
+        src.position(toWrite.position());
+        if (!buffer.hasRemaining()) {
+          flush();
+        }
+      }
+      return src.position() - position;
+    }
+
+    private void flush() throws IOException
+    {
+      buffer.flip();
+      channel.write(buffer);
+      if (buffer.hasRemaining()) {
+        buffer.compact();
+      } else {
+        buffer.clear();
+      }
+    }
+
+    @Override
+    public boolean isOpen()
+    {
+      return channel.isOpen();
+    }
+
+    @Override
+    public void close() throws IOException
+    {
+      if (buffer.position() != 0) {
+        flush();
+      }
       channel.close();
     }
   }
