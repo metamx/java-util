@@ -127,7 +127,7 @@ public class SmooshedFileMapperTest
       Assert.assertTrue(exceptionThrown);
       File[] files = baseDir.listFiles();
       Assert.assertEquals(1, files.length);
-      Assert.assertEquals(0, files[0].length());
+      Assert.assertEquals(4, files[0].length());
     }
   }
 
