@@ -40,6 +40,7 @@ import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.List;
@@ -160,7 +161,19 @@ public class FileSmoosher implements Closeable
         return verifySize(currOut.write(in));
       }
 
-      private int verifySize(int bytesWrittenInChunk) throws IOException
+      @Override
+      public long write(ByteBuffer[] srcs, int offset, int length) throws IOException
+      {
+        return verifySize(currOut.write(srcs, offset, length));
+      }
+
+      @Override
+      public long write(ByteBuffer[] srcs) throws IOException
+      {
+        return verifySize(currOut.write(srcs));
+      }
+
+      private int verifySize(long bytesWrittenInChunk) throws IOException
       {
         bytesWritten += bytesWrittenInChunk;
 
@@ -171,7 +184,7 @@ public class FileSmoosher implements Closeable
           throw new ISE("Wrote[%,d] bytes for something of size[%,d].  Liar!!!", bytesWritten, size);
         }
 
-        return bytesWrittenInChunk;
+        return Ints.checkedCast(bytesWrittenInChunk);
       }
 
       @Override
@@ -247,8 +260,8 @@ public class FileSmoosher implements Closeable
   public static class Outer implements SmooshedWriter
   {
     private final int fileNum;
-    private final WritableByteChannel channel;
     private final int maxLength;
+    private final GatheringByteChannel channel;
 
     private int currOffset = 0;
 
@@ -283,10 +296,22 @@ public class FileSmoosher implements Closeable
     @Override
     public int write(InputStream in) throws IOException
     {
-      return addToOffset(Ints.checkedCast(ByteStreams.copy(Channels.newChannel(in), channel)));
+      return addToOffset(ByteStreams.copy(Channels.newChannel(in), channel));
     }
 
-    public int addToOffset(int numBytesWritten)
+    @Override
+    public long write(ByteBuffer[] srcs, int offset, int length) throws IOException
+    {
+      return addToOffset(channel.write(srcs, offset, length));
+    }
+
+    @Override
+    public long write(ByteBuffer[] srcs) throws IOException
+    {
+      return addToOffset(channel.write(srcs));
+    }
+
+    public int addToOffset(long numBytesWritten)
     {
       if (numBytesWritten > bytesLeft()) {
         throw new ISE("Wrote more bytes[%,d] than available[%,d]. Don't do that.", numBytesWritten, bytesLeft());
@@ -294,7 +319,7 @@ public class FileSmoosher implements Closeable
 
       currOffset += numBytesWritten;
 
-      return numBytesWritten;
+      return Ints.checkedCast(numBytesWritten);
     }
 
     @Override
@@ -311,7 +336,7 @@ public class FileSmoosher implements Closeable
   }
 
   private static class BufferedWritableByteChannel
-      implements WritableByteChannel
+      implements GatheringByteChannel
   {
     private static final int MAX_BUFFER_SIZE = 65536;
     private static final int DEFAULT_BUFFER_SIZE = 8192;  // default of buffered output stream
@@ -347,6 +372,22 @@ public class FileSmoosher implements Closeable
         }
       }
       return src.position() - position;
+    }
+
+    @Override
+    public long write(ByteBuffer[] srcs, int offset, int length) throws IOException
+    {
+      long written = 0;
+      for (int i = offset; i < length; i++) {
+        written += write(srcs[i]);
+      }
+      return written;
+    }
+
+    @Override
+    public long write(ByteBuffer[] srcs) throws IOException
+    {
+      return write(srcs, 0, srcs.length);
     }
 
     private void flush() throws IOException
