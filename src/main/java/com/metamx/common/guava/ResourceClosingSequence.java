@@ -20,7 +20,7 @@ import java.io.Closeable;
 
 /**
  */
-public class ResourceClosingSequence<T> extends YieldingSequenceBase<T>
+public class ResourceClosingSequence<T> implements Sequence<T>
 {
   private final Sequence<T> baseSequence;
   private final Closeable closeable;
@@ -29,6 +29,17 @@ public class ResourceClosingSequence<T> extends YieldingSequenceBase<T>
   {
     this.baseSequence = baseSequence;
     this.closeable = closeable;
+  }
+
+  @Override
+  public <OutType> OutType accumulate(OutType initValue, Accumulator<OutType, T> accumulator)
+  {
+    try {
+      return baseSequence.accumulate(initValue, accumulator);
+    }
+    finally {
+      CloseQuietly.close(closeable);
+    }
   }
 
   @Override
