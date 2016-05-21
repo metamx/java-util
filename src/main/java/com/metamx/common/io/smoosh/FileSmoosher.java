@@ -368,7 +368,7 @@ public class FileSmoosher implements Closeable
         buffer.put(toWrite);
         src.position(toWrite.position());
         if (!buffer.hasRemaining()) {
-          flush();
+          flush(false);
         }
       }
       return src.position() - position;
@@ -390,10 +390,13 @@ public class FileSmoosher implements Closeable
       return write(srcs, 0, srcs.length);
     }
 
-    private void flush() throws IOException
+    private void flush(boolean flushAll) throws IOException
     {
       buffer.flip();
-      channel.write(buffer);
+      do {
+        channel.write(buffer);
+      } while (flushAll && buffer.hasRemaining());
+
       if (buffer.hasRemaining()) {
         buffer.compact();
       } else {
@@ -410,10 +413,14 @@ public class FileSmoosher implements Closeable
     @Override
     public void close() throws IOException
     {
-      if (buffer.position() != 0) {
-        flush();
+      try {
+        if (buffer.position() != 0) {
+          flush(true);
+        }
       }
-      channel.close();
+      finally {
+        channel.close();
+      }
     }
   }
 }
