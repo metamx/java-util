@@ -27,7 +27,6 @@ import com.google.common.io.Files;
 import com.google.common.primitives.Ints;
 import com.metamx.common.IAE;
 import com.metamx.common.ISE;
-import com.metamx.common.guava.CloseQuietly;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -134,15 +133,10 @@ public class FileSmoosher implements Closeable
       size += buffer.remaining();
     }
 
-    SmooshedWriter out = addWithSmooshedWriter(name, size);
-
-    try {
+    try (SmooshedWriter out = addWithSmooshedWriter(name, size)) {
       for (ByteBuffer buffer : bufferToAdd) {
         out.write(buffer);
       }
-    }
-    finally {
-      CloseQuietly.close(out);
     }
   }
 
