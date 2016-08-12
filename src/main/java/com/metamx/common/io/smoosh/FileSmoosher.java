@@ -42,7 +42,9 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -65,8 +67,11 @@ public class FileSmoosher implements Closeable
 
   private final List<File> outFiles = Lists.newArrayList();
   private final Map<String, Metadata> internalFiles = Maps.newTreeMap();
+  private List<File> files = Lists.newArrayList();
+  private List<File> createFiles = Lists.newArrayList();
 
   private Outer currOut = null;
+  private boolean writerCurrentlyInUse = false;
 
   public FileSmoosher(
       File baseDir
@@ -148,6 +153,11 @@ public class FileSmoosher implements Closeable
 
   public SmooshedWriter addWithSmooshedWriter(final String name, final long size) throws IOException
   {
+    if(writerCurrentlyInUse)
+    {
+      return delegateSmooshedWriter (name , size);
+    }
+
     if (size > maxChunkSize) {
       throw new IAE("Asked to add buffers[%,d] larger than configured max[%,d]", size, maxChunkSize);
     }
@@ -160,7 +170,7 @@ public class FileSmoosher implements Closeable
     }
 
     final int startOffset = currOut.getCurrOffset();
-
+    writerCurrentlyInUse = true;
     return new SmooshedWriter()
     {
       private boolean open = true;
@@ -203,6 +213,7 @@ public class FileSmoosher implements Closeable
       {
         open = false;
         internalFiles.put(name, new Metadata(currOut.getFileNum(), startOffset, currOut.getCurrOffset()));
+        writerCurrentlyInUse = false;
 
         if (bytesWritten != currOut.getCurrOffset() - startOffset) {
           throw new ISE("WTF? Perhaps there is some concurrent modification going on?");
@@ -210,15 +221,100 @@ public class FileSmoosher implements Closeable
         if (bytesWritten != size) {
           throw new IOException(
               String.format("Expected [%,d] bytes, only saw [%,d], potential corruption?", size, bytesWritten)
-          );
+              );
+        }
+
+        if(!writerCurrentlyInUse)
+        {
+          mergeWithSmoosher();
         }
       }
     };
   }
 
+  private void mergeWithSmoosher() throws IOException
+  {
+    //get processed elements from the stack and write.
+    List<File> fileToProcess = new ArrayList<>(files);
+    files = Lists.newArrayList();
+    for(File file: fileToProcess)
+    {
+      add(file);
+      createFiles.remove(file);
+      file.delete();
+    }
+  }
+
+  private SmooshedWriter delegateSmooshedWriter(final String name,final long size) throws IOException
+  {	
+    final File tmpFile = new File(baseDir, name);
+    createFiles.add(tmpFile);
+    return new SmooshedWriter () {
+      private int currOffset = 0;
+      private boolean open = true;
+      private final FileOutputStream out = new FileOutputStream(tmpFile);
+
+      @Override
+      public void close() throws IOException
+      {
+        open = false;
+        out.close();
+        files.add(tmpFile);
+        if(!writerCurrentlyInUse ) {
+          mergeWithSmoosher();
+        }
+      }
+      public int bytesLeft()
+      {
+        return (int) (size - currOffset);
+      }
+
+      @Override
+      public int write(ByteBuffer buffer) throws IOException
+      {
+        FileChannel channel = out.getChannel();
+        int bytesWritten = channel.write(buffer);
+        return  addToOffset(bytesWritten);
+      }
+
+      @Override
+      public int write(InputStream in) throws IOException
+      {
+        return addToOffset(Ints.checkedCast(java.nio.file.Files.copy(in, tmpFile.toPath())));
+      }
+
+      public int addToOffset(int numBytesWritten)
+      {
+        if (numBytesWritten > bytesLeft()) {
+          throw new ISE("Wrote more bytes[%,d] than available[%,d]. Don't do that.", numBytesWritten, bytesLeft());
+        }
+
+        currOffset += numBytesWritten;
+
+        return numBytesWritten;
+      }
+
+      @Override
+      public boolean isOpen() {
+        return open;
+      }
+    };
+
+  }
+
   @Override
   public void close() throws IOException
   {
+    //book keeping checks on created file.
+    if(!createFiles.isEmpty())
+    {
+      for(File file: createFiles)
+      {
+        file.delete();
+      }
+      throw new ISE(String.format("%d writers needs to be closed before closing smoosher.", createFiles.size()));
+    }
+
     Closeables.close(currOut, false);
 
     File metaFile = metaFile(baseDir);

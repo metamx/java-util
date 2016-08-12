@@ -24,6 +24,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -46,24 +47,88 @@ public class SmooshedFileMapperTest
       }
       smoosher.close();
 
-      File[] files = baseDir.listFiles();
-      Arrays.sort(files);
-
-      Assert.assertEquals(5, files.length); // 4 smooshed files and 1 meta file
-      for (int i = 0; i < 4; ++i) {
-        Assert.assertEquals(FileSmoosher.makeChunkFile(baseDir, i), files[i]);
+      validateOutput(baseDir);
+    }
+    finally {
+      for (File file : baseDir.listFiles()) {
+        file.delete();
       }
-      Assert.assertEquals(FileSmoosher.metaFile(baseDir), files[files.length - 1]);
+    }
+  }
 
-      SmooshedFileMapper mapper = SmooshedFileMapper.load(baseDir);
-      for (int i = 0; i < 20; ++i) {
-        ByteBuffer buf = mapper.mapFile(String.format("%d", i));
-        Assert.assertEquals(0, buf.position());
-        Assert.assertEquals(4, buf.remaining());
-        Assert.assertEquals(4, buf.capacity());
-        Assert.assertEquals(i, buf.getInt());
+  @Test
+  public void testWhenFirstWriterClosedInTheMiddle() throws Exception
+  {
+    File baseDir = Files.createTempDir();
+
+    try {
+      FileSmoosher smoosher = new FileSmoosher(baseDir, 21);
+
+      final SmooshedWriter writer = smoosher.addWithSmooshedWriter(String.format("%d", 19), 4);
+
+      for (int i = 0; i < 19; ++i) {
+        File tmpFile = File.createTempFile(String.format("smoosh-%s", i), ".bin");
+        Files.write(Ints.toByteArray(i), tmpFile);
+        smoosher.add(String.format("%d", i), tmpFile);
+        if(i==10)
+        {
+          writer.write(ByteBuffer.wrap(Ints.toByteArray(19)));
+          CloseQuietly.close(writer);
+        }
+        tmpFile.delete();
+      }    
+      smoosher.close();
+      validateOutput(baseDir);
+    }
+    finally {
+      for (File file : baseDir.listFiles()) {
+        file.delete();
       }
-      mapper.close();
+    }
+  }
+
+  @Test(expected= ISE.class)
+  public void testExceptionForUnClosedFiles() throws Exception
+  {
+    File baseDir = Files.createTempDir();
+
+    try {
+      FileSmoosher smoosher = new FileSmoosher(baseDir, 21);
+
+      for (int i = 0; i < 19; ++i) {
+        final SmooshedWriter writer = smoosher.addWithSmooshedWriter(String.format("%d", i), 4);
+        writer.write(ByteBuffer.wrap(Ints.toByteArray(i)));
+      }
+      smoosher.close();
+    }
+    finally {
+      for (File file : baseDir.listFiles()) {
+        file.delete();
+      }
+    }
+  }
+
+  @Test
+  public void testWhenFirstWriterClosedInTheLast() throws Exception
+  {
+    File baseDir = Files.createTempDir();
+
+    try {
+      FileSmoosher smoosher = new FileSmoosher(baseDir, 21);
+
+      final SmooshedWriter writer = smoosher.addWithSmooshedWriter(String.format("%d", 19), 4);
+      writer.write(ByteBuffer.wrap(Ints.toByteArray(19)));
+
+      for (int i = 0; i < 19; ++i) {
+        File tmpFile = File.createTempFile(String.format("smoosh-%s", i), ".bin");
+        Files.write(Ints.toByteArray(i), tmpFile);
+        smoosher.add(String.format("%d", i), tmpFile);
+        tmpFile.delete();
+      }
+      CloseQuietly.close(writer);
+      smoosher.close();
+
+      validateOutput(baseDir);
     }
     finally {
       for (File file : baseDir.listFiles()) {
@@ -139,5 +204,27 @@ public class SmooshedFileMapperTest
         file.delete();
       }
     }
+  }
+
+  private void validateOutput(File baseDir) throws IOException
+  {
+    File[] files = baseDir.listFiles();
+    Arrays.sort(files);
+
+    Assert.assertEquals(5, files.length); // 4 smoosh files and 1 meta file
+    for (int i = 0; i < 4; ++i) {
+      Assert.assertEquals(FileSmoosher.makeChunkFile(baseDir, i), files[i]);
+    }
+    Assert.assertEquals(FileSmoosher.metaFile(baseDir), files[files.length - 1]);
+
+    SmooshedFileMapper mapper = SmooshedFileMapper.load(baseDir);
+    for (int i = 0; i < 20; ++i) {
+      ByteBuffer buf = mapper.mapFile(String.format("%d", i));
+      Assert.assertEquals(0, buf.position());
+      Assert.assertEquals(4, buf.remaining());
+      Assert.assertEquals(4, buf.capacity());
+      Assert.assertEquals(i, buf.getInt());
+    }
+    mapper.close();
   }
 }
