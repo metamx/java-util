@@ -25,6 +25,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.primitives.Ints;
+import com.metamx.common.ByteBufferUtils;
 import com.metamx.common.IAE;
 import com.metamx.common.ISE;
 
@@ -40,6 +41,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
@@ -53,6 +55,7 @@ import java.util.Set;
  * <p/>
  * It does not split input files among separate output files, instead the various "chunk" files will
  * be varying sizes and it is not possible to add a file of size greater than Integer.MAX_VALUE
+ * TODO(leventov): consider making this class final
  */
 public class FileSmoosher implements Closeable
 {
@@ -105,12 +108,17 @@ public class FileSmoosher implements Closeable
 
   public void add(File fileToAdd) throws IOException
   {
-    add(fileToAdd.getName(), Files.map(fileToAdd));
+    add(fileToAdd.getName(), fileToAdd);
   }
 
   public void add(String name, File fileToAdd) throws IOException
   {
-    add(name, Files.map(fileToAdd));
+    MappedByteBuffer mappedFileBuffer = Files.map(fileToAdd);
+    try {
+      add(name, mappedFileBuffer);
+    } finally {
+      ByteBufferUtils.unmap(mappedFileBuffer);
+    }
   }
 
   public void add(String name, ByteBuffer bufferToAdd) throws IOException
