@@ -21,6 +21,8 @@ package com.metamx.common;
  * Facilitates using try-with-resources with resources that don't implement {@link AutoCloseable}, e. g.
  * {@link java.nio.ByteBuffer}s.
  *
+ * <p>This interface replaces {@code io.druid.collections.ResourceHandler}.
+ *
  * @param <T> the type of wrapped resource
  */
 public interface ResourceHandler<T> extends AutoCloseable
