@@ -23,6 +23,10 @@ import com.google.common.io.ByteSource;
 import com.google.common.io.Files;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -123,6 +127,56 @@ public class FileUtils
     public void addFile(File file)
     {
       this.addFiles(ImmutableList.of(file));
+    }
+  }
+
+  /**
+   * Fully maps a file read-only in to memory as per
+   * {@link FileChannel#map(java.nio.channels.FileChannel.MapMode, long, long)}.
+   *
+   * <p>Files are mapped from offset 0 to its length.
+   *
+   * <p>This only works for files <= {@link Integer#MAX_VALUE} bytes.
+   *
+   * <p>Similar to {@link Files#map(File)}, but returns {@link ResourceHandler}, that makes it easier to unmap the
+   * buffer within try-with-resources pattern:
+   * <pre>{@code
+   * try (ResourceHandler<MappedByteBuffer> fileMappingHandler = FileUtils.map(file)) {
+   *   ByteBuffer fileMapping = fileMappingHandler.get();
+   *   // use mapped buffer
+   * }}</pre>
+   *
+   * @param file the file to map
+   * @return a {@link ResourceHandler}, wrapping a read-only buffer reflecting {@code file}
+   * @throws FileNotFoundException if the {@code file} does not exist
+   * @throws IOException if an I/O error occurs
+   *
+   * @see FileChannel#map(FileChannel.MapMode, long, long)
+   */
+  public static ResourceHandler<MappedByteBuffer> map(File file) throws IOException
+  {
+    MappedByteBuffer mappedByteBuffer = Files.map(file);
+    return new MappedByteBufferHandler(mappedByteBuffer);
+  }
+
+  private static class MappedByteBufferHandler implements ResourceHandler<MappedByteBuffer> {
+    private final MappedByteBuffer mappedByteBuffer;
+
+    private MappedByteBufferHandler(MappedByteBuffer mappedByteBuffer)
+    {
+      this.mappedByteBuffer = mappedByteBuffer;
+    }
+
+    @Override
+    public MappedByteBuffer get()
+    {
+      return mappedByteBuffer;
+    }
+
+    @Override
+    public void close()
+    {
+      ByteBufferUtils.unmap(mappedByteBuffer);
     }
   }
 }
