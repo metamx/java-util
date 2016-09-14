@@ -52,12 +52,7 @@ public class ByteBufferUtils
    */
   public static void unmap(MappedByteBuffer buffer)
   {
-    try {
-      clean((DirectBuffer) buffer);
-    }
-    catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    free(buffer);
   }
 
   private static void clean(DirectBuffer buffer)
