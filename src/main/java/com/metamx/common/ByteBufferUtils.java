@@ -16,7 +16,6 @@
 
 package com.metamx.common;
 
-import com.google.common.base.Throwables;
 import sun.misc.Cleaner;
 import sun.nio.ch.DirectBuffer;
 
@@ -34,13 +33,8 @@ public class ByteBufferUtils
    */
   public static void free(ByteBuffer buffer)
   {
-    try {
-      if (buffer.isDirect()) {
-        clean((DirectBuffer) buffer);
-      }
-    }
-    catch (Exception e) {
-      throw Throwables.propagate(e);
+    if (buffer.isDirect()) {
+      clean((DirectBuffer) buffer);
     }
   }
 
