@@ -26,7 +26,7 @@ import com.google.common.primitives.Ints;
 import com.metamx.common.FileUtils;
 import com.metamx.common.IAE;
 import com.metamx.common.ISE;
-import com.metamx.common.ResourceHandler;
+import com.metamx.common.MappedByteBufferHandler;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -40,7 +40,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
@@ -98,7 +97,7 @@ public class FileSmoosher implements Closeable
 
   public void add(String name, File fileToAdd) throws IOException
   {
-    try (ResourceHandler<MappedByteBuffer> fileMappingHandler = FileUtils.map(fileToAdd)) {
+    try (MappedByteBufferHandler fileMappingHandler = FileUtils.map(fileToAdd)) {
       add(name, fileMappingHandler.get());
     }
   }
