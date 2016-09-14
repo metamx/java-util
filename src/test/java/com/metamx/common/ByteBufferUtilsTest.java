@@ -16,6 +16,7 @@
 
 package com.metamx.common;
 
+import com.google.common.io.Files;
 import junit.framework.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -27,8 +28,6 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
 public class ByteBufferUtilsTest
@@ -45,10 +44,7 @@ public class ByteBufferUtilsTest
       Arrays.fill(data, (byte) 0x5A);
       os.write(data);
     }
-    final MappedByteBuffer mappedByteBuffer;
-    try (final FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ)) {
-      mappedByteBuffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, 4096);
-    }
+    final MappedByteBuffer mappedByteBuffer = Files.map(file);
     Assert.assertEquals((byte) 0x5A, mappedByteBuffer.get(0));
     ByteBufferUtils.unmap(mappedByteBuffer);
     ByteBufferUtils.unmap(mappedByteBuffer);
