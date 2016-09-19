@@ -297,10 +297,12 @@ public class CompressionUtils
         new FilterInputStream(in)
         {
           @Override
-          public int available()
+          public int available() throws IOException
           {
-            // Hack. Docs say available() should return an estimate, so we estimate about 1KB to work around available == 0 bug in GZIPInputStream
-            return 1 << 10;
+            final int otherAvailable = super.available();
+            // Hack. Docs say available() should return an estimate,
+            // so we estimate about 1KB to work around available == 0 bug in GZIPInputStream
+            return otherAvailable == 0 ? 1 << 10 : otherAvailable;
           }
         }
     );
