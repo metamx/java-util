@@ -1,5 +1,5 @@
 /*
- * Copyright 2011,2012 Metamarkets Group Inc.
+ * Copyright 2011-2016 Metamarkets Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,9 @@
 
 package com.metamx.common;
 
-import com.google.common.base.Throwables;
+import sun.misc.Cleaner;
+import sun.nio.ch.DirectBuffer;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 
@@ -27,46 +26,15 @@ import java.nio.MappedByteBuffer;
  */
 public class ByteBufferUtils
 {
-  private static final Method unmap;
-
-  private static final Method getCleaner;
-  private static final Method clean;
-
-
-  static {
-    try {
-      Method unmapMethod = Class.forName("sun.nio.ch.FileChannelImpl")
-                                .getDeclaredMethod("unmap", MappedByteBuffer.class);
-      unmapMethod.setAccessible(true);
-      unmap = unmapMethod;
-    }
-    catch (Exception e) {
-      throw new UOE(e, "Exception thrown while trying to find unmap method on MappedByteBuffer, "
-                       + "this method must exist in your VM in order for this to work");
-    }
-  }
-
-  static {
-    try {
-      getCleaner = Class.forName("java.nio.DirectByteBuffer").getDeclaredMethod("cleaner");
-      getCleaner.setAccessible(true);
-      clean = Class.forName("sun.misc.Cleaner").getDeclaredMethod("clean");
-      clean.setAccessible(true);
-    } catch(ClassNotFoundException | NoSuchMethodException e) {
-      throw new UOE("Exception thrown while trying to access ByteBuffer clean method.");
-    }
-  }
-
   /**
    * Releases memory held by the given direct ByteBuffer
    *
    * @param buffer buffer to free
    */
-  public static void free(ByteBuffer buffer) {
-    try {
-      clean.invoke(getCleaner.invoke(buffer));
-    } catch(IllegalAccessException | InvocationTargetException e) {
-      throw Throwables.propagate(e);
+  public static void free(ByteBuffer buffer)
+  {
+    if (buffer.isDirect()) {
+      clean((DirectBuffer) buffer);
     }
   }
 
@@ -78,11 +46,14 @@ public class ByteBufferUtils
    */
   public static void unmap(MappedByteBuffer buffer)
   {
-    try {
-      unmap.invoke(null, buffer);
-    }
-    catch (Exception e) {
-      throw Throwables.propagate(e);
+    free(buffer);
+  }
+
+  private static void clean(DirectBuffer buffer)
+  {
+    final Cleaner cleaner = buffer.cleaner();
+    if (cleaner != null) {
+      cleaner.clean();
     }
   }
 }
