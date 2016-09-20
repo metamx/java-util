@@ -136,12 +136,11 @@ public class SmooshedFileMapperTest
   {
     File baseDir = folder.newFolder("base");
 
-    int fileSize = 1 << 20; // 1 MB
     long totalMemoryUsedBeforeAddingFile = BufferUtils.totalMemoryUsedByDirectAndMappedBuffers();
     try (FileSmoosher smoosher = new FileSmoosher(baseDir)) {
       File dataFile = folder.newFile("data.bin");
       try (RandomAccessFile raf = new RandomAccessFile(dataFile, "rw")) {
-        raf.setLength(fileSize);
+        raf.setLength(1 << 20); // 1 MB
       }
       smoosher.add(dataFile);
     }
