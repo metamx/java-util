@@ -24,8 +24,13 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.lang.management.BufferPoolMXBean;
+import java.lang.management.ManagementFactory;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  */
@@ -35,11 +40,13 @@ public class SmooshedFileMapperTest
   public void testSanity() throws Exception
   {
     File baseDir = Files.createTempDir();
+    baseDir.deleteOnExit();
 
     try {
       FileSmoosher smoosher = new FileSmoosher(baseDir, 21);
       for (int i = 0; i < 20; ++i) {
         File tmpFile = File.createTempFile(String.format("smoosh-%s", i), ".bin");
+        tmpFile.deleteOnExit();
         Files.write(Ints.toByteArray(i), tmpFile);
         smoosher.add(String.format("%d", i), tmpFile);
         tmpFile.delete();
@@ -76,6 +83,7 @@ public class SmooshedFileMapperTest
   public void testBehaviorWhenReportedSizesLargeAndExceptionIgnored() throws Exception
   {
     File baseDir = Files.createTempDir();
+    baseDir.deleteOnExit();
 
     try {
       FileSmoosher smoosher = new FileSmoosher(baseDir, 21);
@@ -116,6 +124,7 @@ public class SmooshedFileMapperTest
   public void testBehaviorWhenReportedSizesSmall() throws Exception
   {
     File baseDir = Files.createTempDir();
+    baseDir.deleteOnExit();
 
     try {
       FileSmoosher smoosher = new FileSmoosher(baseDir, 21);
@@ -139,5 +148,50 @@ public class SmooshedFileMapperTest
         file.delete();
       }
     }
+  }
+
+  @Test
+  public void testDeterministicFileUnmapping() throws IOException
+  {
+    File baseDir = Files.createTempDir();
+    baseDir.deleteOnExit();
+
+    int fileSize = 1 << 20; // 1 MB
+    try {
+      long totalMemoryUsedBeforeAddingFile = totalMemoryUsedByDirectAndMappedBuffers();
+      FileSmoosher smoosher = new FileSmoosher(baseDir);
+      File dataFile = createTempFileOfSize("data", "bin", fileSize);
+      smoosher.add(dataFile);
+      // In case smoosher maps some own files internally (though currently it is not), let it unmap them
+      smoosher.close();
+      long totalMemoryUsedAfterAddingFile = totalMemoryUsedByDirectAndMappedBuffers();
+      // Assert no hanging file mappings left by either smoosher or smoosher.add(file)
+      Assert.assertEquals(totalMemoryUsedBeforeAddingFile, totalMemoryUsedAfterAddingFile);
+    }
+    finally {
+      for (File file : baseDir.listFiles()) {
+        file.delete();
+      }
+    }
+  }
+
+  private static File createTempFileOfSize(String prefix, String suffix, int fileSize) throws IOException
+  {
+    File dataFile = File.createTempFile(prefix, suffix);
+    dataFile.deleteOnExit();
+    try (RandomAccessFile raf = new RandomAccessFile(dataFile, "rw")) {
+      raf.setLength(fileSize);
+    }
+    return dataFile;
+  }
+
+  private static long totalMemoryUsedByDirectAndMappedBuffers()
+  {
+    long totalMemoryUsed = 0L;
+    List<BufferPoolMXBean> pools = ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class);
+    for (BufferPoolMXBean pool : pools) {
+      totalMemoryUsed += pool.getMemoryUsed();
+    }
+    return totalMemoryUsed;
   }
 }
