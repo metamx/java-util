@@ -22,11 +22,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 import com.google.common.primitives.Ints;
+import com.metamx.common.FileUtils;
 import com.metamx.common.IAE;
 import com.metamx.common.ISE;
+import com.metamx.common.MappedByteBufferHandler;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -85,19 +85,6 @@ public class FileSmoosher implements Closeable
     Preconditions.checkArgument(maxChunkSize > 0, "maxChunkSize must be a positive value.");
   }
 
-  private FileSmoosher(
-      File baseDir,
-      int maxChunkSize,
-      List<File> outFiles,
-      Map<String, Metadata> internalFiles
-  )
-  {
-    this.baseDir = baseDir;
-    this.maxChunkSize = maxChunkSize;
-    this.outFiles.addAll(outFiles);
-    this.internalFiles.putAll(internalFiles);
-  }
-
   public Set<String> getInternalFilenames()
   {
     return internalFiles.keySet();
@@ -105,12 +92,14 @@ public class FileSmoosher implements Closeable
 
   public void add(File fileToAdd) throws IOException
   {
-    add(fileToAdd.getName(), Files.map(fileToAdd));
+    add(fileToAdd.getName(), fileToAdd);
   }
 
   public void add(String name, File fileToAdd) throws IOException
   {
-    add(name, Files.map(fileToAdd));
+    try (MappedByteBufferHandler fileMappingHandler = FileUtils.map(fileToAdd)) {
+      add(name, fileMappingHandler.get());
+    }
   }
 
   public void add(String name, ByteBuffer bufferToAdd) throws IOException
@@ -149,7 +138,7 @@ public class FileSmoosher implements Closeable
       currOut = getNewCurrOut();
     }
     if (currOut.bytesLeft() < size) {
-      Closeables.close(currOut, false);
+      currOut.close();
       currOut = getNewCurrOut();
     }
 
@@ -213,13 +202,13 @@ public class FileSmoosher implements Closeable
   @Override
   public void close() throws IOException
   {
-    Closeables.close(currOut, false);
+    if (currOut != null) {
+      currOut.close();
+    }
 
     File metaFile = metaFile(baseDir);
 
-    Writer out = null;
-    try {
-      out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(metaFile), Charsets.UTF_8));
+    try (Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(metaFile), Charsets.UTF_8))) {
       out.write(String.format("v1,%d,%d", maxChunkSize, outFiles.size()));
       out.write("\n");
 
@@ -235,9 +224,6 @@ public class FileSmoosher implements Closeable
         );
         out.write("\n");
       }
-    }
-    finally {
-      Closeables.close(out, false);
     }
   }
 
