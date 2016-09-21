@@ -115,20 +115,20 @@ public class SmooshedFileMapperTest
   {
     File baseDir = folder.newFolder("base");
 
-    FileSmoosher smoosher = new FileSmoosher(baseDir, 21);
-    boolean exceptionThrown = false;
-    try (final SmooshedWriter writer = smoosher.addWithSmooshedWriter("1", 2)) {
-      writer.write(ByteBuffer.wrap(Ints.toByteArray(1)));
-    }
-    catch (ISE e) {
-      Assert.assertTrue(e.getMessage().contains("Liar!!!"));
-      exceptionThrown = true;
-    }
+    try (FileSmoosher smoosher = new FileSmoosher(baseDir, 21)) {
+      boolean exceptionThrown = false;
+      try (final SmooshedWriter writer = smoosher.addWithSmooshedWriter("1", 2)) {
+        writer.write(ByteBuffer.wrap(Ints.toByteArray(1)));
+      } catch (ISE e) {
+        Assert.assertTrue(e.getMessage().contains("Liar!!!"));
+        exceptionThrown = true;
+      }
 
-    Assert.assertTrue(exceptionThrown);
-    File[] files = baseDir.listFiles();
-    Assert.assertEquals(1, files.length);
-    Assert.assertEquals(0, files[0].length());
+      Assert.assertTrue(exceptionThrown);
+      File[] files = baseDir.listFiles();
+      Assert.assertEquals(1, files.length);
+      Assert.assertEquals(0, files[0].length());
+    }
   }
 
   @Test
