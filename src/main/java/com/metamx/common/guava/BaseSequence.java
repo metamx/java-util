@@ -17,7 +17,6 @@
 package com.metamx.common.guava;
 
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import com.metamx.common.logger.Logger;
 
 import java.io.Closeable;
@@ -62,13 +61,15 @@ public class BaseSequence<T, IterType extends Iterator<T>> implements Sequence<T
   @Override
   public <OutType> OutType accumulate(OutType initValue, final Accumulator<OutType, T> fn)
   {
-    Yielder<OutType> yielder = null;
+    IterType iterator = maker.make();
     try {
-      yielder = toYielder(initValue, YieldingAccumulators.fromAccumulator(fn));
-      return yielder.get();
+      while (iterator.hasNext()) {
+        initValue = fn.accumulate(initValue, iterator.next());
+      }
+      return initValue;
     }
     finally {
-      CloseQuietly.close(yielder);
+      maker.cleanup(iterator);
     }
   }
 

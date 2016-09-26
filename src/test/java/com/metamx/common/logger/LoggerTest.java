@@ -26,4 +26,14 @@ public class LoggerTest
     final Logger log = new Logger(LoggerTest.class);
     log.warn(message);
   }
+
+  @Test
+  public void testLegacyLogging()
+  {
+    final Logger log = new Logger(LoggerTest.class);
+    final Throwable throwable = new Throwable();
+    // These should show up in an IDE as deprecated, but shouldn't actually fail.
+    log.error("foo", throwable);
+    log.warn("foo", throwable);
+  }
 }

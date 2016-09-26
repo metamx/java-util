@@ -77,6 +77,18 @@ public class Logger
     }
   }
 
+  /**
+   * Protect against assuming slf4j convention. use `warn(Throwable t, String message, Object... formatArgs)` instead
+   *
+   * @param message The string message
+   * @param t       The Throwable to log
+   */
+  @Deprecated
+  public void warn(String message, Throwable t)
+  {
+    log.warn(message, t);
+  }
+
   public void warn(String message, Object... formatArgs)
   {
     log.warn(StringUtils.safeFormat(message, formatArgs));
@@ -90,6 +102,18 @@ public class Logger
   public void error(String message, Object... formatArgs)
   {
     log.error(StringUtils.safeFormat(message, formatArgs));
+  }
+
+  /**
+   * Protect against assuming slf4j convention. use `error(Throwable t, String message, Object... formatArgs)` instead
+   *
+   * @param message The string message
+   * @param t       The Throwable to log
+   */
+  @Deprecated
+  public void error(String message, Throwable t)
+  {
+    log.error(message, t);
   }
 
   public void error(Throwable t, String message, Object... formatArgs)

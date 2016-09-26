@@ -17,6 +17,7 @@
 package com.metamx.common.io.smoosh;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
@@ -131,10 +132,20 @@ public class SmooshedFileMapper implements Closeable
   }
 
   @Override
-  public void close() throws IOException
+  public void close()
   {
+    Throwable thrown = null;
     for (MappedByteBuffer mappedByteBuffer : buffersList) {
-      ByteBufferUtils.unmap(mappedByteBuffer);
+      try {
+        ByteBufferUtils.unmap(mappedByteBuffer);
+      } catch (Throwable t) {
+        if (thrown == null) {
+          thrown = t;
+        } else {
+          thrown.addSuppressed(t);
+        }
+      }
     }
+    Throwables.propagateIfPossible(thrown);
   }
 }
