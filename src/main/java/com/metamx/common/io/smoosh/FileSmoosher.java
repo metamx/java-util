@@ -413,13 +413,10 @@ public class FileSmoosher implements Closeable
     @Override
     public void close() throws IOException
     {
-      try {
+      try (Closeable toClose = channel) {
         if (buffer.position() != 0) {
           flush(true);
         }
-      }
-      finally {
-        channel.close();
       }
     }
   }
