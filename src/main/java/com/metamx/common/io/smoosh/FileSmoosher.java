@@ -74,7 +74,7 @@ public class FileSmoosher implements Closeable
 
   public FileSmoosher(
       File baseDir
-      )
+  )
   {
     this(baseDir, Integer.MAX_VALUE);
   }
@@ -82,7 +82,7 @@ public class FileSmoosher implements Closeable
   public FileSmoosher(
       File baseDir,
       int maxChunkSize
-      )
+  )
   {
     this.baseDir = baseDir;
     this.maxChunkSize = maxChunkSize;
@@ -206,7 +206,6 @@ public class FileSmoosher implements Closeable
               String.format("Expected [%,d] bytes, only saw [%,d], potential corruption?", size, bytesWritten)
           );
         }
-
         mergeWithSmoosher();
       }
     };
@@ -314,8 +313,8 @@ public class FileSmoosher implements Closeable
                 metadata.getFileNum(),
                 metadata.getStartOffset(),
                 metadata.getEndOffset()
-                )
-            );
+            )
+        );
         out.write("\n");
       }
     }
