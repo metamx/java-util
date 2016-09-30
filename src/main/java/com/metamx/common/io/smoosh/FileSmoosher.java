@@ -66,15 +66,15 @@ public class FileSmoosher implements Closeable
 
   private final List<File> outFiles = Lists.newArrayList();
   private final Map<String, Metadata> internalFiles = Maps.newTreeMap();
-  private List<File> files = Lists.newArrayList();
-  private List<File> createFiles = Lists.newArrayList();
+  private List<File> completedFiles = Lists.newArrayList();
+  private List<File> filesInProcess = Lists.newArrayList();
 
   private Outer currOut = null;
   private boolean writerCurrentlyInUse = false;
 
   public FileSmoosher(
       File baseDir
-  )
+      )
   {
     this(baseDir, Integer.MAX_VALUE);
   }
@@ -82,7 +82,7 @@ public class FileSmoosher implements Closeable
   public FileSmoosher(
       File baseDir,
       int maxChunkSize
-  )
+      )
   {
     this.baseDir = baseDir;
     this.maxChunkSize = maxChunkSize;
@@ -204,13 +204,10 @@ public class FileSmoosher implements Closeable
         if (bytesWritten != size) {
           throw new IOException(
               String.format("Expected [%,d] bytes, only saw [%,d], potential corruption?", size, bytesWritten)
-              );
+          );
         }
 
-        if(!writerCurrentlyInUse)
-        {
-          mergeWithSmoosher();
-        }
+        mergeWithSmoosher();
       }
     };
   }
@@ -218,12 +215,11 @@ public class FileSmoosher implements Closeable
   private void mergeWithSmoosher() throws IOException
   {
     //get processed elements from the stack and write.
-    List<File> fileToProcess = new ArrayList<>(files);
-    files = Lists.newArrayList();
+    List<File> fileToProcess = new ArrayList<>(completedFiles);
+    completedFiles = Lists.newArrayList();
     for(File file: fileToProcess)
     {
       add(file);
-      createFiles.remove(file);
       file.delete();
     }
   }
@@ -231,7 +227,7 @@ public class FileSmoosher implements Closeable
   private SmooshedWriter delegateSmooshedWriter(final String name,final long size) throws IOException
   {	
     final File tmpFile = new File(baseDir, name);
-    createFiles.add(tmpFile);
+    filesInProcess.add(tmpFile);
     return new SmooshedWriter () {
       private int currOffset = 0;
       private boolean open = true;
@@ -242,7 +238,9 @@ public class FileSmoosher implements Closeable
       {
         open = false;
         out.close();
-        files.add(tmpFile);
+        completedFiles.add(tmpFile);
+        filesInProcess.remove(tmpFile);
+
         if(!writerCurrentlyInUse ) {
           mergeWithSmoosher();
         }
@@ -255,26 +253,26 @@ public class FileSmoosher implements Closeable
       @Override
       public int write(ByteBuffer buffer) throws IOException
       {
-        FileChannel channel = out.getChannel();
+        WritableByteChannel channel = Channels.newChannel(out);
         int bytesWritten = channel.write(buffer);
-        return  addToOffset(bytesWritten);
+        addToOffset(bytesWritten);
+        return bytesWritten;
       }
 
       @Override
       public int write(InputStream in) throws IOException
       {
-        return addToOffset(Ints.checkedCast(java.nio.file.Files.copy(in, tmpFile.toPath())));
+        int bytesWritten = Ints.checkedCast(ByteStreams.copy(in, out));
+        addToOffset(bytesWritten);
+        return bytesWritten;
       }
 
-      public int addToOffset(int numBytesWritten)
+      private void addToOffset(int numBytesWritten)
       {
         if (numBytesWritten > bytesLeft()) {
           throw new ISE("Wrote more bytes[%,d] than available[%,d]. Don't do that.", numBytesWritten, bytesLeft());
         }
-
         currOffset += numBytesWritten;
-
-        return numBytesWritten;
       }
 
       @Override
@@ -289,15 +287,15 @@ public class FileSmoosher implements Closeable
   public void close() throws IOException
   {
     //book keeping checks on created file.
-    if(!createFiles.isEmpty())
+    if(!completedFiles.isEmpty())
     {
-      for(File file: createFiles)
+      for(File file: completedFiles)
       {
         file.delete();
       }
-      throw new ISE(String.format("%d writers needs to be closed before closing smoosher.", createFiles.size()));
+      throw new ISE(String.format("%d writers needs to be closed before closing smoosher.", filesInProcess.size()));
     }
-    
+
     if (currOut != null) {
       currOut.close();
     }
@@ -316,8 +314,8 @@ public class FileSmoosher implements Closeable
                 metadata.getFileNum(),
                 metadata.getStartOffset(),
                 metadata.getEndOffset()
-            )
-        );
+                )
+            );
         out.write("\n");
       }
     }
@@ -376,24 +374,25 @@ public class FileSmoosher implements Closeable
     public int write(ByteBuffer buffer) throws IOException
     {
       WritableByteChannel channel = Channels.newChannel(out);
-      return addToOffset(channel.write(buffer));
+      int bytesWritten = channel.write(buffer);
+      addToOffset(bytesWritten);
+      return bytesWritten;
     }
 
     @Override
     public int write(InputStream in) throws IOException
     {
-      return addToOffset(Ints.checkedCast(ByteStreams.copy(in, out)));
+      int bytesWritten = Ints.checkedCast(ByteStreams.copy(in, out));
+      addToOffset(bytesWritten);
+      return bytesWritten;
     }
 
-    public int addToOffset(int numBytesWritten)
+    private void addToOffset(int numBytesWritten)
     {
       if (numBytesWritten > bytesLeft()) {
         throw new ISE("Wrote more bytes[%,d] than available[%,d]. Don't do that.", numBytesWritten, bytesLeft());
       }
-
       currOffset += numBytesWritten;
-
-      return numBytesWritten;
     }
 
     @Override
