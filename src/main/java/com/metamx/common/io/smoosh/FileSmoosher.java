@@ -138,7 +138,7 @@ public class FileSmoosher implements Closeable
   {
     if(writerCurrentlyInUse)
     {
-      return delegateSmooshedWriter (name , size);
+      return delegateSmooshedWriter(name , size);
     }
 
     if (size > maxChunkSize) {
