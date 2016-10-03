@@ -136,14 +136,16 @@ public class FileSmoosher implements Closeable
 
   public SmooshedWriter addWithSmooshedWriter(final String name, final long size) throws IOException
   {
-    if(writerCurrentlyInUse)
-    {
-      return delegateSmooshedWriter(name , size);
-    }
 
     if (size > maxChunkSize) {
       throw new IAE("Asked to add buffers[%,d] larger than configured max[%,d]", size, maxChunkSize);
     }
+
+    if (writerCurrentlyInUse)
+    {
+      return delegateSmooshedWriter(name, size);
+    }
+
     if (currOut == null) {
       currOut = getNewCurrOut();
     }
@@ -216,18 +218,20 @@ public class FileSmoosher implements Closeable
     //get processed elements from the stack and write.
     List<File> fileToProcess = new ArrayList<>(completedFiles);
     completedFiles = Lists.newArrayList();
-    for(File file: fileToProcess)
+    for (File file: fileToProcess)
     {
       add(file);
       file.delete();
     }
   }
 
-  private SmooshedWriter delegateSmooshedWriter(final String name,final long size) throws IOException
-  {	
+  private SmooshedWriter delegateSmooshedWriter(final String name, final long size) throws IOException
+  {
     final File tmpFile = new File(baseDir, name);
     filesInProcess.add(tmpFile);
-    return new SmooshedWriter () {
+
+    return new SmooshedWriter()
+    {
       private int currOffset = 0;
       private boolean open = true;
       private final FileOutputStream out = new FileOutputStream(tmpFile);
@@ -240,7 +244,7 @@ public class FileSmoosher implements Closeable
         completedFiles.add(tmpFile);
         filesInProcess.remove(tmpFile);
 
-        if(!writerCurrentlyInUse ) {
+        if (!writerCurrentlyInUse) {
           mergeWithSmoosher();
         }
       }
@@ -286,13 +290,17 @@ public class FileSmoosher implements Closeable
   public void close() throws IOException
   {
     //book keeping checks on created file.
-    if(!completedFiles.isEmpty())
+    if (!completedFiles.isEmpty() || !filesInProcess.isEmpty())
     {
-      for(File file: completedFiles)
+      for (File file: completedFiles)
       {
         file.delete();
       }
-      throw new ISE(String.format("%d writers needs to be closed before closing smoosher.", filesInProcess.size()));
+      for (File file: filesInProcess)
+      {
+        file.delete();
+      }
+      throw new ISE(String.format("%d writers needs to be closed before closing smoosher.", filesInProcess.size() + completedFiles.size()));
     }
 
     if (currOut != null) {

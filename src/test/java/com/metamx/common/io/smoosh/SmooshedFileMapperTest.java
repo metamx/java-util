@@ -68,7 +68,7 @@ public class SmooshedFileMapperTest
         File tmpFile = File.createTempFile(String.format("smoosh-%s", i), ".bin");
         Files.write(Ints.toByteArray(i), tmpFile);
         smoosher.add(String.format("%d", i), tmpFile);
-        if(i==10)
+        if (i==10)
         {
           writer.write(ByteBuffer.wrap(Ints.toByteArray(19)));
           CloseQuietly.close(writer);
