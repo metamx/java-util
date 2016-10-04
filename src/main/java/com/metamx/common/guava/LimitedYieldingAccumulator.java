@@ -18,6 +18,7 @@ package com.metamx.common.guava;
 
 /**
  */
+@Deprecated
 public class LimitedYieldingAccumulator<OutType, T> extends YieldingAccumulator<OutType, T>
 {
   private final int limit;
