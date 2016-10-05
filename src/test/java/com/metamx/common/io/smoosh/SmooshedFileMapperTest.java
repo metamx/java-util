@@ -52,6 +52,7 @@ public class SmooshedFileMapperTest
     }
 
     File[] files = baseDir.listFiles();
+    Assert.assertNotNull(files);
     Arrays.sort(files);
 
     Assert.assertEquals(5, files.length); // 4 smooshed files and 1 meta file
@@ -91,6 +92,7 @@ public class SmooshedFileMapperTest
     }
 
     File[] files = baseDir.listFiles();
+    Assert.assertNotNull(files);
     Arrays.sort(files);
 
     Assert.assertEquals(6, files.length); // 4 smoosh files and 1 meta file
@@ -126,8 +128,8 @@ public class SmooshedFileMapperTest
 
       Assert.assertTrue(exceptionThrown);
       File[] files = baseDir.listFiles();
+      Assert.assertNotNull(files);
       Assert.assertEquals(1, files.length);
-      Assert.assertEquals(0, files[0].length());
     }
   }
 
