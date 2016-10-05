@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Closer;
 import com.google.common.primitives.Ints;
 import com.metamx.common.FileUtils;
 import com.metamx.common.IAE;
@@ -39,9 +40,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import java.nio.channels.GatheringByteChannel;
-import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -244,7 +243,7 @@ public class FileSmoosher implements Closeable
     final int fileNum = outFiles.size();
     File outFile = makeChunkFile(baseDir, fileNum);
     outFiles.add(outFile);
-    return new Outer(fileNum, new FileOutputStream(outFile).getChannel(), maxChunkSize);
+    return new Outer(fileNum, new FileOutputStream(outFile), maxChunkSize);
   }
 
   static File metaFile(File baseDir)
@@ -263,13 +262,16 @@ public class FileSmoosher implements Closeable
     private final int maxLength;
     private final GatheringByteChannel channel;
 
+    private final Closer closer = Closer.create();
     private int currOffset = 0;
 
-    Outer(int fileNum, FileChannel channel, int maxLength)
+    Outer(int fileNum, FileOutputStream output, int maxLength)
     {
       this.fileNum = fileNum;
-      this.channel = new BufferedWritableByteChannel(channel);
+      this.channel = output.getChannel();
       this.maxLength = maxLength;
+      closer.register(output);
+      closer.register(channel);
     }
 
     public int getFileNum()
@@ -331,93 +333,7 @@ public class FileSmoosher implements Closeable
     @Override
     public void close() throws IOException
     {
-      channel.close();
-    }
-  }
-
-  private static class BufferedWritableByteChannel
-      implements GatheringByteChannel
-  {
-    private static final int MAX_BUFFER_SIZE = 65536;
-    private static final int DEFAULT_BUFFER_SIZE = 8192;  // default of buffered output stream
-
-    private final WritableByteChannel channel;
-    private final ByteBuffer buffer;
-
-    BufferedWritableByteChannel(WritableByteChannel channel)
-    {
-      this(channel, DEFAULT_BUFFER_SIZE);
-    }
-
-    BufferedWritableByteChannel(WritableByteChannel channel, int buffer)
-    {
-      this.channel = channel;
-      this.buffer = ByteBuffer.allocateDirect(Math.min(buffer, MAX_BUFFER_SIZE));
-    }
-
-    public int write(ByteBuffer src) throws IOException
-    {
-      int position = src.position();
-      while (src.hasRemaining()) {
-        ByteBuffer toWrite = src;
-        int bytesToWrite = Math.min(buffer.remaining(), src.remaining());
-        if (bytesToWrite != src.remaining()) {
-          toWrite = src.duplicate();
-          toWrite.limit(toWrite.position() + bytesToWrite);
-        }
-        buffer.put(toWrite);
-        src.position(toWrite.position());
-        if (!buffer.hasRemaining()) {
-          flush(false);
-        }
-      }
-      return src.position() - position;
-    }
-
-    @Override
-    public long write(ByteBuffer[] srcs, int offset, int length) throws IOException
-    {
-      long written = 0;
-      for (int i = offset; i < length; i++) {
-        written += write(srcs[i]);
-      }
-      return written;
-    }
-
-    @Override
-    public long write(ByteBuffer[] srcs) throws IOException
-    {
-      return write(srcs, 0, srcs.length);
-    }
-
-    private void flush(boolean flushAll) throws IOException
-    {
-      buffer.flip();
-      do {
-        channel.write(buffer);
-      } while (flushAll && buffer.hasRemaining());
-
-      if (buffer.hasRemaining()) {
-        buffer.compact();
-      } else {
-        buffer.clear();
-      }
-    }
-
-    @Override
-    public boolean isOpen()
-    {
-      return channel.isOpen();
-    }
-
-    @Override
-    public void close() throws IOException
-    {
-      try (Closeable toClose = channel) {
-        if (buffer.position() != 0) {
-          flush(true);
-        }
-      }
+      closer.close();
     }
   }
 }
