@@ -59,6 +59,9 @@ public class SmooshedFileMapperTest
   public void testWhenFirstWriterClosedInTheMiddle() throws Exception
   {
     File baseDir = Files.createTempDir();
+    File[] files = baseDir.listFiles();
+    Assert.assertNotNull(files);
+    Arrays.sort(files);
 
     try (FileSmoosher smoosher = new FileSmoosher(baseDir, 21))
     {
@@ -113,7 +116,7 @@ public class SmooshedFileMapperTest
       CloseQuietly.close(writer);
       smoosher.close();
     }
-    validateOutput(baseDir);    
+    validateOutput(baseDir);
   }
 
   @Test
@@ -136,6 +139,7 @@ public class SmooshedFileMapperTest
     }
 
     File[] files = baseDir.listFiles();
+    Assert.assertNotNull(files);
     Arrays.sort(files);
 
     Assert.assertEquals(6, files.length); // 4 smoosh files and 1 meta file
@@ -171,8 +175,8 @@ public class SmooshedFileMapperTest
 
       Assert.assertTrue(exceptionThrown);
       File[] files = baseDir.listFiles();
+      Assert.assertNotNull(files);
       Assert.assertEquals(1, files.length);
-      Assert.assertEquals(0, files[0].length());
     }
   }
 

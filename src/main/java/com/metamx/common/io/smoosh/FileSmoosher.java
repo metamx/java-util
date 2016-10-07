@@ -22,13 +22,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Closer;
 import com.google.common.primitives.Ints;
 import com.metamx.common.FileUtils;
 import com.metamx.common.IAE;
 import com.metamx.common.ISE;
 import com.metamx.common.MappedByteBufferHandler;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
@@ -36,25 +36,31 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
+import java.nio.channels.GatheringByteChannel;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * A class that concatenates files together into configurable sized chunks, works in conjunction
- * with the SmooshedFileMapper to provide access to the individual files.
+ * A class that concatenates files together into configurable sized chunks,
+ * works in conjunction with the SmooshedFileMapper to provide access to the
+ * individual files.
  * <p/>
- * It does not split input files among separate output files, instead the various "chunk" files will
- * be varying sizes and it is not possible to add a file of size greater than Integer.MAX_VALUE
+ * It does not split input files among separate output files, instead the
+ * various "chunk" files will be varying sizes and it is not possible to add a
+ * file of size greater than Integer.MAX_VALUE.
+ * <p/>
+ * This class is not thread safe but allows writing multiple files even if main
+ * smoosh file writer is open. If main smoosh file writer is already open, it
+ * delegates the write into temporary file on the file system which is later
+ * copied on to the main smoosh file and underlying temporary file will be
+ * cleaned up.
  */
 public class FileSmoosher implements Closeable
 {
@@ -66,7 +72,9 @@ public class FileSmoosher implements Closeable
 
   private final List<File> outFiles = Lists.newArrayList();
   private final Map<String, Metadata> internalFiles = Maps.newTreeMap();
+  // list of files completed writing content using delegated smooshedWriter.
   private List<File> completedFiles = Lists.newArrayList();
+  // list of files in process writing content using delegated smooshedWriter.
   private List<File> filesInProcess = Lists.newArrayList();
 
   private Outer currOut = null;
@@ -141,6 +149,9 @@ public class FileSmoosher implements Closeable
       throw new IAE("Asked to add buffers[%,d] larger than configured max[%,d]", size, maxChunkSize);
     }
 
+    // if current writer is in use then create a new SmooshedWriter which
+    // writes into temporary file which is later merged into original
+    // FileSmoosher.
     if (writerCurrentlyInUse)
     {
       return delegateSmooshedWriter(name, size);
@@ -173,7 +184,19 @@ public class FileSmoosher implements Closeable
         return verifySize(currOut.write(in));
       }
 
-      private int verifySize(int bytesWrittenInChunk) throws IOException
+      @Override
+      public long write(ByteBuffer[] srcs, int offset, int length) throws IOException
+      {
+        return verifySize(currOut.write(srcs, offset, length));
+      }
+
+      @Override
+      public long write(ByteBuffer[] srcs) throws IOException
+      {
+        return verifySize(currOut.write(srcs));
+      }
+
+      private int verifySize(long bytesWrittenInChunk) throws IOException
       {
         bytesWritten += bytesWrittenInChunk;
 
@@ -184,7 +207,7 @@ public class FileSmoosher implements Closeable
           throw new ISE("Wrote[%,d] bytes for something of size[%,d].  Liar!!!", bytesWritten, size);
         }
 
-        return bytesWrittenInChunk;
+        return Ints.checkedCast(bytesWrittenInChunk);
       }
 
       @Override
@@ -208,11 +231,19 @@ public class FileSmoosher implements Closeable
               String.format("Expected [%,d] bytes, only saw [%,d], potential corruption?", size, bytesWritten)
           );
         }
+        // check if delegated smooshedWriter any file, merge with this
+        // FileSmoosher.
         mergeWithSmoosher();
       }
     };
   }
 
+  /**
+   * merges temporary files created by delegated SmooshedWriters into original
+   * FileSmoosher.
+   *
+   * @throws IOException
+   */
   private void mergeWithSmoosher() throws IOException
   {
     //get processed elements from the stack and write.
@@ -225,6 +256,16 @@ public class FileSmoosher implements Closeable
     }
   }
 
+  /**
+   * Returns a new SmooshedWriter which writes into temporary file and close
+   * method on returned SmooshedWriter tries to merge temporary file into
+   * original FileSmoosher object(if not open).
+   *
+   * @param name fileName
+   * @param size size of the file.
+   * @return
+   * @throws IOException
+   */
   private SmooshedWriter delegateSmooshedWriter(final String name, final long size) throws IOException
   {
     final File tmpFile = new File(baseDir, name);
@@ -233,14 +274,17 @@ public class FileSmoosher implements Closeable
     return new SmooshedWriter()
     {
       private int currOffset = 0;
-      private boolean open = true;
       private final FileOutputStream out = new FileOutputStream(tmpFile);
-
+      private final GatheringByteChannel channel = out.getChannel();;
+      private final Closer closer = Closer.create();
+      {
+        closer.register(out);
+        closer.register(channel);
+      }
       @Override
       public void close() throws IOException
       {
-        open = false;
-        out.close();
+        closer.close();
         completedFiles.add(tmpFile);
         filesInProcess.remove(tmpFile);
 
@@ -256,32 +300,43 @@ public class FileSmoosher implements Closeable
       @Override
       public int write(ByteBuffer buffer) throws IOException
       {
-        WritableByteChannel channel = Channels.newChannel(out);
-        int bytesWritten = channel.write(buffer);
-        addToOffset(bytesWritten);
-        return bytesWritten;
+        return addToOffset(channel.write(buffer));
       }
 
       @Override
       public int write(InputStream in) throws IOException
       {
-        int bytesWritten = Ints.checkedCast(ByteStreams.copy(in, out));
-        addToOffset(bytesWritten);
-        return bytesWritten;
+        return addToOffset(ByteStreams.copy(Channels.newChannel(in), channel));
       }
 
-      private void addToOffset(int numBytesWritten)
+      @Override
+      public long write(ByteBuffer[] srcs, int offset, int length) throws IOException
+      {
+        return addToOffset(channel.write(srcs, offset, length));
+      }
+
+      @Override
+      public long write(ByteBuffer[] srcs) throws IOException
+      {
+        return addToOffset(channel.write(srcs));
+      }
+
+      public int addToOffset(long numBytesWritten)
       {
         if (numBytesWritten > bytesLeft()) {
           throw new ISE("Wrote more bytes[%,d] than available[%,d]. Don't do that.", numBytesWritten, bytesLeft());
         }
         currOffset += numBytesWritten;
+
+        return Ints.checkedCast(numBytesWritten);
       }
 
       @Override
-      public boolean isOpen() {
-        return open;
+      public boolean isOpen()
+      {
+        return channel.isOpen();
       }
+
     };
 
   }
@@ -333,7 +388,7 @@ public class FileSmoosher implements Closeable
     final int fileNum = outFiles.size();
     File outFile = makeChunkFile(baseDir, fileNum);
     outFiles.add(outFile);
-    return new Outer(fileNum, new BufferedOutputStream(new FileOutputStream(outFile)), maxChunkSize);
+    return new Outer(fileNum, new FileOutputStream(outFile), maxChunkSize);
   }
 
   static File metaFile(File baseDir)
@@ -349,17 +404,19 @@ public class FileSmoosher implements Closeable
   public static class Outer implements SmooshedWriter
   {
     private final int fileNum;
-    private final OutputStream out;
     private final int maxLength;
+    private final GatheringByteChannel channel;
 
-    private boolean open = true;
+    private final Closer closer = Closer.create();
     private int currOffset = 0;
 
-    Outer(int fileNum, OutputStream out, int maxLength)
+    Outer(int fileNum, FileOutputStream output, int maxLength)
     {
       this.fileNum = fileNum;
-      this.out = out;
+      this.channel = output.getChannel();
       this.maxLength = maxLength;
+      closer.register(output);
+      closer.register(channel);
     }
 
     public int getFileNum()
@@ -380,39 +437,47 @@ public class FileSmoosher implements Closeable
     @Override
     public int write(ByteBuffer buffer) throws IOException
     {
-      WritableByteChannel channel = Channels.newChannel(out);
-      int bytesWritten = channel.write(buffer);
-      addToOffset(bytesWritten);
-      return bytesWritten;
+      return addToOffset(channel.write(buffer));
     }
 
     @Override
     public int write(InputStream in) throws IOException
     {
-      int bytesWritten = Ints.checkedCast(ByteStreams.copy(in, out));
-      addToOffset(bytesWritten);
-      return bytesWritten;
+      return addToOffset(ByteStreams.copy(Channels.newChannel(in), channel));
     }
 
-    private void addToOffset(int numBytesWritten)
+    @Override
+    public long write(ByteBuffer[] srcs, int offset, int length) throws IOException
+    {
+      return addToOffset(channel.write(srcs, offset, length));
+    }
+
+    @Override
+    public long write(ByteBuffer[] srcs) throws IOException
+    {
+      return addToOffset(channel.write(srcs));
+    }
+
+    public int addToOffset(long numBytesWritten)
     {
       if (numBytesWritten > bytesLeft()) {
         throw new ISE("Wrote more bytes[%,d] than available[%,d]. Don't do that.", numBytesWritten, bytesLeft());
       }
       currOffset += numBytesWritten;
+
+      return Ints.checkedCast(numBytesWritten);
     }
 
     @Override
     public boolean isOpen()
     {
-      return open;
+      return channel.isOpen();
     }
 
     @Override
     public void close() throws IOException
     {
-      open = false;
-      out.close();
+      closer.close();
     }
   }
 }
