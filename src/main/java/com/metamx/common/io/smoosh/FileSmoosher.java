@@ -149,7 +149,7 @@ public class FileSmoosher implements Closeable
       throw new IAE("Asked to add buffers[%,d] larger than configured max[%,d]", size, maxChunkSize);
     }
 
-    // if current writer is in use then create a new SmooshedWriter which
+    // If current writer is in use then create a new SmooshedWriter which
     // writes into temporary file which is later merged into original
     // FileSmoosher.
     if (writerCurrentlyInUse)
@@ -231,22 +231,21 @@ public class FileSmoosher implements Closeable
               String.format("Expected [%,d] bytes, only saw [%,d], potential corruption?", size, bytesWritten)
           );
         }
-        // check if delegated smooshedWriter any file, merge with this
-        // FileSmoosher.
+        // Merge temporary files on to the main smoosh file.
         mergeWithSmoosher();
       }
     };
   }
 
   /**
-   * merges temporary files created by delegated SmooshedWriters into original
-   * FileSmoosher.
+   * Merges temporary files created by delegated SmooshedWriters on to the main
+   * smoosh file.
    *
    * @throws IOException
    */
   private void mergeWithSmoosher() throws IOException
   {
-    //get processed elements from the stack and write.
+    // Get processed elements from the stack and write.
     List<File> fileToProcess = new ArrayList<>(completedFiles);
     completedFiles = Lists.newArrayList();
     for (File file: fileToProcess)
