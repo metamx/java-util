@@ -21,7 +21,6 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.metamx.common.logger.Logger;
 
-import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
 
