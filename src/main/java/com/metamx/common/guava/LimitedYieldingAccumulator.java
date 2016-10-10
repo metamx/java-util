@@ -17,6 +17,8 @@
 package com.metamx.common.guava;
 
 /**
+ * @deprecated this class uses expensive volatile counter inside, but it is not thread-safe. It is going to be removed
+ * in the future.
  */
 @Deprecated
 public class LimitedYieldingAccumulator<OutType, T> extends YieldingAccumulator<OutType, T>
