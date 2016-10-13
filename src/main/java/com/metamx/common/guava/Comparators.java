@@ -40,7 +40,7 @@ public class Comparators
       @Override
       public int compare(T t, T t1)
       {
-        return - baseComp.compare(t, t1);
+        return baseComp.compare(t1, t);
       }
     };
   }
