@@ -18,6 +18,9 @@ package com.metamx.common;
 
 import com.google.common.base.Function;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -192,5 +195,35 @@ public class MapUtils
     catch (ClassCastException e) {
       throw new IAE("Key[%s] should be a map, was [%s]", key, retVal);
     }
+  }
+
+  public static URI getURI(Map<String, Object> in, String key){
+    return getURI(in, key, null);
+  }
+
+  public static URI getURI(Map<String, Object> in, String key, URI defaultValue){
+
+    final Object oVal = in.get(key);
+    if(oVal == null){
+      if(defaultValue == null){
+        throw new IAE("Key[%s] is required in map[%s]", key, in);
+      }
+      return defaultValue;
+    }
+    if(oVal instanceof String){
+      return URI.create((String)oVal);
+    }
+    if(oVal instanceof URI){
+      return (URI) oVal;
+    }
+    if(oVal instanceof URL){
+      try {
+        return ((URL) oVal).toURI();
+      }
+      catch (URISyntaxException e) {
+        throw new IAE(e, "Could not convert url [%s] to URI", oVal.toString());
+      }
+    }
+    throw new IAE("Could not convert class [%s] to URI", oVal.getClass().getCanonicalName());
   }
 }
