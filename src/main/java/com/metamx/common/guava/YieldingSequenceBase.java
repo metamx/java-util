@@ -16,11 +16,6 @@
 
 package com.metamx.common.guava;
 
-import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
-
-import java.io.IOException;
-
 /**
  * A Sequence that is based entirely on the Yielder implementation.
  * <p/>

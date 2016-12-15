@@ -16,16 +16,15 @@
 
 package com.metamx.common.guava;
 
-import com.google.common.io.Closeables;
+import com.google.common.base.Throwables;
 
-import java.io.Closeable;
 import java.io.IOException;
 
 /**
  */
 public class Yielders
 {
-  public static <T> Yielder<T> done(final T finalVal, final Closeable closeable)
+  public static <T> Yielder<T> done(final T finalVal, final AutoCloseable closeable)
   {
     return new Yielder<T>()
     {
@@ -50,7 +49,15 @@ public class Yielders
       @Override
       public void close() throws IOException
       {
-        Closeables.close(closeable, false);
+        if (closeable != null) {
+          try {
+            closeable.close();
+          }
+          catch (Exception e) {
+            Throwables.propagateIfInstanceOf(e, IOException.class);
+            throw Throwables.propagate(e);
+          }
+        }
       }
     };
   }
