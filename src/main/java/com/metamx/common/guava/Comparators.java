@@ -16,6 +16,7 @@
 
 package com.metamx.common.guava;
 
+import com.google.common.primitives.Longs;
 import org.joda.time.DateTimeComparator;
 import org.joda.time.Interval;
 
@@ -71,6 +72,13 @@ public class Comparators
     @Override
     public int compare(Interval lhs, Interval rhs)
     {
+      if (lhs.getChronology().equals(rhs.getChronology())) {
+        int compare = Longs.compare(lhs.getStartMillis(), rhs.getStartMillis());
+        if (compare == 0) {
+          return Longs.compare(lhs.getEndMillis(), rhs.getEndMillis());
+        }
+        return compare;
+      }
       int retVal = dateTimeComp.compare(lhs.getStart(), rhs.getStart());
       if (retVal == 0) {
         retVal = dateTimeComp.compare(lhs.getEnd(), rhs.getEnd());
@@ -86,6 +94,13 @@ public class Comparators
     @Override
     public int compare(Interval lhs, Interval rhs)
     {
+      if (lhs.getChronology().equals(rhs.getChronology())) {
+        int compare = Longs.compare(lhs.getEndMillis(), rhs.getEndMillis());
+        if (compare == 0) {
+          return Longs.compare(lhs.getStartMillis(), rhs.getStartMillis());
+        }
+        return compare;
+      }
       int retVal = dateTimeComp.compare(lhs.getEnd(), rhs.getEnd());
       if (retVal == 0) {
         retVal = dateTimeComp.compare(lhs.getStart(), rhs.getStart());
