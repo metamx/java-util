@@ -47,20 +47,8 @@
 
     <developers>
         <developer>
-            <name>Gian Merlino</name>
-            <email>gian@metamarkets.com</email>
-            <organization>Metamarkets Group Inc.</organization>
-            <organizationUrl>https://www.metamarkets.com</organizationUrl>
-        </developer>
-        <developer>
-            <name>Xavier Léauté</name>
-            <email>xavier@metamarkets.com</email>
-            <organization>Metamarkets Group Inc.</organization>
-            <organizationUrl>https://www.metamarkets.com</organizationUrl>
-        </developer>
-        <developer>
-            <name>Fangjin Yang</name>
-            <email>fangjin@metamarkets.com</email>
+            <name>Metamarkets Open Source Team</name>
+            <email>oss@metamarkets.com</email>
             <organization>Metamarkets Group Inc.</organization>
             <organizationUrl>https://www.metamarkets.com</organizationUrl>
         </developer>
