@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import junit.framework.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Map;
 
 public class CSVParserTest
@@ -83,6 +84,25 @@ public class CSVParserTest
     Assert.assertEquals(
         "jsonMap",
         ImmutableMap.of("column_1", "hello", "column_2", "world", "column_3", "foo"),
+        jsonMap
+    );
+  }
+
+  @Test
+  public void testCSVParserWithSplit()
+  {
+    final CSVParser csvParser = new CSVParser(Optional.<String>fromNullable(":"), new String[] {"time", "not-existing"});
+    csvParser.setFieldNames(Arrays.asList("time", "dim1", "dim2", "dim3"));
+    String body = "2016-03-02 09:23:00,hello:world,foo:bar,manse";
+    final Map<String, Object> jsonMap = csvParser.parse(body);
+    Assert.assertEquals(
+        "jsonMap",
+        ImmutableMap.of(
+            "time", "2016-03-02 09:23:00",
+            "dim1", Arrays.asList("hello", "world"),
+            "dim2", Arrays.asList("foo", "bar"),
+            "dim3", "manse"
+        ),
         jsonMap
     );
   }
