@@ -22,7 +22,6 @@ import com.google.common.io.ByteSink;
 import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
-import com.metamx.common.guava.CloseQuietly;
 import com.metamx.common.logger.Logger;
 
 import java.io.BufferedInputStream;
@@ -99,7 +98,7 @@ public class CompressionUtils
         totalSize += Files.asByteSource(file).copyTo(zipOut);
       }
       zipOut.closeEntry();
-      // Workarround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
+      // Workaround for http://hg.openjdk.java.net/jdk8/jdk8/jdk/rev/759aa847dcaf
       zipOut.flush();
     }
 

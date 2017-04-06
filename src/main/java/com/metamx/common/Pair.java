@@ -112,4 +112,20 @@ public class Pair<T1, T2>
       }
     };
   }
+
+  public static <T1 extends Comparable, T2 extends Comparable> Comparator<Pair<T1, T2>> comparator()
+  {
+    return new Comparator<Pair<T1, T2>>()
+    {
+      @Override
+      public int compare(Pair<T1, T2> o1, Pair<T1, T2> o2)
+      {
+        int compare = o1.lhs.compareTo(o2.lhs);
+        if (compare == 0) {
+          return o1.rhs.compareTo(o2.rhs);
+        }
+        return compare;
+      }
+    };
+  }
 }
