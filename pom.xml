@@ -21,7 +21,7 @@
     <parent>
         <groupId>com.metamx</groupId>
         <artifactId>oss-parent</artifactId>
-        <version>3</version>
+        <version>4</version>
     </parent>
 
     <artifactId>java-util</artifactId>
