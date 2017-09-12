@@ -18,6 +18,7 @@ package com.metamx.common;
 
 import org.joda.time.DateTime;
 import org.joda.time.Days;
+import org.joda.time.Duration;
 import org.joda.time.Hours;
 import org.joda.time.Interval;
 import org.joda.time.Minutes;
@@ -665,6 +666,11 @@ public enum Granularity
   public final DateTimeFormatter getFormatter(String type)
   {
     return getFormatter(Formatter.valueOf(type.toUpperCase()));
+  }
+
+  public final Duration getUnitDuration()
+  {
+    return getUnits(1).toPeriod().toStandardDuration();
   }
 
   public final DateTime increment(DateTime time)
