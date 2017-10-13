@@ -120,7 +120,7 @@ public class HttpPostEmitterStressTest
     }
     threadsCompleted.await();
     emitter.flush();
-    System.out.println("Allocated buffers: " + emitter.getAllocatedBuffers());
+    System.out.println("Allocated buffers: " + emitter.getTotalAllocatedBuffers());
     for (int eventIndex = 0; eventIndex < N; eventIndex++) {
       if (!emittedEvents.get(eventIndex)) {
         for (int threadIndex = 0; threadIndex < eventsPerThread.size(); threadIndex++) {

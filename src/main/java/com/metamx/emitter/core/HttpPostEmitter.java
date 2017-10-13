@@ -77,6 +77,11 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private final URL url;
 
   private final ConcurrentLinkedQueue<byte[]> buffersToReuse = new ConcurrentLinkedQueue<>();
+  /**
+   * "Approximate" because not exactly atomically synchronized with {@link #buffersToReuse} updates. {@link
+   * ConcurrentLinkedQueue#size()} is not used, because it's O(n).
+   */
+  private final AtomicInteger approximateBuffersToReuseCount = new AtomicInteger();
 
   /**
    * concurrentBatch.get() == null means the service is closed.
@@ -84,7 +89,15 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private final AtomicReference<Batch> concurrentBatch = new AtomicReference<>();
 
   private final ConcurrentLinkedQueue<Batch> buffersToEmit = new ConcurrentLinkedQueue<>();
+  /** See {@link #approximateBuffersToReuseCount} */
+  private final AtomicInteger approximateBuffersToEmitCount = new AtomicInteger();
+  /** See {@link #approximateBuffersToReuseCount} */
+  private final AtomicLong approximateEventsToEmitCount = new AtomicLong();
+
   private final ConcurrentLinkedQueue<byte[]> largeEventsToEmit = new ConcurrentLinkedQueue<>();
+  /** See {@link #approximateBuffersToReuseCount} */
+  private final AtomicInteger approximateLargeEventsToEmitCount = new AtomicInteger();
+
   private final EmittedBatchCounter emittedBatchCounter = new EmittedBatchCounter();
   private final EmittingThread emittingThread = new EmittingThread();
   private final AtomicLong totalEmittedEvents = new AtomicLong();
@@ -226,6 +239,8 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private void writeLargeEvent(byte[] eventBytes)
   {
     largeEventsToEmit.add(eventBytes);
+    approximateLargeEventsToEmitCount.incrementAndGet();
+    approximateEventsToEmitCount.incrementAndGet();
     wakeUpEmittingThread();
   }
 
@@ -234,7 +249,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
    */
   void onSealExclusive(Batch batch)
   {
-    buffersToEmit.add(batch);
+    addBatchToEmitQueue(batch);
     wakeUpEmittingThread();
     if (!isTerminated()) {
       int nextBatchNumber = EmittedBatchCounter.nextBatchNumber(batch.batchNumber);
@@ -243,6 +258,24 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         Preconditions.checkState(isTerminated());
       }
     }
+  }
+
+  private void addBatchToEmitQueue(Batch batch)
+  {
+    buffersToEmit.add(batch);
+    approximateBuffersToEmitCount.incrementAndGet();
+    approximateEventsToEmitCount.addAndGet(batch.eventCount.get());
+  }
+
+  private Batch pollBatchFromEmitQueue()
+  {
+    Batch result = buffersToEmit.poll();
+    if (result == null) {
+      return null;
+    }
+    approximateBuffersToEmitCount.decrementAndGet();
+    approximateEventsToEmitCount.addAndGet(-result.eventCount.get());
+    return result;
   }
 
   private void wakeUpEmittingThread()
@@ -304,6 +337,13 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private class EmittingThread extends Thread
   {
     private final ArrayDeque<FailedBuffer> failedBuffers = new ArrayDeque<>();
+    /**
+     * "Approximate", because not exactly synchronized with {@link #failedBuffers} updates. Not using size() on
+     * {@link #failedBuffers}, because access to it is not synchronized, while approximateFailedBuffersCount is queried
+     * not within EmittingThread.
+     */
+    private final AtomicInteger approximateFailedBuffersCount = new AtomicInteger();
+
     private boolean shuttingDown = false;
     private ZeroCopyByteArrayOutputStream gzipBaos;
 
@@ -363,7 +403,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
     private void emitBatches()
     {
-      for (Batch batch; (batch = buffersToEmit.poll()) != null; ) {
+      for (Batch batch; (batch = pollBatchFromEmitQueue()) != null; ) {
         emit(batch);
       }
     }
@@ -390,8 +430,10 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
         if (sendWithRetries(batch.buffer, bufferEndOffset, eventCount)) {
           buffersToReuse.add(batch.buffer);
+          approximateBuffersToReuseCount.incrementAndGet();
         } else {
           failedBuffers.add(new FailedBuffer(batch.buffer, bufferEndOffset, eventCount));
+          approximateFailedBuffersCount.incrementAndGet();
         }
       }
       finally {
@@ -409,6 +451,8 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       // posting rate is too high, though it should never happen in practice.
       largeEventsToEmit.add(LARGE_EVENTS_STOP);
       for (byte[] largeEvent; (largeEvent = largeEventsToEmit.poll()) != LARGE_EVENTS_STOP; ) {
+        approximateLargeEventsToEmitCount.decrementAndGet();
+        approximateEventsToEmitCount.decrementAndGet();
         emitLargeEvent(largeEvent);
       }
     }
@@ -422,8 +466,10 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       bufferOffset = batchingStrategy.writeBatchEnd(buffer, bufferOffset);
       if (sendWithRetries(buffer, bufferOffset, 1)) {
         buffersToReuse.add(buffer);
+        approximateBuffersToReuseCount.incrementAndGet();
       } else {
         failedBuffers.add(new FailedBuffer(buffer, bufferOffset, 1));
+        approximateFailedBuffersCount.incrementAndGet();
       }
     }
 
@@ -434,6 +480,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         if (sendWithRetries(failedBuffer.buffer, failedBuffer.length, failedBuffer.eventCount)) {
           // Remove from the queue of failed buffer.
           failedBuffers.poll();
+          approximateFailedBuffersCount.decrementAndGet();
           // Don't add the failed buffer back to the buffersToReuse queue here, because in a situation when we were not
           // able to emit events for a while we don't have a way to discard buffers that were used to accumulate events
           // during that period, if they are added back to buffersToReuse. For instance it may result in having 100
@@ -445,6 +492,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     private void tryEmitAndDrainAllFailedBuffers()
     {
       for (FailedBuffer failedBuffer; (failedBuffer = failedBuffers.poll()) != null; ) {
+        approximateFailedBuffersCount.decrementAndGet();
         sendWithRetries(failedBuffer.buffer, failedBuffer.length, failedBuffer.eventCount);
       }
     }
@@ -572,6 +620,8 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     if (buffer == null) {
       buffer = new byte[bufferSize];
       allocatedBuffers.incrementAndGet();
+    } else {
+      approximateBuffersToReuseCount.decrementAndGet();
     }
     return buffer;
   }
@@ -579,20 +629,46 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private void drainBuffersToReuse()
   {
     while (buffersToReuse.poll() != null) {
-      // loop
+      approximateBuffersToReuseCount.decrementAndGet();
     }
   }
 
-  @VisibleForTesting
-  int getAllocatedBuffers()
+  /**
+   * This and the following methods are public for external monitoring purposes.
+   */
+  public int getTotalAllocatedBuffers()
   {
     return allocatedBuffers.get();
   }
 
-  @VisibleForTesting
-  long getTotalEmittedEvents()
+  public int getBuffersToEmit()
+  {
+    return approximateBuffersToEmitCount.get();
+  }
+
+  public int getBuffersToReuse()
+  {
+    return approximateBuffersToReuseCount.get();
+  }
+
+  public int getFailedBuffers()
+  {
+    return emittingThread.approximateFailedBuffersCount.get();
+  }
+
+  public long getTotalEmittedEvents()
   {
     return totalEmittedEvents.get();
+  }
+
+  public long getEventsToEmit()
+  {
+    return approximateEventsToEmitCount.get();
+  }
+
+  public long getLargeEventsToEmit()
+  {
+    return approximateLargeEventsToEmitCount.get();
   }
 
   @VisibleForTesting
