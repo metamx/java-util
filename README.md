@@ -63,3 +63,8 @@ will be translated into:
     }
 }
 ```
+
+`com.metamx.metrics` - Server Metrics
+=====================================
+
+A library for emitting server-metrics
