@@ -22,7 +22,7 @@ import com.metamx.emitter.service.ServiceMetricEvent;
 public abstract class FeedDefiningMonitor extends AbstractMonitor
 {
   public static final String DEFAULT_METRICS_FEED = "metrics";
-  private String feed;
+  protected final String feed;
 
   public FeedDefiningMonitor(String feed)
   {

@@ -451,9 +451,9 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       // posting rate is too high, though it should never happen in practice.
       largeEventsToEmit.add(LARGE_EVENTS_STOP);
       for (byte[] largeEvent; (largeEvent = largeEventsToEmit.poll()) != LARGE_EVENTS_STOP; ) {
+        emitLargeEvent(largeEvent);
         approximateLargeEventsToEmitCount.decrementAndGet();
         approximateEventsToEmitCount.decrementAndGet();
-        emitLargeEvent(largeEvent);
       }
     }
 
@@ -492,8 +492,8 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     private void tryEmitAndDrainAllFailedBuffers()
     {
       for (FailedBuffer failedBuffer; (failedBuffer = failedBuffers.poll()) != null; ) {
-        approximateFailedBuffersCount.decrementAndGet();
         sendWithRetries(failedBuffer.buffer, failedBuffer.length, failedBuffer.eventCount);
+        approximateFailedBuffersCount.decrementAndGet();
       }
     }
 
