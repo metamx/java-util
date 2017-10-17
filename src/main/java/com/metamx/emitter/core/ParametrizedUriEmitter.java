@@ -17,6 +17,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
 {
@@ -173,6 +174,11 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
     if (thrown != null) {
       throw Throwables.propagate(thrown);
     }
+  }
+
+  public void forEachEmitter(BiConsumer<URI, HttpPostEmitter> action)
+  {
+    emitters.forEach(action);
   }
 
   @Override
