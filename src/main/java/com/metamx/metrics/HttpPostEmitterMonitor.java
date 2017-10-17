@@ -26,6 +26,7 @@ public class HttpPostEmitterMonitor extends FeedDefiningMonitor
 {
   private final HttpPostEmitter httpPostEmitter;
   private final ImmutableMap<String, String> extraDimensions;
+  private final ServiceMetricEvent.Builder builder;
   private long lastTotalEmittedEvents = 0;
   private int lastTotalAllocatedBuffers = 0;
 
@@ -38,6 +39,7 @@ public class HttpPostEmitterMonitor extends FeedDefiningMonitor
     super(feed);
     this.httpPostEmitter = httpPostEmitter;
     this.extraDimensions = extraDimensions;
+    this.builder = builder();
   }
 
   @Override
@@ -45,19 +47,19 @@ public class HttpPostEmitterMonitor extends FeedDefiningMonitor
   {
     long newTotalEmittedEvents = httpPostEmitter.getTotalEmittedEvents();
     long totalEmittedEventsDiff = newTotalEmittedEvents - lastTotalEmittedEvents;
-    emitter.emit(builder().build("emitter/events/emitted", totalEmittedEventsDiff));
+    emitter.emit(builder.build("emitter/events/emitted", totalEmittedEventsDiff));
     lastTotalEmittedEvents = newTotalEmittedEvents;
 
     int newTotalAllocatedBuffers = httpPostEmitter.getTotalAllocatedBuffers();
     int totalAllocatedBuffersDiff = newTotalAllocatedBuffers - lastTotalAllocatedBuffers;
-    emitter.emit(builder().build("emitter/buffers/allocated", totalAllocatedBuffersDiff));
+    emitter.emit(builder.build("emitter/buffers/allocated", totalAllocatedBuffersDiff));
     lastTotalAllocatedBuffers = newTotalAllocatedBuffers;
 
-    emitter.emit(builder().build("emitter/events/emitQueue", httpPostEmitter.getEventsToEmit()));
-    emitter.emit(builder().build("emitter/events/large/emitQueue", httpPostEmitter.getLargeEventsToEmit()));
-    emitter.emit(builder().build("emitter/buffers/emitQueue", httpPostEmitter.getBuffersToEmit()));
-    emitter.emit(builder().build("emitter/buffers/failed", httpPostEmitter.getFailedBuffers()));
-    emitter.emit(builder().build("emitter/buffers/reuseQueue", httpPostEmitter.getBuffersToReuse()));
+    emitter.emit(builder.build("emitter/events/emitQueue", httpPostEmitter.getEventsToEmit()));
+    emitter.emit(builder.build("emitter/events/large/emitQueue", httpPostEmitter.getLargeEventsToEmit()));
+    emitter.emit(builder.build("emitter/buffers/emitQueue", httpPostEmitter.getBuffersToEmit()));
+    emitter.emit(builder.build("emitter/buffers/failed", httpPostEmitter.getFailedBuffers()));
+    emitter.emit(builder.build("emitter/buffers/reuseQueue", httpPostEmitter.getBuffersToReuse()));
 
     return true;
   }
