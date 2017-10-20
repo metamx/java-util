@@ -28,11 +28,13 @@ import java.util.Map;
 public class CgroupMemoryMonitor extends FeedDefiningMonitor
 {
   final CgroupDiscoverer cgroupDiscoverer;
+  final Map<String, String[]> dimensions;
 
   public CgroupMemoryMonitor(CgroupDiscoverer cgroupDiscoverer, final Map<String, String[]> dimensions, String feed)
   {
     super(feed);
     this.cgroupDiscoverer = cgroupDiscoverer;
+    this.dimensions = dimensions;
   }
 
   public CgroupMemoryMonitor(final Map<String, String[]> dimensions, String feed)
@@ -57,12 +59,14 @@ public class CgroupMemoryMonitor extends FeedDefiningMonitor
     final Memory.MemoryStat stat = memory.snapshot();
     stat.getMemoryStats().forEach((key, value) -> {
       final ServiceMetricEvent.Builder builder = builder();
+      MonitorUtils.addDimensionsToBuilder(builder, dimensions);
       // See https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt
       // There are inconsistent units for these. Most are bytes.
       emitter.emit(builder.build(StringUtils.safeFormat("cgroup/memory/%s", key), value));
     });
     stat.getNumaMemoryStats().forEach((key, value) -> {
       final ServiceMetricEvent.Builder builder = builder().setDimension("numaZone", Long.toString(key));
+      MonitorUtils.addDimensionsToBuilder(builder, dimensions);
       value.forEach((k, v) -> {
         emitter.emit(builder.build(StringUtils.safeFormat("cgroup/memory_numa/%s/pages", k), v));
       });
