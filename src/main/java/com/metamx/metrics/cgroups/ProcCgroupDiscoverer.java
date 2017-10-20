@@ -16,18 +16,20 @@
 
 package com.metamx.metrics.cgroups;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.metamx.common.RE;
 import com.metamx.metrics.CgroupUtil;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -35,23 +37,31 @@ import java.util.regex.Pattern;
 public class ProcCgroupDiscoverer implements CgroupDiscoverer
 {
   private static final String CGROUP_TYPE = "cgroup";
-  private static final String PROC_TYPE = "getProc";
+
+  private final File procDir;
+
+  /**
+   * Create a proc discovery mechanism based on a `/proc` directory.
+   *
+   * @param procDir The directory under proc. This is usually `/proc/self` or `/proc/#pid`
+   */
+  public ProcCgroupDiscoverer(Path procDir)
+  {
+    this.procDir = Preconditions.checkNotNull(procDir, "procDir").toFile();
+    Preconditions.checkArgument(this.procDir.isDirectory(), "Not a directory: [%s]", procDir);
+  }
 
   @Override
-  public Path discover(final String cgroup, long pid)
+  public Path discover(final String cgroup)
   {
     Preconditions.checkNotNull(cgroup, "cgroup required");
-    // TODO: find a way to cache these
-    final File proc = getProc();
-    final File procMounts = new File(proc, "mounts");
-    final File procCgroups = new File(proc, "cgroups");
-    final File pidCgroups = new File(new File(proc, Long.toString(pid)), "cgroup");
-    final ProcCgroupsEntry procCgroupsEntry = getCgroupEntry(procCgroups, cgroup);
+    final File procMounts = new File(procDir, "mounts");
+    final File pidCgroups = new File(procDir, "cgroup");
+    final PidCgroupEntry pidCgroupsEntry = getCgroupEntry(pidCgroups, cgroup);
     final ProcMountsEntry procMountsEntry = getMountEntry(procMounts, cgroup);
-    final ProcPidCgroupEntry procPidCgroupEntry = getPidCgroupEntry(pidCgroups, procCgroupsEntry.hierarchy);
     final File cgroupDir = new File(
-        procMountsEntry.path.toFile(),
-        procPidCgroupEntry.path
+        procMountsEntry.path.toString(),
+        pidCgroupsEntry.path.toString()
     );
     if (cgroupDir.exists() && cgroupDir.isDirectory()) {
       return cgroupDir.toPath();
@@ -59,63 +69,11 @@ public class ProcCgroupDiscoverer implements CgroupDiscoverer
     throw new RE("Invalid cgroup directory [%s]", cgroupDir);
   }
 
-  @VisibleForTesting
-  public File getProc()
-  {
-    // TODO: discover `/proc` in a more reliable way
-    final File proc = new File("/proc");
-    Path foundProc = null;
-    if (proc.exists() && proc.isDirectory()) {
-      // Sanity check
-      try {
-        for (final String line : Files.readLines(new File(proc, "mounts"), Charsets.UTF_8)) {
-          final ProcMountsEntry entry = ProcMountsEntry.parse(line);
-          if (PROC_TYPE.equals(entry.type)) {
-            if (proc.toPath().equals(entry.path)) {
-              return proc;
-            } else {
-              foundProc = entry.path;
-            }
-          }
-        }
-      }
-      catch (IOException e) {
-        // Unlikely
-        throw new RuntimeException(e);
-      }
-      if (foundProc != null) {
-        throw new RE("Expected proc to be mounted on /proc, but was on [%s]", foundProc);
-      } else {
-        throw new RE("No proc entry found in /proc/mounts");
-      }
-    } else {
-      throw new RE("/proc is not a valid directory");
-    }
-  }
-
-  private ProcPidCgroupEntry getPidCgroupEntry(final File pidCgroups, final int hierarchy)
+  private PidCgroupEntry getCgroupEntry(final File procCgroup, final String cgroup)
   {
     final List<String> lines;
     try {
-      lines = Files.readLines(pidCgroups, Charsets.UTF_8);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    for (final String line : lines) {
-      final ProcPidCgroupEntry entry = ProcPidCgroupEntry.parse(line);
-      if (hierarchy == entry.hierarchy) {
-        return entry;
-      }
-    }
-    throw new RE("No hierarchy found for [%d]", hierarchy);
-  }
-
-  private ProcCgroupsEntry getCgroupEntry(final File procCgroups, final String cgroup)
-  {
-    final List<String> lines;
-    try {
-      lines = Files.readLines(procCgroups, Charsets.UTF_8);
+      lines = Files.readLines(procCgroup, Charsets.UTF_8);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -124,8 +82,8 @@ public class ProcCgroupDiscoverer implements CgroupDiscoverer
       if (line.startsWith("#")) {
         continue;
       }
-      final ProcCgroupsEntry entry = ProcCgroupsEntry.parse(line);
-      if (entry.enabled && cgroup.equals(entry.subsystem_name)) {
+      final PidCgroupEntry entry = PidCgroupEntry.parse(line);
+      if (entry.controllers.contains(cgroup)) {
         return entry;
       }
     }
@@ -183,52 +141,30 @@ public class ProcCgroupDiscoverer implements CgroupDiscoverer
     }
   }
 
-  static class ProcCgroupsEntry
+  // See man CGROUPS(7)
+  static class PidCgroupEntry
   {
-    // Example Header: #subsys_name	hierarchy	num_cgroups	enabled
-    static ProcCgroupsEntry parse(String entry)
+    static PidCgroupEntry parse(String entry)
     {
-      final String[] splits = entry.split(Pattern.quote("\t"));
-      return new ProcCgroupsEntry(
-          splits[0],
-          Integer.parseInt(splits[1]),
-          Integer.parseInt(splits[2]),
-          Integer.parseInt(splits[3]) == 1
-      );
+      // For example, entries with a port number will have an extra `:` in it somewhere, or ipv6 addresses.
+      final String[] parts = entry.split(Pattern.quote(":"), 3);
+      if (parts.length != 3) {
+        throw new RE("Bad entry [%s]", entry);
+      }
+      final int heirarchyId = Integer.parseInt(parts[0]);
+      final Set<String> controllers = new HashSet<>(Arrays.asList(parts[1].split(Pattern.quote(","))));
+      final Path path = Paths.get(parts[2]);
+      return new PidCgroupEntry(heirarchyId, controllers, path);
     }
 
-    final String subsystem_name;
-    final int hierarchy;
-    final int num_cgroups;
-    final boolean enabled;
+    final int heirarchyId;
+    final Set<String> controllers;
+    final Path path;
 
-    ProcCgroupsEntry(String subsystem_name, int hierarchy, int num_cgroups, boolean enabled)
+    private PidCgroupEntry(int heirarchyId, Set<String> controllers, Path path)
     {
-      this.subsystem_name = subsystem_name;
-      this.hierarchy = hierarchy;
-      this.num_cgroups = num_cgroups;
-      this.enabled = enabled;
-    }
-  }
-
-  static class ProcPidCgroupEntry
-  {
-    // example: 3:cpu,cpuacct:/system.slice/mesos-agent-spark.service/673550f3-69b9-4ef0-910d-762c8aaeda1c
-    static ProcPidCgroupEntry parse(String entry)
-    {
-      final String[] splits = entry.split(CgroupUtil.COLON_MATCH, 3);
-      Preconditions.checkArgument(splits.length == 3, "Invalid entry [%s]", entry);
-      return new ProcPidCgroupEntry(Integer.parseInt(splits[0]), splits[1], splits[2]);
-    }
-
-    private final int hierarchy;
-    private final String entrypoint;
-    private final String path;
-
-    ProcPidCgroupEntry(int hierarchy, String entrypoint, String path)
-    {
-      this.hierarchy = hierarchy;
-      this.entrypoint = entrypoint;
+      this.heirarchyId = heirarchyId;
+      this.controllers = controllers;
       this.path = path;
     }
   }

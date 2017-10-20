@@ -17,12 +17,6 @@
 package com.metamx.metrics.cgroups;
 
 import com.google.common.collect.ImmutableSet;
-import com.metamx.common.StringUtils;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.regex.Pattern;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -30,10 +24,11 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
+import java.nio.file.Paths;
+
 public class ProcCgroupDiscovererTest
 {
-  private static final int PID = 384;
-
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
   @Rule
@@ -47,15 +42,8 @@ public class ProcCgroupDiscovererTest
   {
     cgroupDir = temporaryFolder.newFolder();
     procDir = temporaryFolder.newFolder();
-    discoverer = new ProcCgroupDiscoverer()
-    {
-      @Override
-      public File getProc()
-      {
-        return procDir;
-      }
-    };
-    TestUtils.setUpCgroups(procDir, cgroupDir, PID);
+    discoverer = new ProcCgroupDiscoverer(procDir.toPath());
+    TestUtils.setUpCgroups(procDir, cgroupDir);
   }
 
   @Test
@@ -66,7 +54,7 @@ public class ProcCgroupDiscovererTest
             cgroupDir,
             "cpu,cpuacct/system.slice/mesos-agent-druid.service/f12ba7e0-fa16-462e-bb9d-652ccc27f0ee"
         ).toPath(),
-        discoverer.discover("cpu", PID)
+        discoverer.discover("cpu")
     );
   }
 
@@ -95,6 +83,6 @@ public class ProcCgroupDiscovererTest
   public void testNullCgroup()
   {
     expectedException.expect(NullPointerException.class);
-    Assert.assertNull(new ProcCgroupDiscoverer().discover(null, 0));
+    Assert.assertNull(new ProcCgroupDiscoverer(procDir.toPath()).discover(null));
   }
 }
