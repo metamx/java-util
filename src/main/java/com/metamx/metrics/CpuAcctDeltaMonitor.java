@@ -23,10 +23,11 @@ import com.metamx.emitter.service.ServiceEmitter;
 import com.metamx.emitter.service.ServiceMetricEvent;
 import com.metamx.metrics.cgroups.CgroupDiscoverer;
 import com.metamx.metrics.cgroups.CpuAcct;
-import com.metamx.metrics.cgroups.ProcCgroupDiscoverer;
+import com.metamx.metrics.cgroups.ProcSelfCgroupDiscoverer;
+import org.joda.time.DateTime;
+
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import org.joda.time.DateTime;
 
 public class CpuAcctDeltaMonitor extends FeedDefiningMonitor
 {
@@ -34,7 +35,6 @@ public class CpuAcctDeltaMonitor extends FeedDefiningMonitor
   private final AtomicReference<SnapshotHolder> priorSnapshot = new AtomicReference<>(null);
   private final Map<String, String[]> dimensions;
 
-  private final PidDiscoverer pidDiscoverer;
   private final CgroupDiscoverer cgroupDiscoverer;
 
   public CpuAcctDeltaMonitor()
@@ -49,27 +49,25 @@ public class CpuAcctDeltaMonitor extends FeedDefiningMonitor
 
   public CpuAcctDeltaMonitor(final Map<String, String[]> dimensions, final String feed)
   {
-    this(feed, dimensions, JvmPidDiscoverer.instance(), new ProcCgroupDiscoverer());
+    this(feed, dimensions, new ProcSelfCgroupDiscoverer());
   }
 
   public CpuAcctDeltaMonitor(
       String feed,
       Map<String, String[]> dimensions,
-      PidDiscoverer pidDiscoverer,
       CgroupDiscoverer cgroupDiscoverer
   )
   {
     super(feed);
     Preconditions.checkNotNull(dimensions);
     this.dimensions = ImmutableMap.copyOf(dimensions);
-    this.pidDiscoverer = Preconditions.checkNotNull(pidDiscoverer, "pidDiscoverer required");
     this.cgroupDiscoverer = Preconditions.checkNotNull(cgroupDiscoverer, "cgroupDiscoverer required");
   }
 
   @Override
   public boolean doMonitor(ServiceEmitter emitter)
   {
-    final CpuAcct cpuAcct = new CpuAcct(cgroupDiscoverer, pidDiscoverer);
+    final CpuAcct cpuAcct = new CpuAcct(cgroupDiscoverer);
     final CpuAcct.CpuAcctMetric snapshot = cpuAcct.snapshot();
     final long nanoTime = System.nanoTime(); // Approx time... may be influenced by an unlucky GC
     final DateTime dateTime = new DateTime();

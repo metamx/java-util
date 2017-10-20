@@ -17,13 +17,20 @@
 package com.metamx.metrics.cgroups;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
-public interface CgroupDiscoverer
+public class ProcSelfCgroupDiscoverer implements CgroupDiscoverer
 {
-  /**
-   * Returns a path for a specific cgroup. This path should contain the interesting cgroup files without further traversing needed.
-   * @param cgroup The cgroup
-   * @return The path that contains that cgroup's interesting bits.
-   */
-  Path discover(String cgroup);
+  private final ProcCgroupDiscoverer delegate;
+
+  public ProcSelfCgroupDiscoverer()
+  {
+    delegate = new ProcCgroupDiscoverer(Paths.get("/proc/self"));
+  }
+
+  @Override
+  public Path discover(String cgroup)
+  {
+    return delegate.discover(cgroup);
+  }
 }

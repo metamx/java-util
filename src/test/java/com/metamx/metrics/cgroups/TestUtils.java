@@ -27,8 +27,7 @@ public class TestUtils
 {
   public static void setUpCgroups(
       File procDir,
-      File cgroupDir,
-      int pid
+      File cgroupDir
   ) throws IOException
   {
     final File procMountsTemplate = new File(procDir, "mounts.template");
@@ -48,11 +47,7 @@ public class TestUtils
         cgroupDir,
         "cpu,cpuacct/system.slice/mesos-agent-druid.service/f12ba7e0-fa16-462e-bb9d-652ccc27f0ee"
     ).mkdirs());
-
-    copyResource("/proc.cgroups", new File(procDir, "cgroups"));
-    final File pidDir = new File(procDir, Integer.toString(pid));
-    Assert.assertTrue(pidDir.mkdir());
-    copyResource("/proc.pid.cgroup", new File(pidDir, "cgroup"));
+    copyResource("/proc.pid.cgroup", new File(procDir, "cgroup"));
   }
 
   public static void copyResource(String resource, File out) throws IOException
