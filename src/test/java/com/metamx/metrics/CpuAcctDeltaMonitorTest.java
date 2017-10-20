@@ -21,9 +21,6 @@ import com.metamx.common.StringUtils;
 import com.metamx.metrics.cgroups.CgroupDiscoverer;
 import com.metamx.metrics.cgroups.ProcCgroupDiscoverer;
 import com.metamx.metrics.cgroups.TestUtils;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -31,9 +28,12 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 public class CpuAcctDeltaMonitorTest
 {
-  private static final int PID = 384;
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
   @Rule
@@ -48,15 +48,8 @@ public class CpuAcctDeltaMonitorTest
   {
     cgroupDir = temporaryFolder.newFolder();
     procDir = temporaryFolder.newFolder();
-    discoverer = new ProcCgroupDiscoverer()
-    {
-      @Override
-      public File getProc()
-      {
-        return procDir;
-      }
-    };
-    TestUtils.setUpCgroups(procDir, cgroupDir, PID);
+    discoverer = new ProcCgroupDiscoverer(procDir.toPath());
+    TestUtils.setUpCgroups(procDir, cgroupDir);
     cpuacctDir = new File(
         cgroupDir,
         "cpu,cpuacct/system.slice/mesos-agent-druid.service/f12ba7e0-fa16-462e-bb9d-652ccc27f0ee"
@@ -71,10 +64,9 @@ public class CpuAcctDeltaMonitorTest
     final CpuAcctDeltaMonitor monitor = new CpuAcctDeltaMonitor(
         "some_feed",
         ImmutableMap.of(),
-        () -> {
-          throw new RuntimeException("Test exception");
-        },
-        new ProcCgroupDiscoverer()
+        cgroup -> {
+          throw new RuntimeException("Should continue");
+        }
     );
     final StubServiceEmitter emitter = new StubServiceEmitter("service", "host");
     monitor.doMonitor(emitter);
@@ -96,7 +88,7 @@ public class CpuAcctDeltaMonitorTest
     final CpuAcctDeltaMonitor monitor = new CpuAcctDeltaMonitor(
         "some_feed",
         ImmutableMap.of(),
-        () -> PID, (cgroup, pid) -> cpuacctDir.toPath()
+        (cgroup) -> cpuacctDir.toPath()
     );
     final StubServiceEmitter emitter = new StubServiceEmitter("service", "host");
     Assert.assertFalse(monitor.doMonitor(emitter));

@@ -21,7 +21,7 @@ import com.google.common.base.Preconditions;
 import com.metamx.common.RE;
 import com.metamx.common.logger.Logger;
 import com.metamx.metrics.CgroupUtil;
-import com.metamx.metrics.PidDiscoverer;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -55,12 +55,10 @@ public class CpuAcct
   }
 
   private final CgroupDiscoverer cgroupDiscoverer;
-  private final PidDiscoverer pidDiscoverer;
 
-  public CpuAcct(CgroupDiscoverer cgroupDiscoverer, PidDiscoverer pidDiscoverer)
+  public CpuAcct(CgroupDiscoverer cgroupDiscoverer)
   {
     this.cgroupDiscoverer = cgroupDiscoverer;
-    this.pidDiscoverer = pidDiscoverer;
   }
 
   /**
@@ -73,7 +71,7 @@ public class CpuAcct
     final File cpuacct;
     try {
       cpuacct = new File(
-          cgroupDiscoverer.discover(CGROUP, pidDiscoverer.getPid()).toFile(),
+          cgroupDiscoverer.discover(CGROUP).toFile(),
           CGROUP_ACCT_FILE
       );
     }

@@ -16,12 +16,6 @@
 
 package com.metamx.metrics.cgroups;
 
-import com.metamx.common.RE;
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.stream.LongStream;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -29,10 +23,15 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Random;
+import java.util.stream.LongStream;
+
 
 public class CpuAcctTest
 {
-  private static final int PID = 384;
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
   @Rule
@@ -46,15 +45,8 @@ public class CpuAcctTest
   {
     cgroupDir = temporaryFolder.newFolder();
     procDir = temporaryFolder.newFolder();
-    discoverer = new ProcCgroupDiscoverer()
-    {
-      @Override
-      public File getProc()
-      {
-        return procDir;
-      }
-    };
-    TestUtils.setUpCgroups(procDir, cgroupDir, PID);
+    discoverer = new ProcCgroupDiscoverer(procDir.toPath());
+    TestUtils.setUpCgroups(procDir, cgroupDir);
     final File cpuacctDir = new File(
         cgroupDir,
         "cpu,cpuacct/system.slice/mesos-agent-druid.service/f12ba7e0-fa16-462e-bb9d-652ccc27f0ee"
@@ -66,8 +58,8 @@ public class CpuAcctTest
   @Test
   public void testWontCrash()
   {
-    final CpuAcct cpuAcct = new CpuAcct(new ProcCgroupDiscoverer(), () -> {
-      throw new RE("Testing exception");
+    final CpuAcct cpuAcct = new CpuAcct(cgroup -> {
+      throw new RuntimeException("Should still continue");
     });
     final CpuAcct.CpuAcctMetric metric = cpuAcct.snapshot();
     Assert.assertEquals(0L, metric.cpuCount());
@@ -78,7 +70,7 @@ public class CpuAcctTest
   @Test
   public void testSimpleLoad()
   {
-    final CpuAcct cpuAcct = new CpuAcct(discoverer, () -> PID);
+    final CpuAcct cpuAcct = new CpuAcct(discoverer);
     final CpuAcct.CpuAcctMetric snapshot = cpuAcct.snapshot();
     Assert.assertEquals(128, snapshot.cpuCount());
     Assert.assertArrayEquals(new long[]{
