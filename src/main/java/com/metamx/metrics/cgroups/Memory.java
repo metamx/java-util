@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 Metamarkets Group Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.metamx.metrics.cgroups;
 
 import com.google.common.collect.ImmutableMap;
@@ -7,6 +23,7 @@ import com.metamx.common.logger.Logger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -29,8 +46,7 @@ public class Memory
     final MemoryStat memoryStat = new MemoryStat();
 
     try (final BufferedReader reader = Files.newBufferedReader(
-        cgroupDiscoverer.discover(CGROUP).toFile(),
-        CGROUP_MEMORY_FILE
+        Paths.get(cgroupDiscoverer.discover(CGROUP).toString(), CGROUP_MEMORY_FILE)
     )) {
       for (String line = reader.readLine(); line != null; line = reader.readLine()) {
         final String[] parts = line.split(Pattern.quote(" "));
@@ -51,8 +67,7 @@ public class Memory
     }
 
     try (final BufferedReader reader = Files.newBufferedReader(
-        cgroupDiscoverer.discover(CGROUP).toFile(),
-        CGROUP_MEMORY_NUMA_FILE
+        Paths.get(cgroupDiscoverer.discover(CGROUP).toString(), CGROUP_MEMORY_NUMA_FILE)
     )) {
       for (String line = reader.readLine(); line != null; line = reader.readLine()) {
         // No safety checks here. Just fail as RuntimeException and catch later
@@ -84,9 +99,12 @@ public class Memory
   {
     private final Map<String, Long> memoryStats = new HashMap<>();
     private final Map<Long, Map<String, Long>> numaMemoryStats = new HashMap<>();
-    public Map<String, Long> getMemoryStats() {
+
+    public Map<String, Long> getMemoryStats()
+    {
       return ImmutableMap.copyOf(memoryStats);
     }
+
     public Map<Long, Map<String, Long>> getNumaMemoryStats()
     {
       // They can modify the inner map... but why?
