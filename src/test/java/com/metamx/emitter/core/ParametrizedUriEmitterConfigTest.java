@@ -23,7 +23,6 @@ public class ParametrizedUriEmitterConfigTest
     Assert.assertEquals(null, config.getBasicAuthentication());
     Assert.assertEquals(BatchingStrategy.ARRAY, config.getBatchingStrategy());
     Assert.assertEquals(5 * 1024 * 1024, config.getMaxBatchSize());
-    Assert.assertEquals(250 * 1024 * 1024, config.getMaxBufferSize());
     Assert.assertEquals(Long.MAX_VALUE, config.getFlushTimeOut());
   }
 
@@ -36,7 +35,6 @@ public class ParametrizedUriEmitterConfigTest
     props.setProperty("com.metamx.emitter.httpEmitting.basicAuthentication", "a:b");
     props.setProperty("com.metamx.emitter.httpEmitting.batchingStrategy", "NEWLINES");
     props.setProperty("com.metamx.emitter.httpEmitting.maxBatchSize", "4");
-    props.setProperty("com.metamx.emitter.httpEmitting.maxBufferSize", "8");
     props.setProperty("com.metamx.emitter.httpEmitting.flushTimeOut", "1000");
 
     final ObjectMapper objectMapper = new ObjectMapper();
@@ -49,7 +47,6 @@ public class ParametrizedUriEmitterConfigTest
     Assert.assertEquals("a:b", config.getBasicAuthentication());
     Assert.assertEquals(BatchingStrategy.NEWLINES, config.getBatchingStrategy());
     Assert.assertEquals(4, config.getMaxBatchSize());
-    Assert.assertEquals(8, config.getMaxBufferSize());
     Assert.assertEquals(1000, config.getFlushTimeOut());
   }
 }

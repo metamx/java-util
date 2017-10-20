@@ -157,7 +157,6 @@ public class EmitterTest
         .setBasicAuthentication(authentication)
         .setBatchingStrategy(BatchingStrategy.NEWLINES)
         .setMaxBatchSize(1024 * 1024)
-        .setMaxBufferSize(100 * 1024 * 1024)
         .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
         config,
@@ -174,7 +173,6 @@ public class EmitterTest
         .setFlushMillis(Long.MAX_VALUE)
         .setFlushCount(Integer.MAX_VALUE)
         .setMaxBatchSize(batchSize)
-        .setMaxBufferSize(bufferSize)
         .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
         config,

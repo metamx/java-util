@@ -25,7 +25,6 @@ public class BaseHttpEmittingConfig
   public static final long DEFAULT_FLUSH_MILLIS = 60 * 1000;
   public static final int DEFAULT_FLUSH_COUNTS = 500;
   public static final int DEFAULT_MAX_BATCH_SIZE = 5 * 1024 * 1024;
-  public static final long DEFAULT_MAX_BUFFER_SIZE = 250 * 1024 * 1024;
   /** Do not time out in case flushTimeOut is not set */
   public static final long DEFAULT_FLUSH_TIME_OUT = Long.MAX_VALUE;
   public static final String DEFAULT_BASIC_AUTHENTICATION = null;
@@ -53,10 +52,6 @@ public class BaseHttpEmittingConfig
   @Min(0)
   @JsonProperty
   int maxBatchSize = DEFAULT_MAX_BATCH_SIZE;
-
-  @Min(0)
-  @JsonProperty
-  long maxBufferSize = DEFAULT_MAX_BUFFER_SIZE;
 
   @JsonProperty
   ContentEncoding contentEncoding = DEFAULT_CONTENT_ENCODING;
@@ -90,11 +85,6 @@ public class BaseHttpEmittingConfig
     return maxBatchSize;
   }
 
-  public long getMaxBufferSize()
-  {
-    return maxBufferSize;
-  }
-
   public ContentEncoding getContentEncoding() {
     return contentEncoding;
   }
@@ -114,7 +104,6 @@ public class BaseHttpEmittingConfig
         ", basicAuthentication='" + basicAuthentication + '\'' +
         ", batchingStrategy=" + batchingStrategy +
         ", maxBatchSize=" + maxBatchSize +
-        ", maxBufferSize=" + maxBufferSize +
         ", contentEncoding=" + contentEncoding;
   }
 }

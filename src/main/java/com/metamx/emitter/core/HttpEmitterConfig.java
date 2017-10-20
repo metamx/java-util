@@ -42,7 +42,6 @@ public class HttpEmitterConfig extends BaseHttpEmittingConfig
     this.basicAuthentication = base.basicAuthentication;
     this.batchingStrategy = base.batchingStrategy;
     this.maxBatchSize = base.maxBatchSize;
-    this.maxBufferSize = base.maxBufferSize;
     this.contentEncoding = base.contentEncoding;
   }
 
@@ -100,12 +99,6 @@ public class HttpEmitterConfig extends BaseHttpEmittingConfig
     public Builder setMaxBatchSize(int maxBatchSize)
     {
       this.maxBatchSize = maxBatchSize;
-      return this;
-    }
-
-    public Builder setMaxBufferSize(long maxBufferSize)
-    {
-      this.maxBufferSize = maxBufferSize;
       return this;
     }
 

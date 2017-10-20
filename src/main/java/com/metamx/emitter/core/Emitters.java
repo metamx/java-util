@@ -95,9 +95,6 @@ public class Emitters
     if (props.containsKey("com.metamx.emitter.http.maxBatchSize")) {
       httpMap.put("maxBatchSize", Integer.parseInt(props.getProperty("com.metamx.emitter.http.maxBatchSize")));
     }
-    if (props.containsKey("com.metamx.emitter.http.maxBufferSize")) {
-      httpMap.put("maxBufferSize", Long.parseLong(props.getProperty("com.metamx.emitter.http.maxBufferSize")));
-    }
     return httpMap;
   }
 

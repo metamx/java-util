@@ -124,13 +124,6 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
             batchOverhead
         )
     );
-    Preconditions.checkArgument(
-        config.getMaxBufferSize() >= MAX_EVENT_SIZE,
-        String.format(
-            "maxBufferSize must be greater than MAX_EVENT_SIZE[%,d].",
-            MAX_EVENT_SIZE
-        )
-    );
     this.config = config;
     this.bufferSize = config.getMaxBatchSize();
     this.maxBufferWatermark = bufferSize - batchingStrategy.batchEndLength();

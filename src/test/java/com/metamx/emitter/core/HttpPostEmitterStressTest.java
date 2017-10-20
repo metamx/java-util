@@ -63,7 +63,6 @@ public class HttpPostEmitterStressTest
         .setFlushCount(4)
         .setBatchingStrategy(BatchingStrategy.ONLY_EVENTS)
         .setMaxBatchSize(1024 * 1024)
-        .setMaxBufferSize(1024 * 1024)
         .build();
     final HttpPostEmitter emitter = new HttpPostEmitter(config, httpClient, objectMapper);
     int nThreads = Runtime.getRuntime().availableProcessors() * 2;
