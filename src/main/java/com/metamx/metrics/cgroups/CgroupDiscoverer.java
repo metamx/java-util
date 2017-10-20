@@ -20,6 +20,10 @@ import java.nio.file.Path;
 
 public interface CgroupDiscoverer
 {
-  // Returns a path for a specific cgroup
+  /**
+   * Returns a path for a specific cgroup. This path should contain the interesting cgroup files without further traversing needed.
+   * @param cgroup The cgroup
+   * @return The path that contains that cgroup's interesting bits.
+   */
   Path discover(String cgroup);
 }
