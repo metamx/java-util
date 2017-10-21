@@ -43,6 +43,8 @@ public class HttpEmitterConfig extends BaseHttpEmittingConfig
     this.batchingStrategy = base.batchingStrategy;
     this.maxBatchSize = base.maxBatchSize;
     this.contentEncoding = base.contentEncoding;
+    this.batchQueueThreshold = base.batchQueueThreshold;
+    this.httpTimeoutAllowanceFactor = base.httpTimeoutAllowanceFactor;
   }
 
   public String getRecipientBaseUrl()
@@ -105,6 +107,18 @@ public class HttpEmitterConfig extends BaseHttpEmittingConfig
     public Builder setContentEncoding(ContentEncoding contentEncoding)
     {
       this.contentEncoding = contentEncoding;
+      return this;
+    }
+
+    public Builder setBatchQueueThreshold(int batchQueueThreshold)
+    {
+      this.batchQueueThreshold = batchQueueThreshold;
+      return this;
+    }
+
+    public Builder setHttpTimeoutAllowanceFactor(float httpTimeoutAllowanceFactor)
+    {
+      this.httpTimeoutAllowanceFactor = httpTimeoutAllowanceFactor;
       return this;
     }
 

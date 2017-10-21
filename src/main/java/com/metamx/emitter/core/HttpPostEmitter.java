@@ -34,6 +34,7 @@ import com.metamx.http.client.response.StatusResponseHandler;
 import com.metamx.http.client.response.StatusResponseHolder;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.joda.time.Duration;
 
 import java.io.Closeable;
 import java.io.Flushable;
@@ -102,6 +103,8 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private final EmittingThread emittingThread = new EmittingThread();
   private final AtomicLong totalEmittedEvents = new AtomicLong();
   private final AtomicInteger allocatedBuffers = new AtomicInteger();
+
+  private volatile long lastFillTimeMillis = 0;
 
   private final Object startLock = new Object();
   private final CountDownLatch startLatch = new CountDownLatch(1);
@@ -240,8 +243,11 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   /**
    * Called from {@link Batch} only once for each Batch in existence.
    */
-  void onSealExclusive(Batch batch)
+  void onSealExclusive(Batch batch, long elapsedTimeMillis)
   {
+    if (elapsedTimeMillis > 0) {
+      lastFillTimeMillis = elapsedTimeMillis;
+    }
     addBatchToEmitQueue(batch);
     wakeUpEmittingThread();
     if (!isTerminated()) {
@@ -562,7 +568,19 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         request.setBasicAuthentication(user, password);
       }
 
-      final StatusResponseHolder response = client.go(request, new StatusResponseHandler(Charsets.UTF_8)).get();
+      final long timeoutMillis;
+      if (approximateFailedBuffersCount.get() + approximateBuffersToEmitCount.get() >= config.batchQueueThreshold) {
+        // if queue threshold is reached, enforce timeout to be same as fill time to curb queue growth
+        timeoutMillis = lastFillTimeMillis;
+      } else {
+        timeoutMillis = (long) (lastFillTimeMillis * config.httpTimeoutAllowanceFactor);
+      }
+
+      final StatusResponseHolder response = client.go(
+          request,
+          new StatusResponseHandler(Charsets.UTF_8),
+          timeoutMillis <= 0 ? /* default timeout */ null : Duration.millis(timeoutMillis)
+      ).get();
 
       if (response.getStatus().getCode() == 413) {
         throw new ISE(
