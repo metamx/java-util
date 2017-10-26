@@ -257,9 +257,19 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
   private void writeLargeEvent(byte[] eventBytes)
   {
-    largeEventsToEmit.add(eventBytes);
-    approximateLargeEventsToEmitCount.incrementAndGet();
-    approximateEventsToEmitCount.incrementAndGet();
+    // It's better to drop the oldest, not latest event, but dropping the oldest is not easy to implement, because
+    // LARGE_EVENTS_STOP could be added into the queue concurrently. So just not adding the latest event.
+    // >, not >=, because largeEventsToEmit could contain LARGE_EVENTS_STOP
+    if (approximateBuffersToEmitCount.get() > config.getBatchQueueSizeLimit()) {
+      log.error(
+          "largeEventsToEmit queue size reached the limit [%d], dropping the latest large event",
+          config.getBatchQueueSizeLimit()
+      );
+    } else {
+      largeEventsToEmit.add(eventBytes);
+      approximateLargeEventsToEmitCount.incrementAndGet();
+      approximateEventsToEmitCount.incrementAndGet();
+    }
     wakeUpEmittingThread();
   }
 
@@ -299,7 +309,10 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         approximateBuffersToEmitCount.decrementAndGet();
         approximateEventsToEmitCount.addAndGet(-droppedBatch.eventCount.get());
         droppedBuffers.incrementAndGet();
-        log.error("buffersToEmit queue size reached the limit, dropping the oldest buffer to emit");
+        log.error(
+            "buffersToEmit queue size reached the limit [%d], dropping the oldest buffer to emit",
+            config.getBatchQueueSizeLimit()
+        );
       }
     }
   }
@@ -339,9 +352,9 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     }
     batch.seal();
     try {
-      // This check doesn't always awaits for this exact buffer to be emitted, because another buffer could be dropped
+      // This check doesn't always awaits for this exact batch to be emitted, because another batch could be dropped
       // from the queue ahead of this one, in limitBuffersToEmitSize(). But there is no better way currently to wait for
-      // the exact buffer, and it's not that important.
+      // the exact batch, and it's not that important.
       emittedBatchCounter.awaitBatchEmitted(batch.batchNumber, config.getFlushTimeOut(), TimeUnit.MILLISECONDS);
     }
     catch (TimeoutException e) {
@@ -493,7 +506,10 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         failedBuffers.removeFirst();
         approximateFailedBuffersCount.decrementAndGet();
         droppedBuffers.incrementAndGet();
-        log.error("failedBuffers queue size reached the limit, dropping the oldest failed buffer");
+        log.error(
+            "failedBuffers queue size reached the limit [%d], dropping the oldest failed buffer",
+            config.getBatchQueueSizeLimit()
+        );
       }
     }
 
