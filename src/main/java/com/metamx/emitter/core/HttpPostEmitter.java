@@ -305,7 +305,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   }
 
   private void finalizeBatch(Batch batch) {
-    // Notify HttpPostEmitter.flush(), that the batch is emitted (or failed).
+    // Notify HttpPostEmitter.flush(), that the batch is emitted, or failed, or dropped.
     emittedBatchCounter.batchEmitted(batch.batchNumber);
   }
 
