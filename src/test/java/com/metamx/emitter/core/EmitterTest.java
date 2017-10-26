@@ -360,7 +360,7 @@ public class EmitterTest
     Assert.assertTrue("httpClient.succeeded()", httpClient.succeeded());
   }
 
-  @Test
+  @Test(timeout = 60_000)
   public void testFailedEmission() throws Exception
   {
     final UnitEvent event1 = new UnitEvent("test", 1);
@@ -402,6 +402,9 @@ public class EmitterTest
     emitter.flush();
     waitForEmission(emitter, 1);
     closeNoFlush(emitter);
+    // Failed event is emitted inside emitter thread, there is no other way to wait for it other than joining the
+    // emitterThread
+    emitter.joinEmitterThread();
 
     // Succeed to emit both events.
     Assert.assertEquals(2, emitter.getTotalEmittedEvents());

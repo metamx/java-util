@@ -795,4 +795,10 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   {
     emittedBatchCounter.awaitBatchEmitted(batchNumber, 10, TimeUnit.SECONDS);
   }
+
+  @VisibleForTesting
+  void joinEmitterThread() throws InterruptedException
+  {
+    emittingThread.join();
+  }
 }
