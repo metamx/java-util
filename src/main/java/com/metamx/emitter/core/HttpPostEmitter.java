@@ -295,7 +295,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     if (approximateBuffersToEmitCount.get() >= config.getBatchQueueSizeLimit()) {
       Batch droppedBatch = buffersToEmit.pollFirst();
       if (droppedBatch != null) {
-        finalizeBatch(droppedBatch);
+        batchFinalized();
         approximateBuffersToEmitCount.decrementAndGet();
         approximateEventsToEmitCount.addAndGet(-droppedBatch.eventCount.get());
         droppedBuffers.incrementAndGet();
@@ -304,9 +304,9 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     }
   }
 
-  private void finalizeBatch(Batch batch) {
+  private void batchFinalized() {
     // Notify HttpPostEmitter.flush(), that the batch is emitted, or failed, or dropped.
-    emittedBatchCounter.batchEmitted(batch.batchNumber);
+    emittedBatchCounter.batchEmitted();
   }
 
   private Batch pollBatchFromEmitQueue()
@@ -339,6 +339,9 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     }
     batch.seal();
     try {
+      // This check doesn't always awaits for this exact buffer to be emitted, because another buffer could be dropped
+      // from the queue ahead of this one, in limitBuffersToEmitSize(). But there is no better way currently to wait for
+      // the exact buffer, and it's not that important.
       emittedBatchCounter.awaitBatchEmitted(batch.batchNumber, config.getFlushTimeOut(), TimeUnit.MILLISECONDS);
     }
     catch (TimeoutException e) {
@@ -480,7 +483,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         }
       }
       finally {
-        finalizeBatch(batch);
+        batchFinalized();
       }
     }
 

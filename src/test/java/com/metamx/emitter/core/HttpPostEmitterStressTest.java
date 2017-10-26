@@ -59,6 +59,8 @@ public class HttpPostEmitterStressTest
         .setFlushCount(4)
         .setBatchingStrategy(BatchingStrategy.ONLY_EVENTS)
         .setMaxBatchSize(1024 * 1024)
+        // For this test, we don't need any batches to be dropped, i. e. "gaps" in data
+        .setBatchQueueSizeLimit(1000)
         .build();
     final HttpPostEmitter emitter = new HttpPostEmitter(config, httpClient, objectMapper);
     int nThreads = Runtime.getRuntime().availableProcessors() * 2;
