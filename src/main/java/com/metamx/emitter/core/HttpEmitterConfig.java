@@ -110,9 +110,9 @@ public class HttpEmitterConfig extends BaseHttpEmittingConfig
       return this;
     }
 
-    public Builder setBatchQueueThreshold(int batchQueueThreshold)
+    public Builder setFailedBatchQueueSizeLimit(int failedBatchQueueSizeLimit)
     {
-      this.failedBatchQueueSizeLimit = batchQueueThreshold;
+      this.failedBatchQueueSizeLimit = failedBatchQueueSizeLimit;
       return this;
     }
 
