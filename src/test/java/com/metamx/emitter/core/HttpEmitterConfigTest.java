@@ -38,8 +38,9 @@ public class HttpEmitterConfigTest
     Assert.assertEquals(null, config.getBasicAuthentication());
     Assert.assertEquals(BatchingStrategy.ARRAY, config.getBatchingStrategy());
     Assert.assertEquals(5 * 1024 * 1024, config.getMaxBatchSize());
-    Assert.assertEquals(250 * 1024 * 1024, config.getMaxBufferSize());
     Assert.assertEquals(Long.MAX_VALUE, config.getFlushTimeOut());
+    Assert.assertEquals(50, config.getBatchQueueSizeLimit());
+    Assert.assertEquals(1.5f, config.getHttpTimeoutAllowanceFactor(), 0.0f);
   }
 
   @Test
@@ -57,8 +58,9 @@ public class HttpEmitterConfigTest
     Assert.assertEquals(null, config.getBasicAuthentication());
     Assert.assertEquals(BatchingStrategy.ARRAY, config.getBatchingStrategy());
     Assert.assertEquals(5 * 1024 * 1024, config.getMaxBatchSize());
-    Assert.assertEquals(250 * 1024 * 1024, config.getMaxBufferSize());
     Assert.assertEquals(Long.MAX_VALUE, config.getFlushTimeOut());
+    Assert.assertEquals(50, config.getBatchQueueSizeLimit());
+    Assert.assertEquals(1.5f, config.getHttpTimeoutAllowanceFactor(), 0.0f);
   }
 
   @Test
@@ -71,8 +73,9 @@ public class HttpEmitterConfigTest
     props.setProperty("com.metamx.emitter.basicAuthentication", "a:b");
     props.setProperty("com.metamx.emitter.batchingStrategy", "NEWLINES");
     props.setProperty("com.metamx.emitter.maxBatchSize", "4");
-    props.setProperty("com.metamx.emitter.maxBufferSize", "8");
     props.setProperty("com.metamx.emitter.flushTimeOut", "1000");
+    props.setProperty("com.metamx.emitter.batchQueueSizeLimit", "2500");
+    props.setProperty("com.metamx.emitter.httpTimeoutAllowanceFactor", "3.0");
 
     final ObjectMapper objectMapper = new ObjectMapper();
     final HttpEmitterConfig config = objectMapper.convertValue(Emitters.makeCustomFactoryMap(props), HttpEmitterConfig.class);
@@ -83,8 +86,9 @@ public class HttpEmitterConfigTest
     Assert.assertEquals("a:b", config.getBasicAuthentication());
     Assert.assertEquals(BatchingStrategy.NEWLINES, config.getBatchingStrategy());
     Assert.assertEquals(4, config.getMaxBatchSize());
-    Assert.assertEquals(8, config.getMaxBufferSize());
     Assert.assertEquals(1000, config.getFlushTimeOut());
+    Assert.assertEquals(2500, config.getBatchQueueSizeLimit());
+    Assert.assertEquals(3.0f, config.getHttpTimeoutAllowanceFactor(), 0.0f);
   }
 
   @Test
@@ -97,8 +101,9 @@ public class HttpEmitterConfigTest
     props.setProperty("com.metamx.emitter.http.basicAuthentication", "a:b");
     props.setProperty("com.metamx.emitter.http.batchingStrategy", "newlines");
     props.setProperty("com.metamx.emitter.http.maxBatchSize", "4");
-    props.setProperty("com.metamx.emitter.http.maxBufferSize", "8");
     props.setProperty("com.metamx.emitter.http.flushTimeOut", "1000");
+    props.setProperty("com.metamx.emitter.http.batchQueueSizeLimit", "2500");
+    props.setProperty("com.metamx.emitter.http.httpTimeoutAllowanceFactor", "3.0");
 
     final ObjectMapper objectMapper = new ObjectMapper();
     final HttpEmitterConfig config = objectMapper.convertValue(Emitters.makeHttpMap(props), HttpEmitterConfig.class);
@@ -109,7 +114,8 @@ public class HttpEmitterConfigTest
     Assert.assertEquals("a:b", config.getBasicAuthentication());
     Assert.assertEquals(BatchingStrategy.NEWLINES, config.getBatchingStrategy());
     Assert.assertEquals(4, config.getMaxBatchSize());
-    Assert.assertEquals(8, config.getMaxBufferSize());
     Assert.assertEquals(1000, config.getFlushTimeOut());
+    Assert.assertEquals(2500, config.getBatchQueueSizeLimit());
+    Assert.assertEquals(3.0f, config.getHttpTimeoutAllowanceFactor(), 0.0f);
   }
 }

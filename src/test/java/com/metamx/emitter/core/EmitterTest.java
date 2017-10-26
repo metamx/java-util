@@ -16,27 +16,25 @@
 
 package com.metamx.emitter.core;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.metamx.common.CompressionUtils;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.emitter.service.UnitEvent;
-import com.metamx.http.client.GoHandler;
-import com.metamx.http.client.GoHandlers;
-import com.metamx.http.client.MockHttpClient;
-import com.metamx.http.client.Request;
-import com.metamx.http.client.response.HttpResponseHandler;
-import com.metamx.http.client.response.StatusResponseHandler;
-import com.metamx.http.client.response.StatusResponseHolder;
-import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.HttpVersion;
-import org.joda.time.Duration;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
+import org.asynchttpclient.DefaultAsyncHttpClientConfig;
+import org.asynchttpclient.ListenableFuture;
+import org.asynchttpclient.Request;
+import org.asynchttpclient.Response;
+import org.asynchttpclient.netty.EagerResponseBodyPart;
+import org.asynchttpclient.netty.NettyResponseStatus;
+import org.asynchttpclient.uri.Uri;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -45,7 +43,8 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -57,16 +56,29 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class EmitterTest
 {
   private static final ObjectMapper jsonMapper = new ObjectMapper();
-  public static final StatusResponseHolder OK_RESPONSE = new StatusResponseHolder(
-      new HttpResponseStatus(201, "Created"),
-      new StringBuilder("Yay")
-  );
   public static String TARGET_URL = "http://metrics.foo.bar/";
+  public static final Response OK_RESPONSE = responseBuilder(HttpVersion.HTTP_1_1, HttpResponseStatus.CREATED)
+      .accumulate(new EagerResponseBodyPart(Unpooled.wrappedBuffer("Yay".getBytes(StandardCharsets.UTF_8)), true))
+      .build();
+
+  private static Response.ResponseBuilder responseBuilder(HttpVersion version, HttpResponseStatus status)
+  {
+    return new Response.ResponseBuilder()
+        .accumulate(
+            new NettyResponseStatus(
+                Uri.create(TARGET_URL),
+                new DefaultAsyncHttpClientConfig.Builder().build(),
+                new DefaultHttpResponse(version, status),
+                null
+            )
+        );
+  }
+
 
   MockHttpClient httpClient;
   HttpPostEmitter emitter;
 
-  public static StatusResponseHolder okResponse()
+  public static Response okResponse()
   {
     return OK_RESPONSE;
   }
@@ -157,7 +169,6 @@ public class EmitterTest
         .setBasicAuthentication(authentication)
         .setBatchingStrategy(BatchingStrategy.NEWLINES)
         .setMaxBatchSize(1024 * 1024)
-        .setMaxBufferSize(100 * 1024 * 1024)
         .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
         config,
@@ -174,7 +185,6 @@ public class EmitterTest
         .setFlushMillis(Long.MAX_VALUE)
         .setFlushCount(Integer.MAX_VALUE)
         .setMaxBatchSize(batchSize)
-        .setMaxBufferSize(bufferSize)
         .build();
     HttpPostEmitter emitter = new HttpPostEmitter(
         config,
@@ -198,11 +208,11 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout) throws Exception
+          protected ListenableFuture<Response> go(Request request) throws JsonProcessingException
           {
-            Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
+            Assert.assertEquals(TARGET_URL, request.getUrl());
             Assert.assertEquals(
-                ImmutableList.of("application/json"),
+                "application/json",
                 request.getHeaders().get(HttpHeaders.Names.CONTENT_TYPE)
             );
             Assert.assertEquals(
@@ -211,14 +221,10 @@ public class EmitterTest
                     jsonMapper.writeValueAsString(events.get(0)),
                     jsonMapper.writeValueAsString(events.get(1))
                 ),
-                request.getContent().toString(Charsets.UTF_8)
-            );
-            Assert.assertTrue(
-                "handler is a StatusResponseHandler",
-                handler instanceof StatusResponseHandler
+                Charsets.UTF_8.decode(request.getByteBufferData().slice()).toString()
             );
 
-            return Futures.immediateFuture((Final) okResponse());
+            return GoHandlers.immediateFuture(okResponse());
           }
         }.times(1)
     );
@@ -244,11 +250,11 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout) throws Exception
+          protected ListenableFuture<Response> go(Request request) throws JsonProcessingException
           {
-            Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
+            Assert.assertEquals(TARGET_URL, request.getUrl());
             Assert.assertEquals(
-                ImmutableList.of("application/json"),
+                "application/json",
                 request.getHeaders().get(HttpHeaders.Names.CONTENT_TYPE)
             );
             Assert.assertEquals(
@@ -257,14 +263,10 @@ public class EmitterTest
                     jsonMapper.writeValueAsString(events.get(0)),
                     jsonMapper.writeValueAsString(events.get(1))
                 ),
-                request.getContent().toString(Charsets.UTF_8)
-            );
-            Assert.assertTrue(
-                "handler is a StatusResponseHandler",
-                handler instanceof StatusResponseHandler
+                Charsets.UTF_8.decode(request.getByteBufferData().slice()).toString()
             );
 
-            return Futures.immediateFuture((Final) okResponse());
+            return GoHandlers.immediateFuture(okResponse());
           }
         }.times(1)
     );
@@ -310,11 +312,10 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request intermediateFinalRequest, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout)
-              throws Exception
+          protected ListenableFuture<Response> go(Request request)
           {
             latch.countDown();
-            return Futures.immediateFuture((Final) okResponse());
+            return GoHandlers.immediateFuture(okResponse());
           }
         }.times(1)
     );
@@ -336,11 +337,10 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request intermediateFinalRequest, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout)
-              throws Exception
+          protected ListenableFuture<Response> go(Request request)
           {
             thisLatch.countDown();
-            return Futures.immediateFuture((Final) okResponse());
+            return GoHandlers.immediateFuture(okResponse());
           }
         }.times(1)
     );
@@ -372,19 +372,10 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout)
-              throws Exception
+          protected ListenableFuture<Response> go(Request request)
           {
-            final Intermediate obj = handler
-                                            .handleResponse(
-                                                new DefaultHttpResponse(
-                                                    HttpVersion.HTTP_1_1,
-                                                    HttpResponseStatus.BAD_REQUEST
-                                                )
-                                            )
-                                            .getObj();
-            Assert.assertNotNull(obj);
-            return Futures.immediateFuture((Final) obj);
+            Response response = responseBuilder(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST).build();
+            return GoHandlers.immediateFuture(response);
           }
         }
     );
@@ -400,10 +391,9 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout)
-              throws Exception
+          protected ListenableFuture<Response> go(Request request)
           {
-            return Futures.immediateFuture((Final) okResponse());
+            return GoHandlers.immediateFuture(okResponse());
           }
         }.times(2)
     );
@@ -432,15 +422,15 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout) throws Exception
+          protected ListenableFuture<Response> go(Request request) throws JsonProcessingException
           {
-            Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
+            Assert.assertEquals(TARGET_URL, request.getUrl());
             Assert.assertEquals(
-                ImmutableList.of("application/json"),
+                "application/json",
                 request.getHeaders().get(HttpHeaders.Names.CONTENT_TYPE)
             );
             Assert.assertEquals(
-                ImmutableList.of("Basic " + BaseEncoding.base64().encode("foo:bar".getBytes())),
+                "Basic " + BaseEncoding.base64().encode("foo:bar".getBytes()),
                 request.getHeaders().get(HttpHeaders.Names.AUTHORIZATION)
             );
             Assert.assertEquals(
@@ -449,14 +439,10 @@ public class EmitterTest
                     jsonMapper.writeValueAsString(events.get(0)),
                     jsonMapper.writeValueAsString(events.get(1))
                 ),
-                request.getContent().toString(Charsets.UTF_8)
-            );
-            Assert.assertTrue(
-                "handler is a StatusResponseHandler",
-                handler instanceof StatusResponseHandler
+                Charsets.UTF_8.decode(request.getByteBufferData().slice()).toString()
             );
 
-            return Futures.immediateFuture((Final) okResponse());
+            return GoHandlers.immediateFuture(okResponse());
           }
         }.times(1)
     );
@@ -492,11 +478,11 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout) throws Exception
+          protected ListenableFuture<Response> go(Request request) throws JsonProcessingException
           {
-            Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
+            Assert.assertEquals(TARGET_URL, request.getUrl());
             Assert.assertEquals(
-                ImmutableList.of("application/json"),
+                "application/json",
                 request.getHeaders().get(HttpHeaders.Names.CONTENT_TYPE)
             );
             Assert.assertEquals(
@@ -505,14 +491,10 @@ public class EmitterTest
                     jsonMapper.writeValueAsString(events.get(counter.getAndIncrement())),
                     jsonMapper.writeValueAsString(events.get(counter.getAndIncrement()))
                 ),
-                request.getContent().toString(Charsets.UTF_8)
-            );
-            Assert.assertTrue(
-                "handler is a StatusResponseHandler",
-                handler instanceof StatusResponseHandler
+                Charsets.UTF_8.decode(request.getByteBufferData().slice()).toString()
             );
 
-            return Futures.immediateFuture((Final) okResponse());
+            return GoHandlers.immediateFuture(okResponse());
           }
         }.times(3)
     );
@@ -544,20 +526,23 @@ public class EmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(Request request, HttpResponseHandler<Intermediate, Final> handler, Duration requestReadTimeout) throws Exception
+          protected ListenableFuture<Response> go(Request request) throws IOException
           {
-            Assert.assertEquals(new URL(TARGET_URL), request.getUrl());
+            Assert.assertEquals(TARGET_URL, request.getUrl());
             Assert.assertEquals(
-                ImmutableList.of("application/json"),
+                "application/json",
                 request.getHeaders().get(HttpHeaders.Names.CONTENT_TYPE)
             );
             Assert.assertEquals(
-                ImmutableList.of(HttpHeaders.Values.GZIP),
+                HttpHeaders.Values.GZIP,
                 request.getHeaders().get(HttpHeaders.Names.CONTENT_ENCODING)
             );
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            CompressionUtils.gunzip(new ByteArrayInputStream(request.getContent().array()), baos);
+            ByteBuffer data = request.getByteBufferData().slice();
+            byte[] dataArray = new byte[data.remaining()];
+            data.get(dataArray);
+            CompressionUtils.gunzip(new ByteArrayInputStream(dataArray), baos);
 
             Assert.assertEquals(
                 String.format(
@@ -567,12 +552,8 @@ public class EmitterTest
                 ),
                 baos.toString(Charsets.UTF_8.name())
             );
-            Assert.assertTrue(
-                "handler is a StatusResponseHandler",
-                handler instanceof StatusResponseHandler
-            );
 
-            return Futures.immediateFuture((Final) okResponse());
+            return GoHandlers.immediateFuture(okResponse());
           }
         }.times(1)
     );

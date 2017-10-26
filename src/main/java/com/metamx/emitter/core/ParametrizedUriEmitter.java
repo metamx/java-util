@@ -7,7 +7,7 @@ import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.common.logger.Logger;
-import com.metamx.http.client.HttpClient;
+import org.asynchttpclient.AsyncHttpClient;
 
 import javax.annotation.concurrent.GuardedBy;
 import java.io.Closeable;
@@ -47,13 +47,13 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
   @GuardedBy("startCloseLock")
   private boolean closed = false;
   private final Lifecycle innerLifecycle = new Lifecycle();
-  private final HttpClient client;
+  private final AsyncHttpClient client;
   private final ObjectMapper jsonMapper;
   private final ParametrizedUriEmitterConfig config;
 
   public ParametrizedUriEmitter(
       ParametrizedUriEmitterConfig config,
-      HttpClient client,
+      AsyncHttpClient client,
       ObjectMapper jsonMapper
   )
   {
@@ -62,7 +62,7 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
 
   public ParametrizedUriEmitter(
       ParametrizedUriEmitterConfig config,
-      HttpClient client,
+      AsyncHttpClient client,
       ObjectMapper jsonMapper,
       UriExtractor uriExtractor
   )

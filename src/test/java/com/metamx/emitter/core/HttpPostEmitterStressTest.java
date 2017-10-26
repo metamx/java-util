@@ -20,15 +20,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.metamx.http.client.GoHandler;
-import com.metamx.http.client.MockHttpClient;
-import com.metamx.http.client.Request;
-import com.metamx.http.client.response.HttpResponseHandler;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.joda.time.Duration;
+import org.asynchttpclient.ListenableFuture;
+import org.asynchttpclient.Request;
+import org.asynchttpclient.Response;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -63,7 +59,6 @@ public class HttpPostEmitterStressTest
         .setFlushCount(4)
         .setBatchingStrategy(BatchingStrategy.ONLY_EVENTS)
         .setMaxBatchSize(1024 * 1024)
-        .setMaxBufferSize(1024 * 1024)
         .build();
     final HttpPostEmitter emitter = new HttpPostEmitter(config, httpClient, objectMapper);
     int nThreads = Runtime.getRuntime().availableProcessors() * 2;
@@ -80,15 +75,13 @@ public class HttpPostEmitterStressTest
     httpClient.setGoHandler(new GoHandler()
     {
       @Override
-      protected <Intermediate, Final> ListenableFuture<Final> go(
-          Request request, HttpResponseHandler<Intermediate, Final> httpResponseHandler, Duration duration
-      ) throws Exception
+      protected ListenableFuture<Response> go(Request request)
       {
-        ChannelBuffer batch = request.getContent();
-        while (batch.readerIndex() != batch.writerIndex()) {
-          emittedEvents.set(batch.readInt());
+        ByteBuffer batch = request.getByteBufferData().slice();
+        while (batch.remaining() > 0) {
+          emittedEvents.set(batch.getInt());
         }
-        return (ListenableFuture<Final>) OK_FUTURE;
+        return GoHandlers.immediateFuture(EmitterTest.okResponse());
       }
     });
     emitter.start();

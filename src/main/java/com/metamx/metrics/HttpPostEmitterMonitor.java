@@ -28,7 +28,7 @@ public class HttpPostEmitterMonitor extends FeedDefiningMonitor
   private final ImmutableMap<String, String> extraDimensions;
   private final ServiceMetricEvent.Builder builder;
   private long lastTotalEmittedEvents = 0;
-  private int lastTotalAllocatedBuffers = 0;
+  private int lastDroppedBuffers = 0;
 
   public HttpPostEmitterMonitor(
       String feed,
@@ -50,13 +50,14 @@ public class HttpPostEmitterMonitor extends FeedDefiningMonitor
     emitter.emit(builder.build("emitter/events/emitted", totalEmittedEventsDiff));
     lastTotalEmittedEvents = newTotalEmittedEvents;
 
-    int newTotalAllocatedBuffers = httpPostEmitter.getTotalAllocatedBuffers();
-    int totalAllocatedBuffersDiff = newTotalAllocatedBuffers - lastTotalAllocatedBuffers;
-    emitter.emit(builder.build("emitter/buffers/allocated", totalAllocatedBuffersDiff));
-    lastTotalAllocatedBuffers = newTotalAllocatedBuffers;
+    int newDroppedBuffers = httpPostEmitter.getDroppedBuffers();
+    int droppedBuffersDiff = newDroppedBuffers - lastDroppedBuffers;
+    emitter.emit(builder.build("emitter/buffers/dropped", droppedBuffersDiff));
+    lastDroppedBuffers = newDroppedBuffers;
 
     emitter.emit(builder.build("emitter/events/emitQueue", httpPostEmitter.getEventsToEmit()));
     emitter.emit(builder.build("emitter/events/large/emitQueue", httpPostEmitter.getLargeEventsToEmit()));
+    emitter.emit(builder.build("emitter/buffers/totalAllocated", httpPostEmitter.getTotalAllocatedBuffers()));
     emitter.emit(builder.build("emitter/buffers/emitQueue", httpPostEmitter.getBuffersToEmit()));
     emitter.emit(builder.build("emitter/buffers/failed", httpPostEmitter.getFailedBuffers()));
     emitter.emit(builder.build("emitter/buffers/reuseQueue", httpPostEmitter.getBuffersToReuse()));

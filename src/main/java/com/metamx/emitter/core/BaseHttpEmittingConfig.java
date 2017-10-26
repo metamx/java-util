@@ -25,12 +25,13 @@ public class BaseHttpEmittingConfig
   public static final long DEFAULT_FLUSH_MILLIS = 60 * 1000;
   public static final int DEFAULT_FLUSH_COUNTS = 500;
   public static final int DEFAULT_MAX_BATCH_SIZE = 5 * 1024 * 1024;
-  public static final long DEFAULT_MAX_BUFFER_SIZE = 250 * 1024 * 1024;
   /** Do not time out in case flushTimeOut is not set */
   public static final long DEFAULT_FLUSH_TIME_OUT = Long.MAX_VALUE;
   public static final String DEFAULT_BASIC_AUTHENTICATION = null;
   public static final BatchingStrategy DEFAULT_BATCHING_STRATEGY = BatchingStrategy.ARRAY;
   public static final ContentEncoding DEFAULT_CONTENT_ENCODING = null;
+  public static final int DEFAULT_BATCH_QUEUE_SIZE_LIMIT = 50;
+  public static final float DEFAULT_HTTP_TIMEOUT_ALLOWANCE_FACTOR = 1.5f;
 
   @Min(1)
   @JsonProperty
@@ -54,12 +55,16 @@ public class BaseHttpEmittingConfig
   @JsonProperty
   int maxBatchSize = DEFAULT_MAX_BATCH_SIZE;
 
-  @Min(0)
-  @JsonProperty
-  long maxBufferSize = DEFAULT_MAX_BUFFER_SIZE;
-
   @JsonProperty
   ContentEncoding contentEncoding = DEFAULT_CONTENT_ENCODING;
+
+  @Min(0)
+  @JsonProperty
+  int batchQueueSizeLimit = DEFAULT_BATCH_QUEUE_SIZE_LIMIT;
+
+  @Min(1)
+  @JsonProperty
+  float httpTimeoutAllowanceFactor = DEFAULT_HTTP_TIMEOUT_ALLOWANCE_FACTOR;
 
   public long getFlushMillis()
   {
@@ -90,13 +95,16 @@ public class BaseHttpEmittingConfig
     return maxBatchSize;
   }
 
-  public long getMaxBufferSize()
-  {
-    return maxBufferSize;
-  }
-
   public ContentEncoding getContentEncoding() {
     return contentEncoding;
+  }
+
+  public int getBatchQueueSizeLimit() {
+    return batchQueueSizeLimit;
+  }
+
+  public float getHttpTimeoutAllowanceFactor() {
+    return httpTimeoutAllowanceFactor;
   }
 
   @Override
@@ -114,7 +122,8 @@ public class BaseHttpEmittingConfig
         ", basicAuthentication='" + basicAuthentication + '\'' +
         ", batchingStrategy=" + batchingStrategy +
         ", maxBatchSize=" + maxBatchSize +
-        ", maxBufferSize=" + maxBufferSize +
-        ", contentEncoding=" + contentEncoding;
+        ", contentEncoding=" + contentEncoding +
+        ", batchQueueSizeLimit=" + batchQueueSizeLimit +
+        ", httpTimeoutAllowanceFactor=" + httpTimeoutAllowanceFactor;
   }
 }

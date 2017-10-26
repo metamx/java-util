@@ -275,7 +275,10 @@ class Batch extends AbstractQueuedLongSynchronizer
         if (compareAndSetState(state, newState)) {
           // Ensures only one thread calls emitter.onSealExclusive() for each batch.
           if (!isSealed(state)) {
-            emitter.onSealExclusive(this);
+            emitter.onSealExclusive(
+                this,
+                firstEventTimestamp > 0 ? System.currentTimeMillis() - firstEventTimestamp : -1
+            );
           }
           return isEmittingAllowed(newState);
         }
@@ -290,7 +293,10 @@ class Batch extends AbstractQueuedLongSynchronizer
         }
         long newState = state | SEAL_BIT;
         if (compareAndSetState(state, newState)) {
-          emitter.onSealExclusive(this);
+          emitter.onSealExclusive(
+              this,
+              firstEventTimestamp > 0 ? System.currentTimeMillis() - firstEventTimestamp : -1
+          );
           return isEmittingAllowed(newState);
         }
       }

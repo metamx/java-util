@@ -23,7 +23,8 @@ import com.metamx.common.ISE;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.common.logger.Logger;
 import com.metamx.emitter.core.factory.EmitterFactory;
-import com.metamx.http.client.HttpClient;
+import org.asynchttpclient.AsyncHttpClient;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -36,12 +37,12 @@ public class Emitters
   private static final String HTTP_EMITTER_PROP = "com.metamx.emitter.http";
   private static final String CUSTOM_EMITTER_TYPE_PROP = "com.metamx.emitter.type";
 
-  public static Emitter create(Properties props, HttpClient httpClient, Lifecycle lifecycle)
+  public static Emitter create(Properties props, AsyncHttpClient httpClient, Lifecycle lifecycle)
   {
     return create(props, httpClient, new ObjectMapper(), lifecycle);
   }
 
-  public static Emitter create(Properties props, HttpClient httpClient, ObjectMapper jsonMapper, Lifecycle lifecycle)
+  public static Emitter create(Properties props, AsyncHttpClient httpClient, ObjectMapper jsonMapper, Lifecycle lifecycle)
   {
     Map<String, Object> jsonified = Maps.newHashMap();
     if (props.getProperty(LOG_EMITTER_PROP) != null) {
@@ -95,8 +96,11 @@ public class Emitters
     if (props.containsKey("com.metamx.emitter.http.maxBatchSize")) {
       httpMap.put("maxBatchSize", Integer.parseInt(props.getProperty("com.metamx.emitter.http.maxBatchSize")));
     }
-    if (props.containsKey("com.metamx.emitter.http.maxBufferSize")) {
-      httpMap.put("maxBufferSize", Long.parseLong(props.getProperty("com.metamx.emitter.http.maxBufferSize")));
+    if (props.containsKey("com.metamx.emitter.http.batchQueueSizeLimit")) {
+      httpMap.put("batchQueueSizeLimit", Integer.parseInt(props.getProperty("com.metamx.emitter.http.batchQueueSizeLimit")));
+    }
+    if (props.containsKey("com.metamx.emitter.http.httpTimeoutAllowanceFactor")) {
+      httpMap.put("httpTimeoutAllowanceFactor", Float.parseFloat(props.getProperty("com.metamx.emitter.http.httpTimeoutAllowanceFactor")));
     }
     return httpMap;
   }

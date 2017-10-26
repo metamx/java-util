@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.emitter.core.factory.EmitterFactory;
-import com.metamx.http.client.HttpClient;
+import org.asynchttpclient.AsyncHttpClient;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -23,7 +23,7 @@ public class CustomEmitterFactoryTest
     private int intProperty;
 
     @Override
-    public Emitter makeEmitter(ObjectMapper objectMapper, HttpClient httpClient, Lifecycle lifecycle)
+    public Emitter makeEmitter(ObjectMapper objectMapper, AsyncHttpClient httpClient, Lifecycle lifecycle)
     {
       return new StubEmitter(stringProperty, intProperty);
     }

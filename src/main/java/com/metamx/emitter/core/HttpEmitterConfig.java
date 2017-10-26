@@ -42,8 +42,9 @@ public class HttpEmitterConfig extends BaseHttpEmittingConfig
     this.basicAuthentication = base.basicAuthentication;
     this.batchingStrategy = base.batchingStrategy;
     this.maxBatchSize = base.maxBatchSize;
-    this.maxBufferSize = base.maxBufferSize;
     this.contentEncoding = base.contentEncoding;
+    this.batchQueueSizeLimit = base.batchQueueSizeLimit;
+    this.httpTimeoutAllowanceFactor = base.httpTimeoutAllowanceFactor;
   }
 
   public String getRecipientBaseUrl()
@@ -103,15 +104,21 @@ public class HttpEmitterConfig extends BaseHttpEmittingConfig
       return this;
     }
 
-    public Builder setMaxBufferSize(long maxBufferSize)
-    {
-      this.maxBufferSize = maxBufferSize;
-      return this;
-    }
-
     public Builder setContentEncoding(ContentEncoding contentEncoding)
     {
       this.contentEncoding = contentEncoding;
+      return this;
+    }
+
+    public Builder setBatchQueueSizeLimit(int batchQueueSizeLimit)
+    {
+      this.batchQueueSizeLimit = batchQueueSizeLimit;
+      return this;
+    }
+
+    public Builder setHttpTimeoutAllowanceFactor(float httpTimeoutAllowanceFactor)
+    {
+      this.httpTimeoutAllowanceFactor = httpTimeoutAllowanceFactor;
       return this;
     }
 

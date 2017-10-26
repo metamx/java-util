@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 - 2015 Metamarkets Group Inc.
+ * Copyright 2016 Metamarkets Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,15 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package com.metamx.http.client;
+package com.metamx.emitter.core;
 
 import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.metamx.common.ISE;
-import com.metamx.http.client.response.HttpResponseHandler;
-import org.joda.time.Duration;
+import org.asynchttpclient.ListenableFuture;
+import org.asynchttpclient.Request;
+import org.asynchttpclient.Response;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,11 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class GoHandler
 {
   /******* Abstract Methods *********/
-  protected abstract <Intermediate, Final> ListenableFuture<Final> go(
-      Request request,
-      HttpResponseHandler<Intermediate, Final> handler,
-      Duration requestReadTimeout
-  ) throws Exception;
+  protected abstract <X extends Exception> ListenableFuture<Response> go(Request request) throws X;
 
   /******* Non Abstract Methods ********/
   private volatile boolean succeeded = false;
@@ -43,28 +40,15 @@ public abstract class GoHandler
     return succeeded;
   }
 
-  public <Intermediate, Final> ListenableFuture<Final> run(
-      Request request,
-      HttpResponseHandler<Intermediate, Final> handler
-  ) throws Exception
-  {
-    return run(request, handler, null);
-  }
-
-  public <Intermediate, Final> ListenableFuture<Final> run(
-      Request request,
-      HttpResponseHandler<Intermediate, Final> handler,
-      Duration requestReadTimeout
-  ) throws Exception
+  public ListenableFuture<Response> run(Request request)
   {
     try {
-      final ListenableFuture<Final> retVal = go(request, handler, requestReadTimeout);
+      final ListenableFuture<Response> retVal = go(request);
       succeeded = true;
       return retVal;
     }
     catch (Throwable e) {
       succeeded = false;
-      Throwables.propagateIfPossible(e, Exception.class);
       throw Throwables.propagate(e);
     }
   }
@@ -78,14 +62,10 @@ public abstract class GoHandler
       AtomicInteger counter = new AtomicInteger(0);
 
       @Override
-      public <Intermediate, Final> ListenableFuture<Final> go(
-          final Request request,
-          final HttpResponseHandler<Intermediate, Final> handler,
-          final Duration requestReadTimeout
-      ) throws Exception
+      public ListenableFuture<Response> go(final Request request)
       {
         if (counter.getAndIncrement() < n) {
-          return myself.go(request, handler, requestReadTimeout);
+          return myself.go(request);
         }
         succeeded = false;
         throw new ISE("Called more than %d times", n);
