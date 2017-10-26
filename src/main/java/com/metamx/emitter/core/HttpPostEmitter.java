@@ -18,23 +18,21 @@ package com.metamx.emitter.core;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
+import com.google.common.primitives.Ints;
 import com.metamx.common.ISE;
 import com.metamx.common.RetryUtils;
 import com.metamx.common.StringUtils;
 import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.common.logger.Logger;
-import com.metamx.http.client.HttpClient;
-import com.metamx.http.client.Request;
-import com.metamx.http.client.response.StatusResponseHandler;
-import com.metamx.http.client.response.StatusResponseHolder;
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.ListenableFuture;
+import org.asynchttpclient.RequestBuilder;
+import org.asynchttpclient.Response;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.joda.time.Duration;
 
 import java.io.Closeable;
 import java.io.Flushable;
@@ -42,10 +40,13 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
+import java.util.Base64;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -73,9 +74,9 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private final int bufferSize;
   final int maxBufferWatermark;
   private final int largeEventThreshold;
-  private final HttpClient client;
+  private final AsyncHttpClient client;
   private final ObjectMapper jsonMapper;
-  private final URL url;
+  private final String url;
 
   private final ConcurrentLinkedQueue<byte[]> buffersToReuse = new ConcurrentLinkedQueue<>();
   /**
@@ -110,12 +111,12 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private final CountDownLatch startLatch = new CountDownLatch(1);
   private boolean running = false;
 
-  public HttpPostEmitter(HttpEmitterConfig config, HttpClient client)
+  public HttpPostEmitter(HttpEmitterConfig config, AsyncHttpClient client)
   {
     this(config, client, new ObjectMapper());
   }
 
-  public HttpPostEmitter(HttpEmitterConfig config, HttpClient client, ObjectMapper jsonMapper)
+  public HttpPostEmitter(HttpEmitterConfig config, AsyncHttpClient client, ObjectMapper jsonMapper)
   {
     batchingStrategy = config.getBatchingStrategy();
     final int batchOverhead = batchingStrategy.batchStartLength() + batchingStrategy.batchEndLength();
@@ -135,7 +136,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     this.client = client;
     this.jsonMapper = jsonMapper;
     try {
-      this.url = new URL(config.getRecipientBaseUrl());
+      this.url = new URL(config.getRecipientBaseUrl()).toString();
     }
     catch (MalformedURLException e) {
       throw new ISE(e, "Bad URL: %s", config.getRecipientBaseUrl());
@@ -427,17 +428,27 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         );
         int bufferEndOffset = batchingStrategy.writeBatchEnd(batch.buffer, bufferWatermark);
 
-        if (sendWithRetries(batch.buffer, bufferEndOffset, eventCount)) {
+        if (sendWithRetries(batch.buffer, bufferEndOffset, eventCount, true)) {
           buffersToReuse.add(batch.buffer);
           approximateBuffersToReuseCount.incrementAndGet();
         } else {
-          failedBuffers.add(new FailedBuffer(batch.buffer, bufferEndOffset, eventCount));
+          limitFailedBuffersSize();
+          failedBuffers.addLast(new FailedBuffer(batch.buffer, bufferEndOffset, eventCount));
           approximateFailedBuffersCount.incrementAndGet();
         }
       }
       finally {
         // Notify HttpPostEmitter.flush(), that the batch is emitted (or failed).
         emittedBatchCounter.batchEmitted(batch.batchNumber);
+      }
+    }
+
+    private void limitFailedBuffersSize()
+    {
+      if (failedBuffers.size() >= config.getFailedBatchQueueSizeLimit()) {
+        failedBuffers.removeFirst();
+        log.error("Dropping the oldest failed batch, because the limit for the number of those reached");
+        approximateFailedBuffersCount.decrementAndGet();
       }
     }
 
@@ -463,22 +474,23 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       System.arraycopy(eventBytes, 0, buffer, bufferOffset, eventBytes.length);
       bufferOffset += eventBytes.length;
       bufferOffset = batchingStrategy.writeBatchEnd(buffer, bufferOffset);
-      if (sendWithRetries(buffer, bufferOffset, 1)) {
+      if (sendWithRetries(buffer, bufferOffset, 1, true)) {
         buffersToReuse.add(buffer);
         approximateBuffersToReuseCount.incrementAndGet();
       } else {
-        failedBuffers.add(new FailedBuffer(buffer, bufferOffset, 1));
+        limitFailedBuffersSize();
+        failedBuffers.addLast(new FailedBuffer(buffer, bufferOffset, 1));
         approximateFailedBuffersCount.incrementAndGet();
       }
     }
 
     private void tryEmitOneFailedBuffer()
     {
-      FailedBuffer failedBuffer = failedBuffers.peek();
+      FailedBuffer failedBuffer = failedBuffers.peekFirst();
       if (failedBuffer != null) {
-        if (sendWithRetries(failedBuffer.buffer, failedBuffer.length, failedBuffer.eventCount)) {
+        if (sendWithRetries(failedBuffer.buffer, failedBuffer.length, failedBuffer.eventCount, false)) {
           // Remove from the queue of failed buffer.
-          failedBuffers.poll();
+          failedBuffers.pollFirst();
           approximateFailedBuffersCount.decrementAndGet();
           // Don't add the failed buffer back to the buffersToReuse queue here, because in a situation when we were not
           // able to emit events for a while we don't have a way to discard buffers that were used to accumulate events
@@ -490,8 +502,8 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
     private void tryEmitAndDrainAllFailedBuffers()
     {
-      for (FailedBuffer failedBuffer; (failedBuffer = failedBuffers.poll()) != null; ) {
-        sendWithRetries(failedBuffer.buffer, failedBuffer.length, failedBuffer.eventCount);
+      for (FailedBuffer failedBuffer; (failedBuffer = failedBuffers.pollFirst()) != null; ) {
+        sendWithRetries(failedBuffer.buffer, failedBuffer.length, failedBuffer.eventCount, false);
         approximateFailedBuffersCount.decrementAndGet();
       }
     }
@@ -499,8 +511,9 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     /**
      * Returns true if sent successfully.
      */
-    private boolean sendWithRetries(final byte[] buffer, final int length, final int eventCount)
+    private boolean sendWithRetries(final byte[] buffer, final int length, final int eventCount, boolean withTimeout)
     {
+      long deadLineMillis = System.currentTimeMillis() + sendRequestTimeoutMillis();
       try {
         RetryUtils.retry(
             new Callable<Void>()
@@ -517,6 +530,9 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
               @Override
               public boolean apply(Throwable input)
               {
+                if (withTimeout && deadLineMillis - System.currentTimeMillis() <= 0) { // overflow-aware
+                  return false;
+                }
                 return !(input instanceof InterruptedException);
               }
             },
@@ -536,7 +552,8 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
     private void send(byte[] buffer, int length) throws Exception
     {
-      final Request request = new Request(HttpMethod.POST, url);
+      final RequestBuilder request = new RequestBuilder("POST");
+      request.setUrl(url);
       byte[] payload;
       int payloadLength;
       ContentEncoding contentEncoding = config.getContentEncoding();
@@ -559,30 +576,40 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       }
 
 
-      request.setContent("application/json", payload, 0, payloadLength);
+      request.setHeader(HttpHeaders.Names.CONTENT_TYPE, "application/json");
+      request.setHeader(HttpHeaders.Names.CONTENT_LENGTH, String.valueOf(payloadLength));
+      request.setBody(ByteBuffer.wrap(payload, 0, payloadLength));
 
       if (config.getBasicAuthentication() != null) {
         final String[] parts = config.getBasicAuthentication().split(":", 2);
         final String user = parts[0];
         final String password = parts.length > 1 ? parts[1] : "";
-        request.setBasicAuthentication(user, password);
+        String encoded = Base64.getEncoder().encodeToString((user + ':' + password).getBytes(StandardCharsets.UTF_8));
+        request.setHeader(HttpHeaders.Names.AUTHORIZATION, "Basic " + encoded);
       }
 
-      final long timeoutMillis;
-      if (approximateFailedBuffersCount.get() + approximateBuffersToEmitCount.get() >= config.batchQueueThreshold) {
-        // if queue threshold is reached, enforce timeout to be same as fill time to curb queue growth
-        timeoutMillis = lastFillTimeMillis;
-      } else {
-        timeoutMillis = (long) (lastFillTimeMillis * config.httpTimeoutAllowanceFactor);
+      long lastFillTimeMillis = HttpPostEmitter.this.lastFillTimeMillis;
+      final long timeoutMillis = sendRequestTimeoutMillis();
+      request.setRequestTimeout(Ints.saturatedCast(timeoutMillis));
+
+      ListenableFuture<Response> future = client.executeRequest(request);
+      Response response;
+      try {
+        response = future.get(timeoutMillis, TimeUnit.MILLISECONDS);
+      }
+      catch (Exception e) {
+        if (e instanceof TimeoutException ||
+            (e instanceof ExecutionException && e.getCause() instanceof TimeoutException)) {
+          log.error(
+              "Timing out emitter batch send, last batch fill time [%,d] ms, timeout [%,d] ms",
+              lastFillTimeMillis,
+              timeoutMillis
+          );
+        }
+        throw e;
       }
 
-      final StatusResponseHolder response = client.go(
-          request,
-          new StatusResponseHandler(Charsets.UTF_8),
-          timeoutMillis <= 0 ? /* default timeout */ null : Duration.millis(timeoutMillis)
-      ).get();
-
-      if (response.getStatus().getCode() == 413) {
+      if (response.getStatusCode() == 413) {
         throw new ISE(
             "Received HTTP status 413 from [%s]. Batch size of [%d] may be too large, "
             + "try adjusting maxBatchSizeBatch property",
@@ -591,13 +618,26 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         );
       }
 
-      if (response.getStatus().getCode() / 100 != 2) {
+      if (response.getStatusCode() / 100 != 2) {
         throw new ISE(
-            "Emissions of events not successful[%s], with message[%s].",
-            response.getStatus(),
-            response.getContent().trim()
+            "Emissions of events not successful[%d: %s], with message[%s].",
+            response.getStatusCode(),
+            response.getStatusText(),
+            response.getResponseBody(StandardCharsets.UTF_8).trim()
         );
       }
+    }
+
+    private long sendRequestTimeoutMillis()
+    {
+      int emitQueueSize = approximateBuffersToEmitCount.get();
+      if (emitQueueSize < 5) {
+        return (long) (lastFillTimeMillis * config.httpTimeoutAllowanceFactor);
+      }
+      if (emitQueueSize < 10) {
+        return (long) (lastFillTimeMillis * 0.9);
+      }
+      return (long) (lastFillTimeMillis * 0.5);
     }
 
     GZIPOutputStream acquireGzipOutputStream(int length) throws IOException

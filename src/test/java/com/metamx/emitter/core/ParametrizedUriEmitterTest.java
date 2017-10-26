@@ -1,28 +1,25 @@
 package com.metamx.emitter.core;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.emitter.service.UnitEvent;
-import com.metamx.http.client.GoHandler;
-import com.metamx.http.client.GoHandlers;
-import com.metamx.http.client.MockHttpClient;
-import com.metamx.http.client.Request;
-import com.metamx.http.client.response.HttpResponseHandler;
-import java.net.URL;
+import org.asynchttpclient.ListenableFuture;
+import org.asynchttpclient.Request;
+import org.asynchttpclient.Response;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import org.joda.time.Duration;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+
 import static com.metamx.emitter.core.EmitterTest.okResponse;
 import static org.junit.Assert.assertEquals;
 
@@ -78,23 +75,19 @@ public class ParametrizedUriEmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(
-              Request request,
-              HttpResponseHandler<Intermediate, Final> handler,
-              Duration requestReadTimeout
-          ) throws Exception
+          public ListenableFuture<Response> go(Request request) throws JsonProcessingException
           {
-            Assert.assertEquals(new URL("http://example.com/test"), request.getUrl());
+            Assert.assertEquals("http://example.com/test", request.getUrl());
             Assert.assertEquals(
                 String.format(
                     "[%s,%s]\n",
                     jsonMapper.writeValueAsString(events.get(0)),
                     jsonMapper.writeValueAsString(events.get(1))
                 ),
-                request.getContent().toString(Charsets.UTF_8)
+                Charsets.UTF_8.decode(request.getByteBufferData().slice()).toString()
             );
 
-            return Futures.immediateFuture((Final) okResponse());
+            return GoHandlers.immediateFuture(okResponse());
           }
         }.times(1)
     );
@@ -121,14 +114,13 @@ public class ParametrizedUriEmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(
-              Request request,
-              HttpResponseHandler<Intermediate, Final> handler,
-              Duration requestReadTimeout
-          ) throws Exception
+          protected ListenableFuture<Response> go(Request request)
           {
-            results.put(request.getUrl().toString(), request.getContent().toString(Charsets.UTF_8));
-            return Futures.immediateFuture((Final) okResponse());
+            results.put(
+                request.getUrl().toString(),
+                Charsets.UTF_8.decode(request.getByteBufferData().slice()).toString()
+            );
+            return GoHandlers.immediateFuture(okResponse());
           }
         }.times(2)
     );
@@ -157,23 +149,19 @@ public class ParametrizedUriEmitterTest
         new GoHandler()
         {
           @Override
-          public <Intermediate, Final> ListenableFuture<Final> go(
-              Request request,
-              HttpResponseHandler<Intermediate, Final> handler,
-              Duration requestReadTimeout
-          ) throws Exception
+          protected ListenableFuture<Response> go(Request request) throws JsonProcessingException
           {
-            Assert.assertEquals(new URL("http://example.com/val1/val2"), request.getUrl());
+            Assert.assertEquals("http://example.com/val1/val2", request.getUrl());
             Assert.assertEquals(
                 String.format(
                     "[%s,%s]\n",
                     jsonMapper.writeValueAsString(events.get(0)),
                     jsonMapper.writeValueAsString(events.get(1))
                 ),
-                request.getContent().toString(Charsets.UTF_8)
+                Charsets.UTF_8.decode(request.getByteBufferData().slice()).toString()
             );
 
-            return Futures.immediateFuture((Final) okResponse());
+            return GoHandlers.immediateFuture(okResponse());
           }
         }.times(1)
     );

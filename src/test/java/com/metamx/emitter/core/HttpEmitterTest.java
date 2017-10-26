@@ -19,24 +19,17 @@ package com.metamx.emitter.core;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.primitives.Ints;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.metamx.http.client.GoHandler;
-import com.metamx.http.client.MockHttpClient;
-import com.metamx.http.client.Request;
-import com.metamx.http.client.response.HttpResponseHandler;
-import org.joda.time.Duration;
+import org.asynchttpclient.Request;
+import org.asynchttpclient.Response;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class HttpEmitterTest
 {
-  private static final Future OK_FUTURE = Futures.immediateFuture(EmitterTest.OK_RESPONSE);
   private final MockHttpClient httpClient = new MockHttpClient();
   private static final ObjectMapper objectMapper = new ObjectMapper()
   {
@@ -57,18 +50,11 @@ public class HttpEmitterTest
     httpClient.setGoHandler(new GoHandler()
     {
       @Override
-      protected <Intermediate, Final> ListenableFuture<Final> go(
-          Request request,
-          HttpResponseHandler<Intermediate, Final> httpResponseHandler,
-          Duration timeout
-      ) throws Exception
+      protected org.asynchttpclient.ListenableFuture<Response> go(Request request)
       {
-        if (timeout != null) {
-          timeoutUsed.set(timeout.getMillis());
-        } else {
-          timeoutUsed.set(Long.MAX_VALUE);
-        }
-        return (ListenableFuture<Final>) OK_FUTURE;
+        int timeout = request.getRequestTimeout();
+        timeoutUsed.set(timeout);
+        return GoHandlers.immediateFuture(EmitterTest.okResponse());
       }
     });
   }
@@ -85,7 +71,7 @@ public class HttpEmitterTest
     emitter.start();
     emitter.emitAndReturnBatch(new IntEvent());
     emitter.flush();
-    Assert.assertEquals(Long.MAX_VALUE, timeoutUsed.get());
+    Assert.assertEquals(0, timeoutUsed.get());
 
     final Batch batch = emitter.emitAndReturnBatch(new IntEvent());
     Thread.sleep(1000);
@@ -107,12 +93,12 @@ public class HttpEmitterTest
     emitter.start();
     emitter.emitAndReturnBatch(new IntEvent());
     emitter.flush();
-    Assert.assertEquals(Long.MAX_VALUE, timeoutUsed.get());
+    Assert.assertEquals(0, timeoutUsed.get());
 
     final Batch batch = emitter.emitAndReturnBatch(new IntEvent());
     Thread.sleep(1000);
     batch.seal();
     emitter.flush();
-    Assert.assertTrue(timeoutUsed.get() >= 1000 && timeoutUsed.get() < 2000);
+    Assert.assertTrue("" + timeoutUsed.get(), timeoutUsed.get() >= 2000 && timeoutUsed.get() < 3000);
   }
 }

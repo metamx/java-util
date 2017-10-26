@@ -5,14 +5,14 @@ import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.emitter.core.Emitter;
 import com.metamx.emitter.core.LoggingEmitter;
 import com.metamx.emitter.core.LoggingEmitterConfig;
-import com.metamx.http.client.HttpClient;
+import org.asynchttpclient.AsyncHttpClient;
 
 public class LoggingEmitterFactory extends LoggingEmitterConfig implements EmitterFactory
 {
   public LoggingEmitterFactory() {}
 
   @Override
-  public Emitter makeEmitter(ObjectMapper objectMapper, HttpClient httpClient, Lifecycle lifecycle)
+  public Emitter makeEmitter(ObjectMapper objectMapper, AsyncHttpClient httpClient, Lifecycle lifecycle)
   {
     return makeEmitter(objectMapper, lifecycle);
   }

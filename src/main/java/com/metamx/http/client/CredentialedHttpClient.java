@@ -22,10 +22,7 @@ package com.metamx.http.client;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.metamx.http.client.auth.Credentials;
 import com.metamx.http.client.response.HttpResponseHandler;
-import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.joda.time.Duration;
-
-import java.net.URL;
 
 /**
  */

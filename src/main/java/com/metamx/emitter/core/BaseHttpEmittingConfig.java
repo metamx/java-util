@@ -30,7 +30,7 @@ public class BaseHttpEmittingConfig
   public static final String DEFAULT_BASIC_AUTHENTICATION = null;
   public static final BatchingStrategy DEFAULT_BATCHING_STRATEGY = BatchingStrategy.ARRAY;
   public static final ContentEncoding DEFAULT_CONTENT_ENCODING = null;
-  public static final int DEFAULT_BATCH_QUEUE_THRESHOLD = 250;
+  public static final int DEFAULT_FAILED_BATCH_QUEUE_SIZE_LIMIT = 50;
   public static final float DEFAULT_HTTP_TIMEOUT_ALLOWANCE_FACTOR = 1.5f;
 
   @Min(1)
@@ -60,7 +60,7 @@ public class BaseHttpEmittingConfig
 
   @Min(0)
   @JsonProperty
-  int batchQueueThreshold = DEFAULT_BATCH_QUEUE_THRESHOLD;
+  int failedBatchQueueSizeLimit = DEFAULT_FAILED_BATCH_QUEUE_SIZE_LIMIT;
 
   @Min(1)
   @JsonProperty
@@ -99,8 +99,8 @@ public class BaseHttpEmittingConfig
     return contentEncoding;
   }
 
-  public int getBatchQueueThreshold() {
-    return batchQueueThreshold;
+  public int getFailedBatchQueueSizeLimit() {
+    return failedBatchQueueSizeLimit;
   }
 
   public float getHttpTimeoutAllowanceFactor() {
@@ -123,7 +123,7 @@ public class BaseHttpEmittingConfig
         ", batchingStrategy=" + batchingStrategy +
         ", maxBatchSize=" + maxBatchSize +
         ", contentEncoding=" + contentEncoding +
-        ", batchQueueThreshold=" + batchQueueThreshold +
+        ", failedBatchQueueSizeLimit=" + failedBatchQueueSizeLimit +
         ", httpTimeoutAllowanceFactor=" + httpTimeoutAllowanceFactor;
   }
 }

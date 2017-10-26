@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.emitter.core.Emitter;
-import com.metamx.http.client.HttpClient;
+import org.asynchttpclient.AsyncHttpClient;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes(value = {
@@ -16,5 +16,5 @@ import com.metamx.http.client.HttpClient;
 })
 public interface EmitterFactory
 {
-  Emitter makeEmitter(ObjectMapper objectMapper, HttpClient httpClient, Lifecycle lifecycle);
+  Emitter makeEmitter(ObjectMapper objectMapper, AsyncHttpClient httpClient, Lifecycle lifecycle);
 }
