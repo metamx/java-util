@@ -39,7 +39,7 @@ public class HttpEmitterConfigTest
     Assert.assertEquals(BatchingStrategy.ARRAY, config.getBatchingStrategy());
     Assert.assertEquals(5 * 1024 * 1024, config.getMaxBatchSize());
     Assert.assertEquals(Long.MAX_VALUE, config.getFlushTimeOut());
-    Assert.assertEquals(50, config.getFailedBatchQueueSizeLimit());
+    Assert.assertEquals(50, config.getBatchQueueSizeLimit());
     Assert.assertEquals(1.5f, config.getHttpTimeoutAllowanceFactor(), 0.0f);
   }
 
@@ -59,7 +59,7 @@ public class HttpEmitterConfigTest
     Assert.assertEquals(BatchingStrategy.ARRAY, config.getBatchingStrategy());
     Assert.assertEquals(5 * 1024 * 1024, config.getMaxBatchSize());
     Assert.assertEquals(Long.MAX_VALUE, config.getFlushTimeOut());
-    Assert.assertEquals(50, config.getFailedBatchQueueSizeLimit());
+    Assert.assertEquals(50, config.getBatchQueueSizeLimit());
     Assert.assertEquals(1.5f, config.getHttpTimeoutAllowanceFactor(), 0.0f);
   }
 
@@ -74,7 +74,7 @@ public class HttpEmitterConfigTest
     props.setProperty("com.metamx.emitter.batchingStrategy", "NEWLINES");
     props.setProperty("com.metamx.emitter.maxBatchSize", "4");
     props.setProperty("com.metamx.emitter.flushTimeOut", "1000");
-    props.setProperty("com.metamx.emitter.failedBatchQueueSizeLimit", "2500");
+    props.setProperty("com.metamx.emitter.batchQueueSizeLimit", "2500");
     props.setProperty("com.metamx.emitter.httpTimeoutAllowanceFactor", "3.0");
 
     final ObjectMapper objectMapper = new ObjectMapper();
@@ -87,7 +87,7 @@ public class HttpEmitterConfigTest
     Assert.assertEquals(BatchingStrategy.NEWLINES, config.getBatchingStrategy());
     Assert.assertEquals(4, config.getMaxBatchSize());
     Assert.assertEquals(1000, config.getFlushTimeOut());
-    Assert.assertEquals(2500, config.getFailedBatchQueueSizeLimit());
+    Assert.assertEquals(2500, config.getBatchQueueSizeLimit());
     Assert.assertEquals(3.0f, config.getHttpTimeoutAllowanceFactor(), 0.0f);
   }
 
@@ -102,7 +102,7 @@ public class HttpEmitterConfigTest
     props.setProperty("com.metamx.emitter.http.batchingStrategy", "newlines");
     props.setProperty("com.metamx.emitter.http.maxBatchSize", "4");
     props.setProperty("com.metamx.emitter.http.flushTimeOut", "1000");
-    props.setProperty("com.metamx.emitter.http.failedBatchQueueSizeLimit", "2500");
+    props.setProperty("com.metamx.emitter.http.batchQueueSizeLimit", "2500");
     props.setProperty("com.metamx.emitter.http.httpTimeoutAllowanceFactor", "3.0");
 
     final ObjectMapper objectMapper = new ObjectMapper();
@@ -115,7 +115,7 @@ public class HttpEmitterConfigTest
     Assert.assertEquals(BatchingStrategy.NEWLINES, config.getBatchingStrategy());
     Assert.assertEquals(4, config.getMaxBatchSize());
     Assert.assertEquals(1000, config.getFlushTimeOut());
-    Assert.assertEquals(2500, config.getFailedBatchQueueSizeLimit());
+    Assert.assertEquals(2500, config.getBatchQueueSizeLimit());
     Assert.assertEquals(3.0f, config.getHttpTimeoutAllowanceFactor(), 0.0f);
   }
 }

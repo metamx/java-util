@@ -44,6 +44,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Base64;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -61,6 +62,26 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private static final int MAX_EVENT_SIZE = 1023 * 1024; // Set max size slightly less than 1M to allow for metadata
 
   private static final int MAX_SEND_RETRIES = 3;
+
+  /**
+   * Threshold of the size of {@link #buffersToEmit} when switch from using {@link
+   * BaseHttpEmittingConfig#getHttpTimeoutAllowanceFactor()} to {@link #EQUILIBRIUM_ALLOWANCE_FACTOR}
+   */
+  private static final int EMIT_QUEUE_THRESHOLD_1 = 5;
+
+  /**
+   * Threshold of the size of {@link #buffersToEmit} when switch from using {@link #EQUILIBRIUM_ALLOWANCE_FACTOR}
+   * to {@link #TIGHT_ALLOWANCE_FACTOR}.
+   */
+  private static final int EMIT_QUEUE_THRESHOLD_2 = 10;
+
+  /**
+   * 0.9 is to give room for unexpected latency or time out not being respected rigorously.
+   */
+  private static final double EQUILIBRIUM_ALLOWANCE_FACTOR = 0.9;
+
+  private static final double TIGHT_ALLOWANCE_FACTOR = 0.5;
+
   /**
    * Used in {@link EmittingThread#emitLargeEvents()} to ensure fair emitting of both large events and batched events.
    */
@@ -90,7 +111,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
    */
   private final AtomicReference<Batch> concurrentBatch = new AtomicReference<>();
 
-  private final ConcurrentLinkedQueue<Batch> buffersToEmit = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedDeque<Batch> buffersToEmit = new ConcurrentLinkedDeque<>();
   /** See {@link #approximateBuffersToReuseCount} */
   private final AtomicInteger approximateBuffersToEmitCount = new AtomicInteger();
   /** See {@link #approximateBuffersToReuseCount} */
@@ -104,6 +125,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private final EmittingThread emittingThread = new EmittingThread();
   private final AtomicLong totalEmittedEvents = new AtomicLong();
   private final AtomicInteger allocatedBuffers = new AtomicInteger();
+  private final AtomicInteger droppedBuffers = new AtomicInteger();
 
   private volatile long lastFillTimeMillis = 0;
 
@@ -262,14 +284,34 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
   private void addBatchToEmitQueue(Batch batch)
   {
-    buffersToEmit.add(batch);
+    limitBuffersToEmitSize();
+    buffersToEmit.addLast(batch);
     approximateBuffersToEmitCount.incrementAndGet();
     approximateEventsToEmitCount.addAndGet(batch.eventCount.get());
   }
 
+  private void limitBuffersToEmitSize()
+  {
+    if (approximateBuffersToEmitCount.get() >= config.getBatchQueueSizeLimit()) {
+      Batch droppedBatch = buffersToEmit.pollFirst();
+      if (droppedBatch != null) {
+        finalizeBatch(droppedBatch);
+        approximateBuffersToEmitCount.decrementAndGet();
+        approximateEventsToEmitCount.addAndGet(-droppedBatch.eventCount.get());
+        droppedBuffers.incrementAndGet();
+        log.error("buffersToEmit queue size reached the limit, dropping the oldest buffer to emit");
+      }
+    }
+  }
+
+  private void finalizeBatch(Batch batch) {
+    // Notify HttpPostEmitter.flush(), that the batch is emitted (or failed).
+    emittedBatchCounter.batchEmitted(batch.batchNumber);
+  }
+
   private Batch pollBatchFromEmitQueue()
   {
-    Batch result = buffersToEmit.poll();
+    Batch result = buffersToEmit.pollFirst();
     if (result == null) {
       return null;
     }
@@ -438,17 +480,17 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         }
       }
       finally {
-        // Notify HttpPostEmitter.flush(), that the batch is emitted (or failed).
-        emittedBatchCounter.batchEmitted(batch.batchNumber);
+        finalizeBatch(batch);
       }
     }
 
     private void limitFailedBuffersSize()
     {
-      if (failedBuffers.size() >= config.getFailedBatchQueueSizeLimit()) {
+      if (failedBuffers.size() >= config.getBatchQueueSizeLimit()) {
         failedBuffers.removeFirst();
-        log.error("Dropping the oldest failed batch, because the limit for the number of those reached");
         approximateFailedBuffersCount.decrementAndGet();
+        droppedBuffers.incrementAndGet();
+        log.error("failedBuffers queue size reached the limit, dropping the oldest failed buffer");
       }
     }
 
@@ -631,13 +673,15 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     private long sendRequestTimeoutMillis()
     {
       int emitQueueSize = approximateBuffersToEmitCount.get();
-      if (emitQueueSize < 5) {
+      if (emitQueueSize < EMIT_QUEUE_THRESHOLD_1) {
         return (long) (lastFillTimeMillis * config.httpTimeoutAllowanceFactor);
       }
-      if (emitQueueSize < 10) {
-        return (long) (lastFillTimeMillis * 0.9);
+      if (emitQueueSize < EMIT_QUEUE_THRESHOLD_2) {
+        // The idea is to not let buffersToEmit queue to grow faster than we can emit buffers.
+        return (long) (lastFillTimeMillis * EQUILIBRIUM_ALLOWANCE_FACTOR);
       }
-      return (long) (lastFillTimeMillis * 0.5);
+      // If buffersToEmit still grows, try to restrict even more
+      return (long) (lastFillTimeMillis * TIGHT_ALLOWANCE_FACTOR);
     }
 
     GZIPOutputStream acquireGzipOutputStream(int length) throws IOException
@@ -705,6 +749,11 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   public int getFailedBuffers()
   {
     return emittingThread.approximateFailedBuffersCount.get();
+  }
+
+  public int getDroppedBuffers()
+  {
+    return droppedBuffers.get();
   }
 
   public long getTotalEmittedEvents()

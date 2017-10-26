@@ -43,7 +43,7 @@ public class HttpEmitterConfig extends BaseHttpEmittingConfig
     this.batchingStrategy = base.batchingStrategy;
     this.maxBatchSize = base.maxBatchSize;
     this.contentEncoding = base.contentEncoding;
-    this.failedBatchQueueSizeLimit = base.failedBatchQueueSizeLimit;
+    this.batchQueueSizeLimit = base.batchQueueSizeLimit;
     this.httpTimeoutAllowanceFactor = base.httpTimeoutAllowanceFactor;
   }
 
@@ -110,9 +110,9 @@ public class HttpEmitterConfig extends BaseHttpEmittingConfig
       return this;
     }
 
-    public Builder setFailedBatchQueueSizeLimit(int failedBatchQueueSizeLimit)
+    public Builder setBatchQueueSizeLimit(int batchQueueSizeLimit)
     {
-      this.failedBatchQueueSizeLimit = failedBatchQueueSizeLimit;
+      this.batchQueueSizeLimit = batchQueueSizeLimit;
       return this;
     }
 

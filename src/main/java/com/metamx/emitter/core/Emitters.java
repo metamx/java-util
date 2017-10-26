@@ -96,8 +96,8 @@ public class Emitters
     if (props.containsKey("com.metamx.emitter.http.maxBatchSize")) {
       httpMap.put("maxBatchSize", Integer.parseInt(props.getProperty("com.metamx.emitter.http.maxBatchSize")));
     }
-    if (props.containsKey("com.metamx.emitter.http.failedBatchQueueSizeLimit")) {
-      httpMap.put("failedBatchQueueSizeLimit", Integer.parseInt(props.getProperty("com.metamx.emitter.http.failedBatchQueueSizeLimit")));
+    if (props.containsKey("com.metamx.emitter.http.batchQueueSizeLimit")) {
+      httpMap.put("batchQueueSizeLimit", Integer.parseInt(props.getProperty("com.metamx.emitter.http.batchQueueSizeLimit")));
     }
     if (props.containsKey("com.metamx.emitter.http.httpTimeoutAllowanceFactor")) {
       httpMap.put("httpTimeoutAllowanceFactor", Float.parseFloat(props.getProperty("com.metamx.emitter.http.httpTimeoutAllowanceFactor")));

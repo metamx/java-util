@@ -79,26 +79,4 @@ public class HttpEmitterTest
     emitter.flush();
     Assert.assertTrue(timeoutUsed.get() >= 2000 && timeoutUsed.get() < 3000);
   }
-
-  @Test
-  public void timeoutMaxQueue() throws IOException, InterruptedException
-  {
-    final HttpEmitterConfig config = new HttpEmitterConfig.Builder("http://foo.bar")
-        .setBatchingStrategy(BatchingStrategy.ONLY_EVENTS)
-        .setHttpTimeoutAllowanceFactor(2.0f)
-        .setFailedBatchQueueSizeLimit(0)
-        .build();
-    final HttpPostEmitter emitter = new HttpPostEmitter(config, httpClient, objectMapper);
-
-    emitter.start();
-    emitter.emitAndReturnBatch(new IntEvent());
-    emitter.flush();
-    Assert.assertEquals(0, timeoutUsed.get());
-
-    final Batch batch = emitter.emitAndReturnBatch(new IntEvent());
-    Thread.sleep(1000);
-    batch.seal();
-    emitter.flush();
-    Assert.assertTrue("" + timeoutUsed.get(), timeoutUsed.get() >= 2000 && timeoutUsed.get() < 3000);
-  }
 }
