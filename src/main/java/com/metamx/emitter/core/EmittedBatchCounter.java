@@ -35,11 +35,9 @@ final class EmittedBatchCounter
 
   private final Phaser phaser = new Phaser(1);
 
-  void batchEmitted(int batchNumber)
+  void batchEmitted()
   {
-    if (batchNumber != phaser.arrive()) {
-      throw new IllegalStateException();
-    }
+    phaser.arrive();
   }
 
   void awaitBatchEmitted(int batchNumberToAwait, long timeout, TimeUnit unit)

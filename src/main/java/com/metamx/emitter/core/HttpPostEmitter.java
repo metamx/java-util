@@ -257,9 +257,19 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
   private void writeLargeEvent(byte[] eventBytes)
   {
-    largeEventsToEmit.add(eventBytes);
-    approximateLargeEventsToEmitCount.incrementAndGet();
-    approximateEventsToEmitCount.incrementAndGet();
+    // It's better to drop the oldest, not latest event, but dropping the oldest is not easy to implement, because
+    // LARGE_EVENTS_STOP could be added into the queue concurrently. So just not adding the latest event.
+    // >, not >=, because largeEventsToEmit could contain LARGE_EVENTS_STOP
+    if (approximateBuffersToEmitCount.get() > config.getBatchQueueSizeLimit()) {
+      log.error(
+          "largeEventsToEmit queue size reached the limit [%d], dropping the latest large event",
+          config.getBatchQueueSizeLimit()
+      );
+    } else {
+      largeEventsToEmit.add(eventBytes);
+      approximateLargeEventsToEmitCount.incrementAndGet();
+      approximateEventsToEmitCount.incrementAndGet();
+    }
     wakeUpEmittingThread();
   }
 
@@ -295,18 +305,21 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     if (approximateBuffersToEmitCount.get() >= config.getBatchQueueSizeLimit()) {
       Batch droppedBatch = buffersToEmit.pollFirst();
       if (droppedBatch != null) {
-        finalizeBatch(droppedBatch);
+        batchFinalized();
         approximateBuffersToEmitCount.decrementAndGet();
         approximateEventsToEmitCount.addAndGet(-droppedBatch.eventCount.get());
         droppedBuffers.incrementAndGet();
-        log.error("buffersToEmit queue size reached the limit, dropping the oldest buffer to emit");
+        log.error(
+            "buffersToEmit queue size reached the limit [%d], dropping the oldest buffer to emit",
+            config.getBatchQueueSizeLimit()
+        );
       }
     }
   }
 
-  private void finalizeBatch(Batch batch) {
+  private void batchFinalized() {
     // Notify HttpPostEmitter.flush(), that the batch is emitted, or failed, or dropped.
-    emittedBatchCounter.batchEmitted(batch.batchNumber);
+    emittedBatchCounter.batchEmitted();
   }
 
   private Batch pollBatchFromEmitQueue()
@@ -339,6 +352,9 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     }
     batch.seal();
     try {
+      // This check doesn't always awaits for this exact batch to be emitted, because another batch could be dropped
+      // from the queue ahead of this one, in limitBuffersToEmitSize(). But there is no better way currently to wait for
+      // the exact batch, and it's not that important.
       emittedBatchCounter.awaitBatchEmitted(batch.batchNumber, config.getFlushTimeOut(), TimeUnit.MILLISECONDS);
     }
     catch (TimeoutException e) {
@@ -480,7 +496,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         }
       }
       finally {
-        finalizeBatch(batch);
+        batchFinalized();
       }
     }
 
@@ -490,7 +506,10 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         failedBuffers.removeFirst();
         approximateFailedBuffersCount.decrementAndGet();
         droppedBuffers.incrementAndGet();
-        log.error("failedBuffers queue size reached the limit, dropping the oldest failed buffer");
+        log.error(
+            "failedBuffers queue size reached the limit [%d], dropping the oldest failed buffer",
+            config.getBatchQueueSizeLimit()
+        );
       }
     }
 
@@ -775,5 +794,11 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   void waitForEmission(int batchNumber) throws Exception
   {
     emittedBatchCounter.awaitBatchEmitted(batchNumber, 10, TimeUnit.SECONDS);
+  }
+
+  @VisibleForTesting
+  void joinEmitterThread() throws InterruptedException
+  {
+    emittingThread.join();
   }
 }
