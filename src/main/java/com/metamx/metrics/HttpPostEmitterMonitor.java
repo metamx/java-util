@@ -18,7 +18,7 @@
 package com.metamx.metrics;
 
 import com.google.common.collect.ImmutableMap;
-import com.metamx.emitter.core.AtomicTimeCounter;
+import com.metamx.emitter.core.ConcurrentTimeCounter;
 import com.metamx.emitter.core.HttpPostEmitter;
 import com.metamx.emitter.service.ServiceEmitter;
 import com.metamx.emitter.service.ServiceMetricEvent;
@@ -70,11 +70,11 @@ public class HttpPostEmitterMonitor extends FeedDefiningMonitor
     return true;
   }
 
-  private void emitTimeCounterMetrics(ServiceEmitter emitter, AtomicTimeCounter timeCounter, String metricNameBase)
+  private void emitTimeCounterMetrics(ServiceEmitter emitter, ConcurrentTimeCounter timeCounter, String metricNameBase)
   {
-    long state = timeCounter.getStateAndReset();
-    emitter.emit(builder.build(metricNameBase + "timeMsSum", AtomicTimeCounter.timeSum(state)));
-    emitter.emit(builder.build(metricNameBase + "count", AtomicTimeCounter.count(state)));
+    long timeSumAndCount = timeCounter.getTimeSumAndCountAndReset();
+    emitter.emit(builder.build(metricNameBase + "timeMsSum", ConcurrentTimeCounter.timeSum(timeSumAndCount)));
+    emitter.emit(builder.build(metricNameBase + "count", ConcurrentTimeCounter.count(timeSumAndCount)));
     emitter.emit(builder.build(metricNameBase + "maxTimeMs", timeCounter.getAndResetMaxTime()));
     emitter.emit(builder.build(metricNameBase + "minTimeMs", timeCounter.getAndResetMinTime()));
   }

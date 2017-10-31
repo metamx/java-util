@@ -128,7 +128,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private final AtomicInteger droppedBuffers = new AtomicInteger();
 
   private volatile long lastFillTimeMillis = 0;
-  private final AtomicTimeCounter batchFillingTimeCounter = new AtomicTimeCounter();
+  private final ConcurrentTimeCounter batchFillingTimeCounter = new ConcurrentTimeCounter();
 
   private final Object startLock = new Object();
   private final CountDownLatch startLatch = new CountDownLatch(1);
@@ -405,8 +405,8 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
      */
     private final AtomicInteger approximateFailedBuffersCount = new AtomicInteger();
 
-    private final AtomicTimeCounter successfulSendingTimeCounter = new AtomicTimeCounter();
-    private final AtomicTimeCounter failedSendingTimeCounter = new AtomicTimeCounter();
+    private final ConcurrentTimeCounter successfulSendingTimeCounter = new ConcurrentTimeCounter();
+    private final ConcurrentTimeCounter failedSendingTimeCounter = new ConcurrentTimeCounter();
 
     /** Cache the exception. Need an exception because {@link RetryUtils} operates only via exceptions. */
     private final TimeoutException timeoutLessThanMinimumException;
@@ -414,7 +414,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     private boolean shuttingDown = false;
     private ZeroCopyByteArrayOutputStream gzipBaos;
 
-    EmittingThread(BaseHttpEmittingConfig config)
+    EmittingThread(HttpEmitterConfig config)
     {
       super("HttpPostEmitter-" + instanceCounter.incrementAndGet());
       setDaemon(true);
@@ -828,17 +828,17 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     return approximateLargeEventsToEmitCount.get();
   }
 
-  public AtomicTimeCounter getBatchFillingTimeCounter()
+  public ConcurrentTimeCounter getBatchFillingTimeCounter()
   {
     return batchFillingTimeCounter;
   }
 
-  public AtomicTimeCounter getSuccessfulSendingTimeCounter()
+  public ConcurrentTimeCounter getSuccessfulSendingTimeCounter()
   {
     return emittingThread.successfulSendingTimeCounter;
   }
 
-  public AtomicTimeCounter getFailedSendingTimeCounter()
+  public ConcurrentTimeCounter getFailedSendingTimeCounter()
   {
     return emittingThread.successfulSendingTimeCounter;
   }
