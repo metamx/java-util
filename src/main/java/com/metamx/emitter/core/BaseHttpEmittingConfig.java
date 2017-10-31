@@ -31,7 +31,9 @@ public class BaseHttpEmittingConfig
   public static final BatchingStrategy DEFAULT_BATCHING_STRATEGY = BatchingStrategy.ARRAY;
   public static final ContentEncoding DEFAULT_CONTENT_ENCODING = null;
   public static final int DEFAULT_BATCH_QUEUE_SIZE_LIMIT = 50;
-  public static final float DEFAULT_HTTP_TIMEOUT_ALLOWANCE_FACTOR = 1.5f;
+  public static final float DEFAULT_HTTP_TIMEOUT_ALLOWANCE_FACTOR = 2.0f;
+  /** The default value effective doesn't set the min timeout */
+  public static final int DEFAULT_MIN_HTTP_TIMEOUT_MILLIS = 0;
 
   @Min(1)
   @JsonProperty
@@ -65,6 +67,10 @@ public class BaseHttpEmittingConfig
   @Min(1)
   @JsonProperty
   float httpTimeoutAllowanceFactor = DEFAULT_HTTP_TIMEOUT_ALLOWANCE_FACTOR;
+
+  @Min(0)
+  @JsonProperty
+  int minHttpTimeoutMillis = DEFAULT_MIN_HTTP_TIMEOUT_MILLIS;
 
   public long getFlushMillis()
   {
@@ -107,6 +113,11 @@ public class BaseHttpEmittingConfig
     return httpTimeoutAllowanceFactor;
   }
 
+  public int getMinHttpTimeoutMillis()
+  {
+    return minHttpTimeoutMillis;
+  }
+
   @Override
   public String toString()
   {
@@ -124,6 +135,7 @@ public class BaseHttpEmittingConfig
         ", maxBatchSize=" + maxBatchSize +
         ", contentEncoding=" + contentEncoding +
         ", batchQueueSizeLimit=" + batchQueueSizeLimit +
-        ", httpTimeoutAllowanceFactor=" + httpTimeoutAllowanceFactor;
+        ", httpTimeoutAllowanceFactor=" + httpTimeoutAllowanceFactor +
+        ", minHttpTimeoutMillis=" + minHttpTimeoutMillis;
   }
 }

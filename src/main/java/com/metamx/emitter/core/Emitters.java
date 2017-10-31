@@ -102,6 +102,9 @@ public class Emitters
     if (props.containsKey("com.metamx.emitter.http.httpTimeoutAllowanceFactor")) {
       httpMap.put("httpTimeoutAllowanceFactor", Float.parseFloat(props.getProperty("com.metamx.emitter.http.httpTimeoutAllowanceFactor")));
     }
+    if (props.containsKey("com.metamx.emitter.http.minHttpTimeoutMillis")) {
+      httpMap.put("minHttpTimeoutMillis", Float.parseFloat(props.getProperty("com.metamx.emitter.http.minHttpTimeoutMillis")));
+    }
     return httpMap;
   }
 

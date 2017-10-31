@@ -40,7 +40,8 @@ public class HttpEmitterConfigTest
     Assert.assertEquals(5 * 1024 * 1024, config.getMaxBatchSize());
     Assert.assertEquals(Long.MAX_VALUE, config.getFlushTimeOut());
     Assert.assertEquals(50, config.getBatchQueueSizeLimit());
-    Assert.assertEquals(1.5f, config.getHttpTimeoutAllowanceFactor(), 0.0f);
+    Assert.assertEquals(2.0f, config.getHttpTimeoutAllowanceFactor(), 0.0f);
+    Assert.assertEquals(0, config.getMinHttpTimeoutMillis());
   }
 
   @Test
@@ -60,7 +61,8 @@ public class HttpEmitterConfigTest
     Assert.assertEquals(5 * 1024 * 1024, config.getMaxBatchSize());
     Assert.assertEquals(Long.MAX_VALUE, config.getFlushTimeOut());
     Assert.assertEquals(50, config.getBatchQueueSizeLimit());
-    Assert.assertEquals(1.5f, config.getHttpTimeoutAllowanceFactor(), 0.0f);
+    Assert.assertEquals(2.0f, config.getHttpTimeoutAllowanceFactor(), 0.0f);
+    Assert.assertEquals(0, config.getMinHttpTimeoutMillis());
   }
 
   @Test
@@ -76,6 +78,7 @@ public class HttpEmitterConfigTest
     props.setProperty("com.metamx.emitter.flushTimeOut", "1000");
     props.setProperty("com.metamx.emitter.batchQueueSizeLimit", "2500");
     props.setProperty("com.metamx.emitter.httpTimeoutAllowanceFactor", "3.0");
+    props.setProperty("com.metamx.emitter.minHttpTimeoutMillis", "100");
 
     final ObjectMapper objectMapper = new ObjectMapper();
     final HttpEmitterConfig config = objectMapper.convertValue(Emitters.makeCustomFactoryMap(props), HttpEmitterConfig.class);
@@ -89,6 +92,7 @@ public class HttpEmitterConfigTest
     Assert.assertEquals(1000, config.getFlushTimeOut());
     Assert.assertEquals(2500, config.getBatchQueueSizeLimit());
     Assert.assertEquals(3.0f, config.getHttpTimeoutAllowanceFactor(), 0.0f);
+    Assert.assertEquals(100, config.getMinHttpTimeoutMillis());
   }
 
   @Test
@@ -104,6 +108,7 @@ public class HttpEmitterConfigTest
     props.setProperty("com.metamx.emitter.http.flushTimeOut", "1000");
     props.setProperty("com.metamx.emitter.http.batchQueueSizeLimit", "2500");
     props.setProperty("com.metamx.emitter.http.httpTimeoutAllowanceFactor", "3.0");
+    props.setProperty("com.metamx.emitter.http.minHttpTimeoutMillis", "100");
 
     final ObjectMapper objectMapper = new ObjectMapper();
     final HttpEmitterConfig config = objectMapper.convertValue(Emitters.makeHttpMap(props), HttpEmitterConfig.class);
@@ -117,5 +122,6 @@ public class HttpEmitterConfigTest
     Assert.assertEquals(1000, config.getFlushTimeOut());
     Assert.assertEquals(2500, config.getBatchQueueSizeLimit());
     Assert.assertEquals(3.0f, config.getHttpTimeoutAllowanceFactor(), 0.0f);
+    Assert.assertEquals(100, config.getMinHttpTimeoutMillis());
   }
 }

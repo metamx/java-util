@@ -122,12 +122,13 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private final AtomicInteger approximateLargeEventsToEmitCount = new AtomicInteger();
 
   private final EmittedBatchCounter emittedBatchCounter = new EmittedBatchCounter();
-  private final EmittingThread emittingThread = new EmittingThread();
+  private final EmittingThread emittingThread;
   private final AtomicLong totalEmittedEvents = new AtomicLong();
   private final AtomicInteger allocatedBuffers = new AtomicInteger();
   private final AtomicInteger droppedBuffers = new AtomicInteger();
 
   private volatile long lastFillTimeMillis = 0;
+  private final AtomicTimeCounter batchFillingTimeCounter = new AtomicTimeCounter();
 
   private final Object startLock = new Object();
   private final CountDownLatch startLatch = new CountDownLatch(1);
@@ -163,6 +164,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     catch (MalformedURLException e) {
       throw new ISE(e, "Bad URL: %s", config.getRecipientBaseUrl());
     }
+    emittingThread = new EmittingThread(config);
     concurrentBatch.set(new Batch(this, acquireBuffer(), 0));
   }
 
@@ -280,6 +282,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   {
     if (elapsedTimeMillis > 0) {
       lastFillTimeMillis = elapsedTimeMillis;
+      batchFillingTimeCounter.add((int) Math.max(elapsedTimeMillis, 0));
     }
     addBatchToEmitQueue(batch);
     wakeUpEmittingThread();
@@ -402,13 +405,24 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
      */
     private final AtomicInteger approximateFailedBuffersCount = new AtomicInteger();
 
+    private final AtomicTimeCounter successfulSendingTimeCounter = new AtomicTimeCounter();
+    private final AtomicTimeCounter failedSendingTimeCounter = new AtomicTimeCounter();
+
+    /** Cache the exception. Need an exception because {@link RetryUtils} operates only via exceptions. */
+    private final TimeoutException timeoutLessThanMinimumException;
+
     private boolean shuttingDown = false;
     private ZeroCopyByteArrayOutputStream gzipBaos;
 
-    EmittingThread()
+    EmittingThread(BaseHttpEmittingConfig config)
     {
       super("HttpPostEmitter-" + instanceCounter.incrementAndGet());
       setDaemon(true);
+      timeoutLessThanMinimumException = new TimeoutException(
+          "Timeout less than minimum [" + config.getMinHttpTimeoutMillis() + "] ms."
+      );
+      // To not showing and writing nonsense and misleading stack trace in logs.
+      timeoutLessThanMinimumException.setStackTrace(new StackTraceElement[]{});
     }
 
     @Override
@@ -574,7 +588,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
      */
     private boolean sendWithRetries(final byte[] buffer, final int length, final int eventCount, boolean withTimeout)
     {
-      long deadLineMillis = System.currentTimeMillis() + sendRequestTimeoutMillis();
+      long deadLineMillis = System.currentTimeMillis() + sendRequestTimeoutMillis(lastFillTimeMillis);
       try {
         RetryUtils.retry(
             new Callable<Void>()
@@ -589,12 +603,15 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
             new Predicate<Throwable>()
             {
               @Override
-              public boolean apply(Throwable input)
+              public boolean apply(Throwable e)
               {
                 if (withTimeout && deadLineMillis - System.currentTimeMillis() <= 0) { // overflow-aware
                   return false;
                 }
-                return !(input instanceof InterruptedException);
+                if (e == timeoutLessThanMinimumException) {
+                  return false; // Doesn't make sense to retry, because the result will be the same.
+                }
+                return !(e instanceof InterruptedException);
               }
             },
             MAX_SEND_RETRIES
@@ -613,6 +630,13 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
 
     private void send(byte[] buffer, int length) throws Exception
     {
+      long lastFillTimeMillis = HttpPostEmitter.this.lastFillTimeMillis;
+      final long timeoutMillis = sendRequestTimeoutMillis(lastFillTimeMillis);
+      if (timeoutMillis < config.getMinHttpTimeoutMillis()) {
+        throw timeoutLessThanMinimumException;
+      }
+      long sendingStartMs = System.currentTimeMillis();
+
       final RequestBuilder request = new RequestBuilder("POST");
       request.setUrl(url);
       byte[] payload;
@@ -649,18 +673,18 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         request.setHeader(HttpHeaders.Names.AUTHORIZATION, "Basic " + encoded);
       }
 
-      long lastFillTimeMillis = HttpPostEmitter.this.lastFillTimeMillis;
-      final long timeoutMillis = sendRequestTimeoutMillis();
       request.setRequestTimeout(Ints.saturatedCast(timeoutMillis));
 
       ListenableFuture<Response> future = client.executeRequest(request);
       Response response;
       try {
-        response = future.get(timeoutMillis, TimeUnit.MILLISECONDS);
+        // Don't use Future.get(timeout), because we want to avoid sending the same data twice, in case the send
+        // succeeds finally, but after the timeout.
+        response = future.get();
       }
-      catch (Exception e) {
-        if (e instanceof TimeoutException ||
-            (e instanceof ExecutionException && e.getCause() instanceof TimeoutException)) {
+      catch (ExecutionException e) {
+        accountFailedSending(sendingStartMs);
+        if (e.getCause() instanceof TimeoutException) {
           log.error(
               "Timing out emitter batch send, last batch fill time [%,d] ms, timeout [%,d] ms",
               lastFillTimeMillis,
@@ -671,6 +695,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       }
 
       if (response.getStatusCode() == 413) {
+        accountFailedSending(sendingStartMs);
         throw new ISE(
             "Received HTTP status 413 from [%s]. Batch size of [%d] may be too large, "
             + "try adjusting maxBatchSizeBatch property",
@@ -680,6 +705,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       }
 
       if (response.getStatusCode() / 100 != 2) {
+        accountFailedSending(sendingStartMs);
         throw new ISE(
             "Emissions of events not successful[%d: %s], with message[%s].",
             response.getStatusCode(),
@@ -687,9 +713,11 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
             response.getResponseBody(StandardCharsets.UTF_8).trim()
         );
       }
+
+      accountSuccessfulSending(sendingStartMs);
     }
 
-    private long sendRequestTimeoutMillis()
+    private long sendRequestTimeoutMillis(long lastFillTimeMillis)
     {
       int emitQueueSize = approximateBuffersToEmitCount.get();
       if (emitQueueSize < EMIT_QUEUE_THRESHOLD_1) {
@@ -701,6 +729,16 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
       }
       // If buffersToEmit still grows, try to restrict even more
       return (long) (lastFillTimeMillis * TIGHT_ALLOWANCE_FACTOR);
+    }
+
+    private void accountSuccessfulSending(long sendingStartMs)
+    {
+      successfulSendingTimeCounter.add((int) Math.max(System.currentTimeMillis() - sendingStartMs, 0));
+    }
+
+    private void accountFailedSending(long sendingStartMs)
+    {
+      failedSendingTimeCounter.add((int) Math.max(System.currentTimeMillis() - sendingStartMs, 0));
     }
 
     GZIPOutputStream acquireGzipOutputStream(int length) throws IOException
@@ -788,6 +826,21 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   public long getLargeEventsToEmit()
   {
     return approximateLargeEventsToEmitCount.get();
+  }
+
+  public AtomicTimeCounter getBatchFillingTimeCounter()
+  {
+    return batchFillingTimeCounter;
+  }
+
+  public AtomicTimeCounter getSuccessfulSendingTimeCounter()
+  {
+    return emittingThread.successfulSendingTimeCounter;
+  }
+
+  public AtomicTimeCounter getFailedSendingTimeCounter()
+  {
+    return emittingThread.successfulSendingTimeCounter;
   }
 
   @VisibleForTesting
