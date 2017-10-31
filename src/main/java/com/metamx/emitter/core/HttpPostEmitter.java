@@ -166,7 +166,8 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     }
     emittingThread = new EmittingThread(config);
     concurrentBatch.set(new Batch(this, acquireBuffer(), 0));
-    lastFillTimeMillis = config.minHttpTimeoutMillis;
+    // lastFillTimeMillis must not be 0, minHttpTimeoutMillis could be.
+    lastFillTimeMillis = Math.max(config.minHttpTimeoutMillis, 1);
   }
 
   @Override
