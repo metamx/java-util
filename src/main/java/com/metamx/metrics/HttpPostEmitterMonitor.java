@@ -18,6 +18,7 @@
 package com.metamx.metrics;
 
 import com.google.common.collect.ImmutableMap;
+import com.metamx.emitter.core.ConcurrentTimeCounter;
 import com.metamx.emitter.core.HttpPostEmitter;
 import com.metamx.emitter.service.ServiceEmitter;
 import com.metamx.emitter.service.ServiceMetricEvent;
@@ -55,6 +56,10 @@ public class HttpPostEmitterMonitor extends FeedDefiningMonitor
     emitter.emit(builder.build("emitter/buffers/dropped", droppedBuffersDiff));
     lastDroppedBuffers = newDroppedBuffers;
 
+    emitTimeCounterMetrics(emitter, httpPostEmitter.getBatchFillingTimeCounter(), "emitter/batchFilling/");
+    emitTimeCounterMetrics(emitter, httpPostEmitter.getSuccessfulSendingTimeCounter(), "emitter/successfulSending/");
+    emitTimeCounterMetrics(emitter, httpPostEmitter.getFailedSendingTimeCounter(), "emitter/failedSending/");
+
     emitter.emit(builder.build("emitter/events/emitQueue", httpPostEmitter.getEventsToEmit()));
     emitter.emit(builder.build("emitter/events/large/emitQueue", httpPostEmitter.getLargeEventsToEmit()));
     emitter.emit(builder.build("emitter/buffers/totalAllocated", httpPostEmitter.getTotalAllocatedBuffers()));
@@ -63,6 +68,15 @@ public class HttpPostEmitterMonitor extends FeedDefiningMonitor
     emitter.emit(builder.build("emitter/buffers/reuseQueue", httpPostEmitter.getBuffersToReuse()));
 
     return true;
+  }
+
+  private void emitTimeCounterMetrics(ServiceEmitter emitter, ConcurrentTimeCounter timeCounter, String metricNameBase)
+  {
+    long timeSumAndCount = timeCounter.getTimeSumAndCountAndReset();
+    emitter.emit(builder.build(metricNameBase + "timeMsSum", ConcurrentTimeCounter.timeSum(timeSumAndCount)));
+    emitter.emit(builder.build(metricNameBase + "count", ConcurrentTimeCounter.count(timeSumAndCount)));
+    emitter.emit(builder.build(metricNameBase + "maxTimeMs", timeCounter.getAndResetMaxTime()));
+    emitter.emit(builder.build(metricNameBase + "minTimeMs", timeCounter.getAndResetMinTime()));
   }
 
   @Override

@@ -45,6 +45,7 @@ public class HttpEmitterConfig extends BaseHttpEmittingConfig
     this.contentEncoding = base.contentEncoding;
     this.batchQueueSizeLimit = base.batchQueueSizeLimit;
     this.httpTimeoutAllowanceFactor = base.httpTimeoutAllowanceFactor;
+    this.minHttpTimeoutMillis = base.minHttpTimeoutMillis;
   }
 
   public String getRecipientBaseUrl()
@@ -119,6 +120,12 @@ public class HttpEmitterConfig extends BaseHttpEmittingConfig
     public Builder setHttpTimeoutAllowanceFactor(float httpTimeoutAllowanceFactor)
     {
       this.httpTimeoutAllowanceFactor = httpTimeoutAllowanceFactor;
+      return this;
+    }
+
+    public Builder setMinHttpTimeoutMillis(int minHttpTimeoutMillis)
+    {
+      this.minHttpTimeoutMillis = minHttpTimeoutMillis;
       return this;
     }
 
