@@ -71,7 +71,7 @@ public class HttpEmitterTest
     emitter.start();
     emitter.emitAndReturnBatch(new IntEvent());
     emitter.flush();
-    Assert.assertEquals(0, timeoutUsed.get());
+    Assert.assertTrue(timeoutUsed.get() < 5);
 
     final Batch batch = emitter.emitAndReturnBatch(new IntEvent());
     Thread.sleep(1000);
