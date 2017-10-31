@@ -127,7 +127,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
   private final AtomicInteger allocatedBuffers = new AtomicInteger();
   private final AtomicInteger droppedBuffers = new AtomicInteger();
 
-  private volatile long lastFillTimeMillis = 0;
+  private volatile long lastFillTimeMillis;
   private final ConcurrentTimeCounter batchFillingTimeCounter = new ConcurrentTimeCounter();
 
   private final Object startLock = new Object();
@@ -166,6 +166,7 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
     }
     emittingThread = new EmittingThread(config);
     concurrentBatch.set(new Batch(this, acquireBuffer(), 0));
+    lastFillTimeMillis = config.minHttpTimeoutMillis;
   }
 
   @Override
@@ -280,9 +281,11 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
    */
   void onSealExclusive(Batch batch, long elapsedTimeMillis)
   {
+    batchFillingTimeCounter.add((int) Math.max(elapsedTimeMillis, 0));
     if (elapsedTimeMillis > 0) {
+      // If elapsedTimeMillis is 0 or negative, it's likely because System.currentTimeMillis() is not monotonic, so not
+      // accounting this time for determining batch sending timeout.
       lastFillTimeMillis = elapsedTimeMillis;
-      batchFillingTimeCounter.add((int) Math.max(elapsedTimeMillis, 0));
     }
     addBatchToEmitQueue(batch);
     wakeUpEmittingThread();
