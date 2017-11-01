@@ -627,7 +627,11 @@ public class HttpPostEmitter implements Flushable, Closeable, Emitter
         return false;
       }
       catch (Exception e) {
-        log.error(e, "Failed to send events to url[%s]", config.getRecipientBaseUrl());
+        if (e == timeoutLessThanMinimumException) {
+          log.debug(e, "Failed to send events to url[%s] with timeout less than minimum", config.getRecipientBaseUrl());
+        } else {
+          log.error(e, "Failed to send events to url[%s]", config.getRecipientBaseUrl());
+        }
         return false;
       }
     }
