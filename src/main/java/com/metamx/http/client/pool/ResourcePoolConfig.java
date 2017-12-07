@@ -21,21 +21,25 @@ package com.metamx.http.client.pool;
 public class ResourcePoolConfig
 {
   private final int maxPerKey;
+  private final long maxTimeInNanosToHold;
 
   public ResourcePoolConfig(
-      int maxPerKey
+      int maxPerKey,
+      long maxTimeInNanosToHold
   )
   {
     this.maxPerKey = maxPerKey;
+    this.maxTimeInNanosToHold = maxTimeInNanosToHold;
   }
 
   @Deprecated
   public ResourcePoolConfig(
       int maxPerKey,
-      boolean cleanIdle
+      boolean cleanIdle,
+      long maxTimeInNanosToHold
   )
   {
-    this(maxPerKey);
+    this(maxPerKey,maxTimeInNanosToHold);
 
     if (cleanIdle) {
       throw new IllegalStateException(
@@ -53,5 +57,10 @@ public class ResourcePoolConfig
   public boolean isCleanIdle()
   {
     return false;
+  }
+
+  public long getMaxTimeInNanosToHold()
+  {
+    return maxTimeInNanosToHold;
   }
 }

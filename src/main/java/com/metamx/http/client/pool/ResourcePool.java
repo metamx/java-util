@@ -25,8 +25,9 @@ import com.google.common.collect.ImmutableSet;
 import com.metamx.common.logger.Logger;
 
 import java.io.Closeable;
-import java.util.LinkedList;
+import java.util.Collection;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -51,6 +52,7 @@ public class ResourcePool<K, V> implements Closeable
           {
             return new ImmediateCreationResourceHolder<K, V>(
                 config.getMaxPerKey(),
+                config.getMaxTimeInNanosToHold(),
                 input,
                 factory
             );
@@ -128,12 +130,14 @@ public class ResourcePool<K, V> implements Closeable
     private final int maxSize;
     private final K key;
     private final ResourceFactory<K, V> factory;
-    private final LinkedList<V> objectList;
+    private final TreeMap<Long, V> objectMap;
     private int deficit = 0;
     private boolean closed = false;
+    private final long maxTimeInNanosToHold;
 
     private ImmediateCreationResourceHolder(
         int maxSize,
+        long maxTimeInNanosToHold,
         K key,
         ResourceFactory<K, V> factory
     )
@@ -141,19 +145,21 @@ public class ResourcePool<K, V> implements Closeable
       this.maxSize = maxSize;
       this.key = key;
       this.factory = factory;
+      this.maxTimeInNanosToHold = maxTimeInNanosToHold;
 
-      this.objectList = new LinkedList<V>();
-      for (int i = 0; i < maxSize; ++i) {
-        objectList.addLast(Preconditions.checkNotNull(factory.generate(key), "factory.generate(key)"));
+      this.objectMap = new TreeMap<Long, V>();
+      for(int i = 0; i < maxSize; ++i)
+      {
+        objectMap.put(System.nanoTime(), Preconditions.checkNotNull(factory.generate(key), "factory.generate(key)"));
       }
     }
 
     V get()
     {
-      // objectList can't have nulls, so we'll use a null to signal that we need to create a new resource.
+      // objectMap can't have nulls, so we'll use a null to signal that we need to create a new resource.
       final V poolVal;
       synchronized (this) {
-        while (!closed && objectList.size() == 0 && deficit == 0) {
+        while (!closed && objectMap.size() == 0 && deficit == 0) {
           try {
             this.wait();
           }
@@ -166,9 +172,18 @@ public class ResourcePool<K, V> implements Closeable
         if (closed) {
           log.info(String.format("get() called even though I'm closed. key[%s]", key));
           return null;
-        } else if (!objectList.isEmpty()) {
-          poolVal = objectList.removeFirst();
-        } else if (deficit > 0) {
+        } else if (!objectMap.isEmpty())
+        {
+          Map.Entry<Long,V> firstEntry = objectMap.pollFirstEntry();
+          if(System.nanoTime() - firstEntry.getKey() > maxTimeInNanosToHold)
+          {
+            factory.close(firstEntry.getValue());
+            poolVal = factory.generate(key);
+          } else{
+            poolVal = firstEntry.getValue();
+          }
+        }
+        else if (deficit > 0) {
           deficit --;
           poolVal = null;
         } else {
@@ -210,8 +225,8 @@ public class ResourcePool<K, V> implements Closeable
           return;
         }
 
-        if (objectList.size() >= maxSize) {
-          if (objectList.contains(object)) {
+        if (objectMap.size() >= maxSize) {
+          if (objectMap.containsValue(object)) {
             log.warn(
                 String.format(
                     "Returning object[%s] at key[%s] that has already been returned!? Skipping",
@@ -226,7 +241,7 @@ public class ResourcePool<K, V> implements Closeable
                     "Returning object[%s] at key[%s] even though we already have all that we can hold[%s]!? Skipping",
                     object,
                     key,
-                    objectList
+                    objectMap
                 ),
                 new Exception("Exception for stacktrace")
             );
@@ -234,7 +249,7 @@ public class ResourcePool<K, V> implements Closeable
           return;
         }
 
-        objectList.addLast(object);
+        objectMap.put(System.nanoTime(), object);
         this.notifyAll();
       }
     }
@@ -243,9 +258,9 @@ public class ResourcePool<K, V> implements Closeable
     {
       synchronized (this) {
         closed = true;
-        while (!objectList.isEmpty()) {
-          factory.close(objectList.removeFirst());
-        }
+        Collection<V> channels = objectMap.values();
+        channels.forEach(v -> factory.close(v));
+        objectMap.clear();
         this.notifyAll();
       }
     }
