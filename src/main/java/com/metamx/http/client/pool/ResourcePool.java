@@ -160,7 +160,7 @@ public class ResourcePool<K, V> implements Closeable
 
     V get()
     {
-      // objectMap can't have nulls, so we'll use a null to signal that we need to create a new resource.
+      // resourceHolderList can't have nulls, so we'll use a null to signal that we need to create a new resource.
       final V poolVal;
       synchronized (this) {
         while (!closed && resourceHolderList.size() == 0 && deficit == 0) {
@@ -227,7 +227,7 @@ public class ResourcePool<K, V> implements Closeable
         }
 
         if (resourceHolderList.size() >= maxSize) {
-          if (resourceHolderList.stream().filter(a -> a.getResource().equals(object)).findAny().isPresent()) {
+          if (holderListContains(object)) {
             log.warn(
                 String.format(
                     "Returning object[%s] at key[%s] that has already been returned!? Skipping",
@@ -253,6 +253,11 @@ public class ResourcePool<K, V> implements Closeable
         resourceHolderList.addLast(new ResourceHolder<>(System.currentTimeMillis(), object));
         this.notifyAll();
       }
+    }
+
+    private boolean holderListContains(V object)
+    {
+      return resourceHolderList.stream().filter(a -> a.getResource().equals(object)).findAny().isPresent();
     }
 
     void close()
