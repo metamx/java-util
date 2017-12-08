@@ -91,7 +91,10 @@ public class HttpClientInit
                       timer,
                       config.getSslHandshakeTimeout() == null ? -1 : config.getSslHandshakeTimeout().getMillis()
                   ),
-                  new ResourcePoolConfig(config.getNumConnections(), config.getUnusedConnectionTimeout())
+                  new ResourcePoolConfig(
+                      config.getNumConnections(),
+                      config.getUnusedConnectionTimeoutDuration().getMillis()
+                  )
               ),
               config.getReadTimeout(),
               config.getCompressionCodec(),

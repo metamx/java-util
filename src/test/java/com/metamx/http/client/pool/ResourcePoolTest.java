@@ -41,7 +41,7 @@ public class ResourcePoolTest
     EasyMock.replay(resourceFactory);
     pool = new ResourcePool<String, String>(
         resourceFactory,
-        new ResourcePoolConfig(2, 14400000000l)
+        new ResourcePoolConfig(2, TimeUnit.MINUTES.toMicros(4))
     );
 
     EasyMock.verify(resourceFactory);
@@ -222,6 +222,44 @@ public class ResourcePoolTest
     blockedThread.join();
     // pool returns null after close
     Assert.assertEquals(null, blockedThread.getValue());
+  }
+
+  @Test
+  public void testTimedOutResource() throws Exception
+  {
+    resourceFactory = (ResourceFactory<String, String>) EasyMock.createMock(ResourceFactory.class);
+
+    pool = new ResourcePool<String, String>(
+        resourceFactory,
+        new ResourcePoolConfig(2, TimeUnit.MILLISECONDS.toMillis(10))
+    );
+
+    EasyMock.expect(resourceFactory.generate("billy")).andAnswer(new StringIncrementingAnswer("billy")).times(2);
+    EasyMock.expect(resourceFactory.isGood("billy0")).andReturn(true).times(1);
+    EasyMock.replay(resourceFactory);
+
+    ResourceContainer<String> billyString = pool.take("billy");
+    Assert.assertEquals("billy0", billyString.get());
+
+    EasyMock.verify(resourceFactory);
+    EasyMock.reset(resourceFactory);
+
+    billyString.returnResource();
+
+    //make sure resources have been timed out.
+    Thread.sleep(100);
+
+    EasyMock.expect(resourceFactory.generate("billy")).andReturn("billy1").times(1);
+    resourceFactory.close("billy1");
+    EasyMock.expect(resourceFactory.isGood("billy1")).andReturn(true).times(1);
+    EasyMock.replay(resourceFactory);
+
+    ResourceContainer<String> billy = pool.take("billy");
+    Assert.assertEquals("billy1", billy.get());
+    billy.returnResource();
+
+    EasyMock.verify(resourceFactory);
+    EasyMock.reset(resourceFactory);
   }
 
   private static class StringIncrementingAnswer implements IAnswer<String>
