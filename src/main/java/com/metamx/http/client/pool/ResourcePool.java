@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.metamx.common.logger.Logger;
 
 import java.io.Closeable;
-import java.util.LinkedList;
+import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -129,7 +129,7 @@ public class ResourcePool<K, V> implements Closeable
     private final int maxSize;
     private final K key;
     private final ResourceFactory<K, V> factory;
-    private final LinkedList<ResourceHolder<V>> resourceHolderList;
+    private final ArrayDeque<ResourceHolder<V>> resourceHolderList;
     private int deficit = 0;
     private boolean closed = false;
     private final long unusedResourceTimeoutMillis;
@@ -145,7 +145,7 @@ public class ResourcePool<K, V> implements Closeable
       this.key = key;
       this.factory = factory;
       this.unusedResourceTimeoutMillis = unusedResourceTimeoutMillis;
-      this.resourceHolderList = new LinkedList<>();
+      this.resourceHolderList = new ArrayDeque<>();
 
       for (int i = 0; i < maxSize; ++i) {
         resourceHolderList.add(new ResourceHolder<>(
@@ -257,7 +257,7 @@ public class ResourcePool<K, V> implements Closeable
 
     private boolean holderListContains(V object)
     {
-      return resourceHolderList.stream().filter(a -> a.getResource().equals(object)).findAny().isPresent();
+      return resourceHolderList.stream().anyMatch(a -> a.getResource().equals(object));
     }
 
     void close()
