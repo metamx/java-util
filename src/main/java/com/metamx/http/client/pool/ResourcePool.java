@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.metamx.common.logger.Logger;
 
 import java.io.Closeable;
-import java.util.LinkedList;
+import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -51,6 +51,7 @@ public class ResourcePool<K, V> implements Closeable
           {
             return new ImmediateCreationResourceHolder<K, V>(
                 config.getMaxPerKey(),
+                config.getUnusedConnectionTimeoutMillis(),
                 input,
                 factory
             );
@@ -128,12 +129,14 @@ public class ResourcePool<K, V> implements Closeable
     private final int maxSize;
     private final K key;
     private final ResourceFactory<K, V> factory;
-    private final LinkedList<V> objectList;
+    private final ArrayDeque<ResourceHolder<V>> resourceHolderList;
     private int deficit = 0;
     private boolean closed = false;
+    private final long unusedResourceTimeoutMillis;
 
     private ImmediateCreationResourceHolder(
         int maxSize,
+        long unusedResourceTimeoutMillis,
         K key,
         ResourceFactory<K, V> factory
     )
@@ -141,19 +144,26 @@ public class ResourcePool<K, V> implements Closeable
       this.maxSize = maxSize;
       this.key = key;
       this.factory = factory;
+      this.unusedResourceTimeoutMillis = unusedResourceTimeoutMillis;
+      this.resourceHolderList = new ArrayDeque<>();
 
-      this.objectList = new LinkedList<V>();
       for (int i = 0; i < maxSize; ++i) {
-        objectList.addLast(Preconditions.checkNotNull(factory.generate(key), "factory.generate(key)"));
+        resourceHolderList.add(new ResourceHolder<>(
+            System.currentTimeMillis(),
+            Preconditions.checkNotNull(
+                factory.generate(key),
+                "factory.generate(key)"
+            )
+        ));
       }
     }
 
     V get()
     {
-      // objectList can't have nulls, so we'll use a null to signal that we need to create a new resource.
+      // resourceHolderList can't have nulls, so we'll use a null to signal that we need to create a new resource.
       final V poolVal;
       synchronized (this) {
-        while (!closed && objectList.size() == 0 && deficit == 0) {
+        while (!closed && resourceHolderList.size() == 0 && deficit == 0) {
           try {
             this.wait();
           }
@@ -166,10 +176,16 @@ public class ResourcePool<K, V> implements Closeable
         if (closed) {
           log.info(String.format("get() called even though I'm closed. key[%s]", key));
           return null;
-        } else if (!objectList.isEmpty()) {
-          poolVal = objectList.removeFirst();
+        } else if (!resourceHolderList.isEmpty()) {
+          ResourceHolder<V> holder = resourceHolderList.removeFirst();
+          if (System.currentTimeMillis() - holder.getLastAccessedTime() > unusedResourceTimeoutMillis) {
+            factory.close(holder.getResource());
+            poolVal = factory.generate(key);
+          } else {
+            poolVal = holder.getResource();
+          }
         } else if (deficit > 0) {
-          deficit --;
+          deficit--;
           poolVal = null;
         } else {
           throw new IllegalStateException("WTF?! No objects left, and no object deficit. This is probably a bug.");
@@ -210,8 +226,8 @@ public class ResourcePool<K, V> implements Closeable
           return;
         }
 
-        if (objectList.size() >= maxSize) {
-          if (objectList.contains(object)) {
+        if (resourceHolderList.size() >= maxSize) {
+          if (holderListContains(object)) {
             log.warn(
                 String.format(
                     "Returning object[%s] at key[%s] that has already been returned!? Skipping",
@@ -226,7 +242,7 @@ public class ResourcePool<K, V> implements Closeable
                     "Returning object[%s] at key[%s] even though we already have all that we can hold[%s]!? Skipping",
                     object,
                     key,
-                    objectList
+                    resourceHolderList
                 ),
                 new Exception("Exception for stacktrace")
             );
@@ -234,20 +250,47 @@ public class ResourcePool<K, V> implements Closeable
           return;
         }
 
-        objectList.addLast(object);
+        resourceHolderList.addLast(new ResourceHolder<>(System.currentTimeMillis(), object));
         this.notifyAll();
       }
+    }
+
+    private boolean holderListContains(V object)
+    {
+      return resourceHolderList.stream().anyMatch(a -> a.getResource().equals(object));
     }
 
     void close()
     {
       synchronized (this) {
         closed = true;
-        while (!objectList.isEmpty()) {
-          factory.close(objectList.removeFirst());
-        }
+        resourceHolderList.forEach(v -> factory.close(v.getResource()));
+        resourceHolderList.clear();
         this.notifyAll();
       }
     }
+  }
+
+  private static class ResourceHolder<V>
+  {
+    private long lastAccessedTime;
+    private V resource;
+
+    public ResourceHolder(long lastAccessedTime, V resource)
+    {
+      this.resource = resource;
+      this.lastAccessedTime = lastAccessedTime;
+    }
+
+    public long getLastAccessedTime()
+    {
+      return lastAccessedTime;
+    }
+
+    public V getResource()
+    {
+      return resource;
+    }
+
   }
 }

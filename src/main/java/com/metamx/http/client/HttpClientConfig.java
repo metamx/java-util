@@ -17,6 +17,7 @@
 package com.metamx.http.client;
 
 import org.joda.time.Duration;
+import org.joda.time.Period;
 
 import javax.net.ssl.SSLContext;
 
@@ -67,6 +68,8 @@ public class HttpClientConfig
   // Default from SelectorUtil.DEFAULT_IO_THREADS, which is private:
   private static final int DEFAULT_WORKER_COUNT = Runtime.getRuntime().availableProcessors() * 2;
 
+  private static final Duration DEFAULT_UNUSED_CONNECTION_TIMEOUT_DURATION = new Period("PT4M").toStandardDuration();
+
   public static Builder builder()
   {
     return new Builder();
@@ -79,6 +82,7 @@ public class HttpClientConfig
   private final int bossPoolSize;
   private final int workerPoolSize;
   private final CompressionCodec compressionCodec;
+  private final Duration unusedConnectionTimeoutDuration;
 
   @Deprecated // Use the builder instead
   public HttpClientConfig(
@@ -93,7 +97,8 @@ public class HttpClientConfig
         null,
         DEFAULT_BOSS_COUNT,
         DEFAULT_WORKER_COUNT,
-        DEFAULT_COMPRESSION_CODEC
+        DEFAULT_COMPRESSION_CODEC,
+        DEFAULT_UNUSED_CONNECTION_TIMEOUT_DURATION
     );
   }
 
@@ -111,7 +116,8 @@ public class HttpClientConfig
         null,
         DEFAULT_BOSS_COUNT,
         DEFAULT_WORKER_COUNT,
-        DEFAULT_COMPRESSION_CODEC
+        DEFAULT_COMPRESSION_CODEC,
+        DEFAULT_UNUSED_CONNECTION_TIMEOUT_DURATION
     );
   }
 
@@ -130,7 +136,8 @@ public class HttpClientConfig
         sslHandshakeTimeout,
         DEFAULT_BOSS_COUNT,
         DEFAULT_WORKER_COUNT,
-        DEFAULT_COMPRESSION_CODEC
+        DEFAULT_COMPRESSION_CODEC,
+        DEFAULT_UNUSED_CONNECTION_TIMEOUT_DURATION
     );
   }
 
@@ -141,7 +148,8 @@ public class HttpClientConfig
       Duration sslHandshakeTimeout,
       int bossPoolSize,
       int workerPoolSize,
-      CompressionCodec compressionCodec
+      CompressionCodec compressionCodec,
+      Duration unusedConnectionTimeoutDuration
   )
   {
     this.numConnections = numConnections;
@@ -151,6 +159,7 @@ public class HttpClientConfig
     this.bossPoolSize = bossPoolSize;
     this.workerPoolSize = workerPoolSize;
     this.compressionCodec = compressionCodec;
+    this.unusedConnectionTimeoutDuration = unusedConnectionTimeoutDuration;
   }
 
   public int getNumConnections()
@@ -188,6 +197,11 @@ public class HttpClientConfig
     return compressionCodec;
   }
 
+  public Duration getUnusedConnectionTimeoutDuration()
+  {
+    return unusedConnectionTimeoutDuration;
+  }
+
   public static class Builder
   {
     private int numConnections = 1;
@@ -197,6 +211,7 @@ public class HttpClientConfig
     private int bossCount = DEFAULT_BOSS_COUNT;
     private int workerCount = DEFAULT_WORKER_COUNT;
     private CompressionCodec compressionCodec = DEFAULT_COMPRESSION_CODEC;
+    private Duration unusedConnectionTimeoutDuration = DEFAULT_UNUSED_CONNECTION_TIMEOUT_DURATION;
 
     private Builder() {}
 
@@ -248,6 +263,12 @@ public class HttpClientConfig
       return this;
     }
 
+    public Builder withUnusedConnectionTimeoutDuration(Duration unusedConnectionTimeoutDuration)
+    {
+      this.unusedConnectionTimeoutDuration = unusedConnectionTimeoutDuration;
+      return this;
+    }
+
     public HttpClientConfig build()
     {
       return new HttpClientConfig(
@@ -257,7 +278,8 @@ public class HttpClientConfig
           sslHandshakeTimeout,
           bossCount,
           workerCount,
-          compressionCodec
+          compressionCodec,
+          unusedConnectionTimeoutDuration
       );
     }
   }

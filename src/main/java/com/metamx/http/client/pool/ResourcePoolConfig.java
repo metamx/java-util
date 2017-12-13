@@ -21,21 +21,25 @@ package com.metamx.http.client.pool;
 public class ResourcePoolConfig
 {
   private final int maxPerKey;
+  private final long unusedConnectionTimeoutMillis;
 
   public ResourcePoolConfig(
-      int maxPerKey
+      int maxPerKey,
+      long unusedConnectionTimeoutMillis
   )
   {
     this.maxPerKey = maxPerKey;
+    this.unusedConnectionTimeoutMillis = unusedConnectionTimeoutMillis;
   }
 
   @Deprecated
   public ResourcePoolConfig(
       int maxPerKey,
-      boolean cleanIdle
+      boolean cleanIdle,
+      long unusedConnectionTimeoutMillis
   )
   {
-    this(maxPerKey);
+    this(maxPerKey, unusedConnectionTimeoutMillis);
 
     if (cleanIdle) {
       throw new IllegalStateException(
@@ -53,5 +57,10 @@ public class ResourcePoolConfig
   public boolean isCleanIdle()
   {
     return false;
+  }
+
+  public long getUnusedConnectionTimeoutMillis()
+  {
+    return unusedConnectionTimeoutMillis;
   }
 }
