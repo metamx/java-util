@@ -41,7 +41,7 @@ public class ResourcePoolTest
     EasyMock.replay(resourceFactory);
     pool = new ResourcePool<String, String>(
         resourceFactory,
-        new ResourcePoolConfig(2, TimeUnit.MINUTES.toMicros(4))
+        new ResourcePoolConfig(2, TimeUnit.MINUTES.toMillis(4))
     );
 
     EasyMock.verify(resourceFactory);
