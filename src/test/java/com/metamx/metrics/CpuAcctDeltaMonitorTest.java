@@ -18,8 +18,6 @@ package com.metamx.metrics;
 
 import com.google.common.collect.ImmutableMap;
 import com.metamx.common.StringUtils;
-import com.metamx.metrics.cgroups.CgroupDiscoverer;
-import com.metamx.metrics.cgroups.ProcCgroupDiscoverer;
 import com.metamx.metrics.cgroups.TestUtils;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,14 +39,12 @@ public class CpuAcctDeltaMonitorTest
   private File procDir;
   private File cgroupDir;
   private File cpuacctDir;
-  private CgroupDiscoverer discoverer;
 
   @Before
   public void setUp() throws IOException
   {
     cgroupDir = temporaryFolder.newFolder();
     procDir = temporaryFolder.newFolder();
-    discoverer = new ProcCgroupDiscoverer(procDir.toPath());
     TestUtils.setUpCgroups(procDir, cgroupDir);
     cpuacctDir = new File(
         cgroupDir,
