@@ -29,11 +29,11 @@ public class Props {
     return props;
   }
 
-  public static Properties fromEnv(String prefix) {
+  public static Properties fromEnvs(String prefix) {
     final Properties props = new Properties();
     for (Map.Entry<String, String> env: System.getenv().entrySet()) {
       if (env.getKey().startsWith(prefix)) {
-        props.put(env.getKey().toLowerCase().replaceAll("_", "."), env.getValue());
+        props.put(env.getKey().replaceAll("_", "."), env.getValue());
       }
     }
     return props;
