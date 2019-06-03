@@ -28,7 +28,6 @@ import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
-import org.asynchttpclient.DefaultAsyncHttpClientConfig;
 import org.asynchttpclient.ListenableFuture;
 import org.asynchttpclient.Request;
 import org.asynchttpclient.Response;
@@ -50,6 +49,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 /**
  */
@@ -57,23 +57,24 @@ public class EmitterTest
 {
   private static final ObjectMapper jsonMapper = new ObjectMapper();
   public static String TARGET_URL = "http://metrics.foo.bar/";
-  public static final Response OK_RESPONSE = responseBuilder(HttpVersion.HTTP_1_1, HttpResponseStatus.CREATED)
-      .accumulate(new EagerResponseBodyPart(Unpooled.wrappedBuffer("Yay".getBytes(StandardCharsets.UTF_8)), true))
-      .build();
+
+  public static final Response OK_RESPONSE = Stream
+      .of(responseBuilder(HttpVersion.HTTP_1_1, HttpResponseStatus.CREATED))
+      .map(b -> {
+        b.accumulate(new EagerResponseBodyPart(Unpooled.wrappedBuffer("Yay".getBytes(StandardCharsets.UTF_8)), true));
+        return b.build();
+      }).findFirst().get();
 
   private static Response.ResponseBuilder responseBuilder(HttpVersion version, HttpResponseStatus status)
   {
-    return new Response.ResponseBuilder()
-        .accumulate(
-            new NettyResponseStatus(
-                Uri.create(TARGET_URL),
-                new DefaultAsyncHttpClientConfig.Builder().build(),
-                new DefaultHttpResponse(version, status),
-                null
-            )
-        );
+    Response.ResponseBuilder builder = new Response.ResponseBuilder();
+    builder.accumulate(new NettyResponseStatus(
+        Uri.create(TARGET_URL),
+        new DefaultHttpResponse(version, status),
+        null
+    ));
+    return builder;
   }
-
 
   MockHttpClient httpClient;
   HttpPostEmitter emitter;
