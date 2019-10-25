@@ -12,6 +12,7 @@ import org.asynchttpclient.AsyncHttpClient;
     @JsonSubTypes.Type(name = "http", value = HttpEmitterFactory.class),
     @JsonSubTypes.Type(name = "logging", value = LoggingEmitterFactory.class),
     @JsonSubTypes.Type(name = "parametrized", value = ParametrizedUriEmitterFactory.class),
+    @JsonSubTypes.Type(name = "composing", value = ComposingEmitterFactory.class),
     @JsonSubTypes.Type(name = "noop", value = NoopEmiterFactory.class),
 })
 public interface EmitterFactory
