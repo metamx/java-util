@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class ComposingEmitterConfig
 {
-  @JsonProperty("composite")
+  @JsonProperty("composing")
   private Map<String, Map<String, Object>> emitterConfigs = ImmutableMap.of();
 
   public Map<String, Map<String, Object>> getEmitterConfigs()

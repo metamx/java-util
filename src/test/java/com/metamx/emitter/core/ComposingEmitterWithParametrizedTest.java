@@ -50,12 +50,12 @@ public class ComposingEmitterWithParametrizedTest
   {
     final Properties props = new Properties();
     props.setProperty("com.metamx.emitter.type", "composing");
-    props.setProperty("com.metamx.emitter.composite.noop.type", "noop");
-    props.setProperty("com.metamx.emitter.composite.log.type", "logging");
-    props.setProperty("com.metamx.emitter.composite.http1.type", "parametrized");
-    props.setProperty("com.metamx.emitter.composite.http1.recipientBaseUrlPattern", "http://example.com/{feed}");
-    props.setProperty("com.metamx.emitter.composite.http2.type", "parametrized");
-    props.setProperty("com.metamx.emitter.composite.http2.recipientBaseUrlPattern", "http://example.com/{feed}");
+    props.setProperty("com.metamx.emitter.composing.noop.type", "noop");
+    props.setProperty("com.metamx.emitter.composing.log.type", "logging");
+    props.setProperty("com.metamx.emitter.composing.http1.type", "parametrized");
+    props.setProperty("com.metamx.emitter.composing.http1.recipientBaseUrlPattern", "http://example.com/{feed}");
+    props.setProperty("com.metamx.emitter.composing.http2.type", "parametrized");
+    props.setProperty("com.metamx.emitter.composing.http2.recipientBaseUrlPattern", "http://example.com/{feed}");
     props.putAll(overrideProps);
     lifecycle = new Lifecycle();
     Emitter emitter = Emitters.create(props, httpClient, lifecycle);
