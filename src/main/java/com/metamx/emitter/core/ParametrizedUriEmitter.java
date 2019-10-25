@@ -7,6 +7,8 @@ import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.common.logger.Logger;
+import com.metamx.emitter.core.filter.BWListEventFilter;
+import com.metamx.emitter.core.filter.BWListEventFilterFactory;
 import org.asynchttpclient.AsyncHttpClient;
 
 import javax.annotation.concurrent.GuardedBy;
@@ -50,6 +52,7 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
   private final AsyncHttpClient client;
   private final ObjectMapper jsonMapper;
   private final ParametrizedUriEmitterConfig config;
+  private final BWListEventFilter bwListEventFilter;
 
   public ParametrizedUriEmitter(
       ParametrizedUriEmitterConfig config,
@@ -57,20 +60,28 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
       ObjectMapper jsonMapper
   )
   {
-    this(config, client, jsonMapper, makeUriExtractor(config));
+    this(
+        config,
+        client,
+        jsonMapper,
+        makeUriExtractor(config),
+        BWListEventFilterFactory.makeEventFilter(config.getBwListEventFilterConfig())
+    );
   }
 
   public ParametrizedUriEmitter(
       ParametrizedUriEmitterConfig config,
       AsyncHttpClient client,
       ObjectMapper jsonMapper,
-      UriExtractor uriExtractor
+      UriExtractor uriExtractor,
+      BWListEventFilter bwListEventFilter
   )
   {
     this.config = config;
     this.client = client;
     this.jsonMapper = jsonMapper;
     this.uriExtractor = uriExtractor;
+    this.bwListEventFilter = bwListEventFilter;
   }
 
   @Override
@@ -99,6 +110,10 @@ public class ParametrizedUriEmitter implements Flushable, Closeable, Emitter
   @Override
   public void emit(Event event)
   {
+    if (bwListEventFilter.isNotListed(event)) {
+      log.trace("Event won't be emitted since one of its field isn't whitelisted or is blacklisted");
+      return;
+    }
     try {
       URI uri = uriExtractor.apply(event);
       HttpPostEmitter emitter = emitters.get(uri);
