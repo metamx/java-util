@@ -26,16 +26,29 @@ import com.metamx.common.logger.Logger;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ComposingEmitter implements Emitter
 {
   private static Logger log = new Logger(ComposingEmitter.class);
 
-  private final List<Emitter> emitters;
+  private final Map<String, Emitter> emitters;
+
+  public ComposingEmitter(Map<String, Emitter> emitters)
+  {
+    this.emitters = Preconditions.checkNotNull(emitters, "null emitters");
+  }
 
   public ComposingEmitter(List<Emitter> emitters)
   {
-    this.emitters = Preconditions.checkNotNull(emitters, "null emitters");
+    this.emitters = emitters.stream().collect(
+        Collectors.toMap(
+            // Default toString implementation to make the key be unique
+            e -> e.getClass().getName() + "@" + Integer.toHexString(e.hashCode()),
+            e -> e
+        )
+    );
   }
 
   @Override
@@ -44,16 +57,16 @@ public class ComposingEmitter implements Emitter
   {
     log.info("Starting Composing Emitter.");
 
-    for (Emitter e : emitters) {
-      log.info("Starting emitter %s.", e.getClass().getName());
-      e.start();
+    for (Map.Entry<String, Emitter> e : emitters.entrySet()) {
+      log.info("Starting emitter [%s].", e.getKey());
+      e.getValue().start();
     }
   }
 
   @Override
   public void emit(Event event)
   {
-    for (Emitter e : emitters) {
+    for (Emitter e : emitters.values()) {
       e.emit(event);
     }
   }
@@ -64,17 +77,18 @@ public class ComposingEmitter implements Emitter
     boolean fail = false;
     log.info("Flushing Composing Emitter.");
 
-    for (Emitter e : emitters) {
+    for (Map.Entry<String, Emitter> e : emitters.entrySet()) {
       try {
-        log.info("Flushing emitter %s.", e.getClass().getName());
-        e.flush();
-      } catch (IOException ex) {
-        log.error(ex, "Failed to flush emitter [%s]", e.getClass().getName());
+        log.info("Flushing emitter [%s].", e.getKey());
+        e.getValue().flush();
+      }
+      catch (IOException ex) {
+        log.error(ex, "Failed to flush emitter [%s]", e.getKey());
         fail = true;
       }
     }
 
-    if(fail) {
+    if (fail) {
       throw new IOException("failed to flush one or more emitters");
     }
   }
@@ -86,18 +100,18 @@ public class ComposingEmitter implements Emitter
     boolean fail = false;
     log.info("Closing Composing Emitter.");
 
-    for (Emitter e : emitters) {
+    for (Map.Entry<String, Emitter> e : emitters.entrySet()) {
       try {
-        log.info("Closing emitter %s.", e.getClass().getName());
-        e.close();
+        log.info("Closing emitter [%s].", e.getKey());
+        e.getValue().close();
       }
       catch (IOException ex) {
-        log.error(ex, "Failed to close emitter [%s]", e.getClass().getName());
+        log.error(ex, "Failed to close emitter [%s]", e.getKey());
         fail = true;
       }
     }
 
-    if(fail) {
+    if (fail) {
       throw new IOException("failed to close one or more emitters");
     }
   }
