@@ -132,16 +132,11 @@ public class Emitters
       if (key.startsWith(prefix)) {
         String combinedKey = key.substring(prefix.length());
         Map<String, Object> currentLevelJson = factoryMap;
-        String currentKey = null;
         String[] keyPath = combinedKey.split("\\.");
 
         for (int i = 0; i < keyPath.length - 1; i++) {
           String keyPart = keyPath[i];
-          Object nextLevelJson = currentLevelJson.get(keyPart);
-          if (nextLevelJson == null) {
-            nextLevelJson = new HashMap<String, Object>();
-            currentLevelJson.put(keyPart, nextLevelJson);
-          }
+          Object nextLevelJson = currentLevelJson.computeIfAbsent(keyPart, k -> new HashMap<String, Object>());
           currentLevelJson = (Map<String, Object>) nextLevelJson;
         }
 

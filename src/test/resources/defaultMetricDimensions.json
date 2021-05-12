@@ -1,0 +1,5 @@
+{
+  "query/time" : { "dimensions" : ["dataSource", "type"], "type" : "timer"},
+  "query/cache/total/hitRate" : { "dimensions" : [], "type" : "gauge", "convertRange" : true },
+  "jvm/gc/count" : { "dimensions" : ["gcName", "gcGen"], "type" : "count" }
+}

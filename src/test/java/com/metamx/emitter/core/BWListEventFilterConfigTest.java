@@ -1,8 +1,6 @@
 package com.metamx.emitter.core;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.metamx.emitter.core.Emitters;
-import com.metamx.emitter.core.ParametrizedUriEmitterConfig;
 import org.junit.Assert;
 import org.junit.Test;
 

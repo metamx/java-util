@@ -83,4 +83,26 @@ public class StringUtils
       return bob.toString();
     }
   }
+
+  /**
+   * Replaces all occurrences of the given char in the given string with the given replacement string. This method is an
+   * optimal version of {@link String#replace(CharSequence, CharSequence) s.replace("c", replacement)}.
+   */
+  public static String replaceChar(String s, char c, String replacement)
+  {
+    int pos = s.indexOf(c);
+    if (pos < 0) {
+      return s;
+    }
+    StringBuilder sb = new StringBuilder(s.length() - 1 + replacement.length());
+    int prevPos = 0;
+    do {
+      sb.append(s, prevPos, pos);
+      sb.append(replacement);
+      prevPos = pos + 1;
+      pos = s.indexOf(c, pos + 1);
+    } while (pos > 0);
+    sb.append(s, prevPos, s.length());
+    return sb.toString();
+  }
 }
