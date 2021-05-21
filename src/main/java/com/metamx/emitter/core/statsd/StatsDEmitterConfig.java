@@ -20,7 +20,9 @@ package com.metamx.emitter.core.statsd;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.Preconditions;
+import com.metamx.emitter.core.JacksonUtil;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -50,6 +52,7 @@ public class StatsDEmitterConfig
   @JsonProperty
   private final Boolean dogstatsd;
   @JsonProperty
+  @JsonDeserialize(using = JacksonUtil.CommaDelimitedListDeserializer.class)
   private final List<String> dogstatsdConstantTags;
   @JsonProperty
   private final Boolean dogstatsdServiceAsTag;
