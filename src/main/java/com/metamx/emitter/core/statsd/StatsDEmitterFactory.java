@@ -3,8 +3,10 @@ package com.metamx.emitter.core.statsd;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.metamx.common.lifecycle.Lifecycle;
 import com.metamx.emitter.core.Emitter;
+import com.metamx.emitter.core.JacksonUtil;
 import com.metamx.emitter.core.factory.EmitterFactory;
 import org.asynchttpclient.AsyncHttpClient;
 
@@ -23,7 +25,9 @@ public class StatsDEmitterFactory extends StatsDEmitterConfig implements Emitter
       @JsonProperty("dimensionMapPath") @Nullable String dimensionMapPath,
       @JsonProperty("blankHolder") @Nullable String blankHolder,
       @JsonProperty("dogstatsd") @Nullable Boolean dogstatsd,
-      @JsonProperty("dogstatsdConstantTags") @Nullable List<String> dogstatsdConstantTags,
+      @JsonProperty("dogstatsdConstantTags")
+      @JsonDeserialize(using = JacksonUtil.CommaDelimitedListDeserializer.class)
+      @Nullable List<String> dogstatsdConstantTags,
       @JsonProperty("dogstatsdServiceAsTag") @Nullable Boolean dogstatsdServiceAsTag,
       @JsonProperty("dogstatsdEvents") @Nullable Boolean dogstatsdEvents
   )
